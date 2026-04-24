@@ -1,6 +1,6 @@
 [project]
 name = "sovereign-agent"
-version = "0.2.0a1"
+version = "0.2.0"
 description = "A framework for building always-on AI agents that you actually own"
 readme = "README.md"
 requires-python = ">=3.12"
