@@ -2,6 +2,14 @@ name: publish
 
 # Publishes sovereign-agent to PyPI on every git tag matching v*.*.*.
 #
+# Routing (in order of specificity):
+#   Stable tags   → real PyPI        v0.2.0,   v1.0.0,   v2.3.4
+#   Pre-releases  → TestPyPI         v0.3.0a1, v0.3.0b2, v0.3.0rc1, v0.3.0-alpha
+#
+# Pre-release detection matches PEP 440 + legacy hyphenated pre-releases:
+#   - PEP 440:  v<N>.<N>.<N>{a,b,rc}<N>   (e.g. v0.3.0a1, v1.0.0rc2)
+#   - Legacy:   v<N>.<N>.<N>-<anything>   (e.g. v0.2.0-alpha, v1.0.0-dev)
+#
 # Uses PyPI's Trusted Publishers (OIDC) — no API token required.
 # You must first configure the trusted publisher at:
 #   https://pypi.org/manage/account/publishing/
@@ -12,23 +20,25 @@ name: publish
 #   - Workflow filename: publish.yml
 #   - Environment name: pypi
 #
-# For TestPyPI (recommended for the first publish), configure the same
-# at https://test.pypi.org/manage/account/publishing/ and use the
-# publish-testpypi job below (manually triggered).
+# For TestPyPI, configure the same at https://test.pypi.org/manage/account/publishing/
+# with Environment name: testpypi.
 #
 # Release flow:
-#   git tag v0.2.0-alpha
-#   git push origin v0.2.0-alpha
+#   git tag v0.3.0a1                       # PEP 440 alpha → TestPyPI
+#   git tag v0.3.0                         # stable → real PyPI
+#   git push origin <tag>
 #   → GitHub Actions runs this workflow
-#   → Builds wheel + sdist
-#   → Verifies both install and import cleanly
-#   → Publishes to PyPI
+#   → Builds wheel + sdist, verifies they install
+#   → Publishes to the appropriate index
 
 on:
   push:
     tags:
-      - "v*.*.*"
-      - "v*.*.*-*"   # also allow pre-release tags like v0.2.0-alpha
+      - "v*.*.*"         # stable: v0.2.0, v1.0.0
+      - "v*.*.*a*"       # PEP 440 alpha: v0.3.0a1
+      - "v*.*.*b*"       # PEP 440 beta: v0.3.0b2
+      - "v*.*.*rc*"      # PEP 440 release candidate: v0.3.0rc1
+      - "v*.*.*-*"       # legacy hyphenated pre-release: v0.2.0-alpha
   workflow_dispatch:
     inputs:
       target:
@@ -48,34 +58,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # full history so setuptools-scm (if used) sees tags
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-
       - name: Build distributions
         run: |
           uv build
           ls -la dist/
-
       - name: Verify wheel installs cleanly in a fresh venv
         run: |
           python -m venv /tmp/verify-venv
           /tmp/verify-venv/bin/pip install --upgrade pip
           /tmp/verify-venv/bin/pip install dist/*.whl
           /tmp/verify-venv/bin/python -c "import sovereign_agent as sa; print(f'sovereign-agent {sa.__version__}, {len(sa.__all__)} exports')"
-
       - name: Verify sdist builds into a working wheel
         run: |
           python -m venv /tmp/verify-sdist-venv
           /tmp/verify-sdist-venv/bin/pip install --upgrade pip build
           /tmp/verify-sdist-venv/bin/pip install dist/*.tar.gz
           /tmp/verify-sdist-venv/bin/python -c "import sovereign_agent as sa; print(f'sovereign-agent {sa.__version__} from sdist — OK')"
-
       - name: Upload distributions as workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -86,12 +90,19 @@ jobs:
   publish-testpypi:
     name: Publish to TestPyPI
     needs: build
-    # Runs on manual dispatch with target=testpypi, or on every push to a
-    # pre-release tag (so every -alpha/-beta tag smoke-tests against TestPyPI
-    # before real PyPI).
+    # Routes to TestPyPI when:
+    #   - manual dispatch with target=testpypi
+    #   - tag is a pre-release: PEP 440 (v0.3.0a1, v0.3.0b2, v0.3.0rc1)
+    #     or legacy hyphenated (v0.2.0-alpha, v0.3.0-beta)
+    # The regex matches tag names ending in a/b/rc + digits, OR containing a hyphen.
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi') ||
-      (github.event_name == 'push' && contains(github.ref, '-'))
+      (github.event_name == 'push' && (
+        contains(github.ref_name, '-') ||
+        contains(github.ref_name, 'a') ||
+        contains(github.ref_name, 'b') ||
+        contains(github.ref_name, 'rc')
+      ))
     runs-on: ubuntu-latest
     environment:
       name: testpypi
@@ -104,7 +115,6 @@ jobs:
         with:
           name: dist
           path: dist/
-
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -114,11 +124,18 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     needs: build
-    # Runs only on stable version tags (v0.2.0, v1.0.0) — never on pre-releases.
-    # Manual dispatch with target=pypi also works for emergencies.
+    # Routes to real PyPI ONLY on stable version tags (v0.2.0, v1.0.0) —
+    # never on pre-releases. Manual dispatch with target=pypi also works.
+    #
+    # A stable tag is one with NONE of: hyphen, 'a', 'b', 'rc'.
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'pypi') ||
-      (github.event_name == 'push' && !contains(github.ref, '-'))
+      (github.event_name == 'push' && !(
+        contains(github.ref_name, '-') ||
+        contains(github.ref_name, 'a') ||
+        contains(github.ref_name, 'b') ||
+        contains(github.ref_name, 'rc')
+      ))
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -131,7 +148,6 @@ jobs:
         with:
           name: dist
           path: dist/
-
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
