@@ -1,0 +1,66 @@
+# Critical files that MUST exist after extracting this tarball.
+#
+# After extract, run:
+#   cd sovereign-agent/
+#   while read f; do case "$f" in \#*|"") continue;; esac; [ -f "$f" ] || echo "MISSING: $f"; done < MANIFEST-CRITICAL.txt
+# If nothing prints, the extract was clean. Any "MISSING:" line means the
+# extract was corrupted — STOP and redo.
+
+sovereign_agent/__init__.py
+sovereign_agent/config.py
+sovereign_agent/discovery.py
+sovereign_agent/errors.py
+
+sovereign_agent/tools/__init__.py
+sovereign_agent/tools/registry.py
+sovereign_agent/tools/builtin/__init__.py
+sovereign_agent/executor/__init__.py
+sovereign_agent/session/__init__.py
+sovereign_agent/session/directory.py
+sovereign_agent/ipc/__init__.py
+sovereign_agent/tickets/__init__.py
+sovereign_agent/planner/__init__.py
+sovereign_agent/halves/__init__.py
+sovereign_agent/halves/verifiers.py
+sovereign_agent/halves/structured.py
+sovereign_agent/_internal/__init__.py
+sovereign_agent/_internal/paths.py
+sovereign_agent/_internal/llm_client.py
+sovereign_agent/_internal/atomic.py
+
+Makefile
+pyproject.toml
+uv.lock
+README.md
+CHANGELOG.md
+LICENSE
+docs/API.md
+.github/workflows/ci.yml
+.github/workflows/publish.yml
+.gitignore
+
+examples/research_assistant/run.py
+examples/code_reviewer/run.py
+examples/pub_booking/run.py
+examples/parallel_research/run.py
+examples/isolated_worker/run.py
+examples/session_resume_chain/run.py
+examples/classifier_rule/run.py
+examples/hitl_deposit/run.py
+
+chapters/README.md
+chapters/chapter_01_session/demo.py
+chapters/chapter_02_queue/demo.py
+chapters/chapter_03_ipc/demo.py
+chapters/chapter_04_scheduler/demo.py
+chapters/chapter_05_planner_executor/demo.py
+
+tests/integration/test_real_path_mocked.py
+tests/integration/test_end_to_end.py
+tests/integration/test_examples.py
+tests/conftest.py
+
+scripts/preflight.py
+scripts/verify_setup.py
+scripts/ci_real.py
+tools/verify_chapter_drift.py

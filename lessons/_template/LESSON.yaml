@@ -1,0 +1,35 @@
+# Machine-readable metadata. The top-level lessons/README.md index is
+# regenerated from these files by tools/rebuild_lessons_index.py.
+version: 1
+title: "<short descriptive title>"
+slug: "<kebab-case-slug>"
+date: YYYY-MM-DD
+author: "<name>"
+status: draft                # draft | published | deprecated
+deprecated: false
+deprecated_by: null          # e.g. "2026-06-newer-slug" when superseded
+tags:
+  - <tag>
+  - <tag>
+related_chapters:
+  - chapter_XX_<slug>
+related_extensions:
+  - sovereign_agent/<path>/<file>.py
+paper_reference:
+  arxiv_id: "XXXX.XXXXX"
+  title: "<paper title>"
+  authors: ["<Author et al.>"]
+  year: YYYY
+baseline: "<name of the sovereign-agent extension we're comparing against>"
+variant: "<name of the new extension introduced by this lesson>"
+scenarios_tested:
+  - research_assistant
+  - code_reviewer
+  # - pub_booking
+metrics_of_interest:
+  - plan_coherence_score
+  - total_tool_calls
+  - final_success_rate
+  - planner_tokens_in
+  - wall_clock_ms
+video_url: null              # fill in after recording

@@ -1,0 +1,138 @@
+name: publish
+
+# Publishes sovereign-agent to PyPI on every git tag matching v*.*.*.
+#
+# Uses PyPI's Trusted Publishers (OIDC) — no API token required.
+# You must first configure the trusted publisher at:
+#   https://pypi.org/manage/account/publishing/
+# with:
+#   - PyPI Project Name: sovereign-agent
+#   - Owner: sovereignagents
+#   - Repository name: sovereign-agent
+#   - Workflow filename: publish.yml
+#   - Environment name: pypi
+#
+# For TestPyPI (recommended for the first publish), configure the same
+# at https://test.pypi.org/manage/account/publishing/ and use the
+# publish-testpypi job below (manually triggered).
+#
+# Release flow:
+#   git tag v0.2.0-alpha
+#   git push origin v0.2.0-alpha
+#   → GitHub Actions runs this workflow
+#   → Builds wheel + sdist
+#   → Verifies both install and import cleanly
+#   → Publishes to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-*"   # also allow pre-release tags like v0.2.0-alpha
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+jobs:
+  build:
+    name: Build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so setuptools-scm (if used) sees tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Build distributions
+        run: |
+          uv build
+          ls -la dist/
+
+      - name: Verify wheel installs cleanly in a fresh venv
+        run: |
+          python -m venv /tmp/verify-venv
+          /tmp/verify-venv/bin/pip install --upgrade pip
+          /tmp/verify-venv/bin/pip install dist/*.whl
+          /tmp/verify-venv/bin/python -c "import sovereign_agent as sa; print(f'sovereign-agent {sa.__version__}, {len(sa.__all__)} exports')"
+
+      - name: Verify sdist builds into a working wheel
+        run: |
+          python -m venv /tmp/verify-sdist-venv
+          /tmp/verify-sdist-venv/bin/pip install --upgrade pip build
+          /tmp/verify-sdist-venv/bin/pip install dist/*.tar.gz
+          /tmp/verify-sdist-venv/bin/python -c "import sovereign_agent as sa; print(f'sovereign-agent {sa.__version__} from sdist — OK')"
+
+      - name: Upload distributions as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    # Runs on manual dispatch with target=testpypi, or on every push to a
+    # pre-release tag (so every -alpha/-beta tag smoke-tests against TestPyPI
+    # before real PyPI).
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi') ||
+      (github.event_name == 'push' && contains(github.ref, '-'))
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/sovereign-agent/
+    permissions:
+      id-token: write   # required for trusted publishing (OIDC)
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true   # idempotent if the same version is re-run
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    # Runs only on stable version tags (v0.2.0, v1.0.0) — never on pre-releases.
+    # Manual dispatch with target=pypi also works for emergencies.
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'pypi') ||
+      (github.event_name == 'push' && !contains(github.ref, '-'))
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/sovereign-agent/
+    permissions:
+      id-token: write   # required for trusted publishing (OIDC)
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: false   # fail loudly if version already exists

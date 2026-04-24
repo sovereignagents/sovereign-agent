@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + dev extras
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+
+      - name: Ruff lint
+        run: ruff check sovereign_agent/ tests/
+
+      - name: Pytest
+        run: pytest -v --tb=short
+
+  chapter-drift:
+    name: Chapter drift check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Verify chapter solutions match the production package
+        run: python tools/verify_chapter_drift.py
+
+  chapter-demos:
+    name: Chapter demos + v0.1.0 examples run end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Chapter 1 demo
+        run: python -m chapters.chapter_01_session.demo
+
+      - name: Chapter 2 demo
+        run: python -m chapters.chapter_02_queue.demo
+
+      - name: Chapter 3 demo
+        run: python -m chapters.chapter_03_ipc.demo
+
+      - name: Chapter 4 demo
+        run: python -m chapters.chapter_04_scheduler.demo
+
+      - name: Chapter 5 demo (offline, FakeLLMClient)
+        run: python -m chapters.chapter_05_planner_executor.demo
+
+      - name: v0.1.0 example — research assistant
+        run: python -m examples.research_assistant.run
+
+      - name: v0.1.0 example — code reviewer
+        run: python -m examples.code_reviewer.run
+
+      - name: v0.1.0 example — pub booking (default)
+        run: python -m examples.pub_booking.run
+
+      - name: v0.1.0 example — pub booking (oversize, triggers escalation)
+        run: python -m examples.pub_booking.run --oversize
+
+  v02-examples:
+    name: v0.2 example scenarios (Modules 1-5)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Kernel info (Landlock requires Linux >= 5.13)
+        run: |
+          uname -a
+          python -c "from sovereign_agent._internal.isolation import landlock_available, sandbox_exec_available, detect_best_policy; print(f'landlock_available: {landlock_available()}'); print(f'sandbox_exec_available: {sandbox_exec_available()}'); print(f'detected policy: {detect_best_policy().name}')"
+
+      # One step per v0.2 example. Separate steps (rather than one
+      # loop) so that when an example breaks, the CI log shows
+      # exactly which module's demo regressed — a student or
+      # maintainer can tell at a glance.
+
+      - name: Module 1 — parallel tool dispatch (default, parallel)
+        run: python -m examples.parallel_research.run
+
+      - name: Module 1 — forced sequential (timing regression guard)
+        run: python -m examples.parallel_research.run --sequential
+
+      - name: Module 2 — isolated worker (Landlock / sandbox-exec / NoOp fallback)
+        # Linux kernel on GitHub-hosted ubuntu-latest is 6.x so this
+        # exercises the real Landlock path. The example is also valid
+        # on older kernels (NoOp with warning), so we don't need a
+        # matrix — either path is a pass.
+        run: python -m examples.isolated_worker.run
+
+      - name: Module 3 — session resume chain (three generations)
+        run: python -m examples.session_resume_chain.run
+
+      - name: Module 4 — classifier-driven rule (6/6 must be correct)
+        run: python -m examples.classifier_rule.run
+
+      - name: Module 5 — HITL deposit approval (grant + deny paths)
+        run: python -m examples.hitl_deposit.run
+
+      - name: Integration tests that grep example output for regressions
+        # These tests re-run each example as a subprocess AND assert
+        # specific phrases appear in stdout. They are the contract
+        # between the examples and the CHANGELOG claims.
+        run: pytest -v tests/integration/test_examples.py
+
+  doctor:
+    name: CLI doctor (with fake key, --skip-llm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run doctor
+        run: NEBIUS_KEY=fake sovereign-agent doctor --skip-llm

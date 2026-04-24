@@ -1,0 +1,49 @@
+site_name: sovereign-agent
+site_description: A framework for building always-on AI agents that you actually own
+site_url: https://sovereignagents.github.io/sovereign-agent/
+repo_url: https://github.com/sovereignagents/sovereign-agent
+repo_name: sovereignagents/sovereign-agent
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Architecture:
+      - Overview: architecture.md
+  - API Reference: api_reference.md
+  - Chapters:
+      - Overview: chapters/index.md
+  - Deployment: deployment.md

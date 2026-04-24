@@ -1,0 +1,106 @@
+[project]
+name = "sovereign-agent"
+version = "0.2.0"
+description = "A framework for building always-on AI agents that you actually own"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Rod Rivera" }]
+keywords = ["agent", "llm", "always-on", "ai", "orchestration"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "openai>=1.40",
+  "typer>=0.12",
+  "croniter>=2.0",
+  "python-dateutil>=2.8.2",
+]
+
+# User-facing extras (surface on PyPI).
+#
+# `rasa` is intentionally NOT in the `all` meta-extra. rasa-pro has tight
+# version pins that conflict with several other optional deps; users who
+# want Rasa-based structured halves install it explicitly:
+#   pip install sovereign-agent[rasa]
+# or:
+#   uv add sovereign-agent --extra rasa
+[project.optional-dependencies]
+evidently = ["evidently>=0.4"]
+otel = [
+  "opentelemetry-api>=1.25",
+  "opentelemetry-sdk>=1.25",
+  "opentelemetry-exporter-otlp>=1.25",
+]
+voice = ["speechmatics-python", "elevenlabs"]
+rasa = ["rasa-pro"]
+docker = ["docker>=7.0"]
+all = ["sovereign-agent[evidently,otel,voice,docker]"]
+
+[project.scripts]
+sovereign-agent = "sovereign_agent.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/sovereignagents/sovereign-agent"
+Repository = "https://github.com/sovereignagents/sovereign-agent"
+Issues = "https://github.com/sovereignagents/sovereign-agent/issues"
+
+# Dev tooling lives in dependency groups (PEP 735). Never shipped on PyPI.
+# Install with `uv sync --all-groups` or `uv sync --group dev`.
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "pytest-timeout>=2.2",
+  "ruff>=0.5",
+  "mypy>=1.10",
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "pyyaml>=6",
+]
+
+# Build backend. Setuptools is still fine for this layout; uv will use it
+# when building wheels via `uv build`. No need to move to uv_build for a
+# single-package project.
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sovereign_agent*"]
+exclude = ["tests*", "chapters*", "lessons*", "examples*"]
+
+# Tooling configuration ─────────────────────────────────────────────────
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "chapters"]
+python_files = ["test_*.py", "tests.py"]
+markers = [
+  "network: tests that require network access (LLM APIs)",
+  "slow: tests that take more than a few seconds",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]
+ignore = [
+  "E501",   # line length handled by formatter
+  "B008",   # typer.Option() in defaults is idiomatic
+  "N818",   # exception names are part of the public API surface
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
