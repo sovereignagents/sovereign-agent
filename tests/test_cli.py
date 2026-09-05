@@ -33,4 +33,4 @@ def test_module_entry_point_reports_version() -> None:
         capture_output=True,
         text=True,
     )
-    assert result.stdout.strip() == "sovereign-agent 1.3.0"
+    assert result.stdout.strip() == "sovereign-agent 1.4.0"

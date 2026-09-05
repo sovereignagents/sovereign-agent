@@ -1,6 +1,6 @@
 [project]
 name = "sovereign-agent"
-version = "1.3.0"
+version = "1.4.0"
 description = "An executable textbook for learning Zero-Employee Organizations"
 readme = "README.md"
 requires-python = ">=3.14"

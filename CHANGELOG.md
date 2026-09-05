@@ -6,6 +6,13 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+## [1.4.0] — 2026-09-05
+
+Sovereign Agent 1.4.0 is a correctness release for two boundaries the
+executable book teaches learners to distrust: replacing durable files and
+selling inventory already promised elsewhere. It turns both claims into
+behavioral guarantees without adding a runtime dependency.
+
 - Make `atomic_write` safe under concurrent writers by using a unique
   same-directory temporary file, syncing its contents before replacement, and
   cleaning it on both success and failure. Parent-directory durability remains

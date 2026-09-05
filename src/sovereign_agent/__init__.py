@@ -10,7 +10,7 @@ from sovereign_agent.ids import new_id
 from sovereign_agent.models import Actor, Outcome, StatementOfWork
 from sovereign_agent.organization import Organization
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 __all__ = [
     "Actor",
