@@ -2,7 +2,7 @@
 
 PROVES: BOOK.json names one existing path per surface and partitions chapters 0-12 once.
 PAID-FAILURE: front matter and appendices existed upstream but were invisible to consumers.
-proven-at: profrodai/sovereign-agent@pending
+proven-at: profrodai/sovereign-agent@ab7028465d4eccf2809b24c238de8578ab96c498
 """
 
 from __future__ import annotations
