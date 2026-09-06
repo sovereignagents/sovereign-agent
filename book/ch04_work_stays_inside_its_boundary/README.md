@@ -69,6 +69,8 @@ flowchart TB
     T -->|before/after SHA-256 map| B[BoundaryReport]
 ```
 
+**Figure:** A workspace snapshot can detect tracked writes outside the assignment, but database files and paths beyond the organization root remain explicit blind regions.
+
 The dashed arrows are not claims that the provider *will* write there. They
 name what is possible without OS isolation. The snapshot hashes `T`, excluding
 the authorized workspace and SQLite files because both legitimately change
@@ -144,6 +146,8 @@ left. The string check happened to catch it here, but the join itself
 silently became an absolute escape.
 
 ### The join that refuses by shape
+
+**Listing:** Resolve a candidate path before admitting it
 
 ```python
 def safe_join(root, relative):
@@ -375,6 +379,8 @@ flowchart TB
     D -->|no| N[Narrow claim: no visible boundary change]
 ```
 
+**Figure:** Typed parsing, resolved-path checks, shell-free execution, and before/after snapshots narrow the claim from “sandboxed” to “no visible tracked change escaped.”
+
 The last box is deliberately not “the provider was contained.”
 `snapshot_boundary` hashes files under the organization root while excluding
 the assignment workspace and the SQLite ledger. It cannot see a network call,
@@ -440,6 +446,8 @@ flowchart LR
     T --> D
     O --> D
 ```
+
+**Figure:** Path, network, credential, tool, and process isolation require separate normalization and checks; passing one plane says nothing about the others.
 
 | Plane | Native mechanism in this project | Honest limit |
 | --- | --- | --- |
@@ -629,12 +637,12 @@ misreported as one.
 
 ## Summary
 
-This chapter built two mechanisms that are easy to confuse: `safe_join`, a
+The boundary now has two mechanisms that are easy to confuse: `safe_join`, a
 preventive check that refuses a path by its resolved shape before any write
 is attempted, and `snapshot_boundary`/`diff_boundary`, a detective check
 that compares tracked files before and after a provider runs.
 
-The invariant it establishes is honesty about scope: a clean boundary report
+Its governing discipline is honesty about scope: a clean boundary report
 means nothing changed inside `organization_root_excluding_workspace_and_ledger`
 — never an unqualified claim that the provider was contained, and never a
 claim about files outside that scope.
@@ -643,14 +651,14 @@ The chapter also decomposed isolation into five independently reported planes.
 Application allowlists can refuse named paths, hosts, credentials, and tools;
 process isolation remains unavailable until a behavioral host probe proves it.
 
-The failure it prevents is trusting a provider's own good behavior, or
+The exercise rejects trust in a provider's own good behavior, or
 worse, trusting a docstring's claim about what a check covers: the exercise
 plants a real write outside the workspace and shows it caught, and plants a
 real write outside the boundary's own observed scope and shows it invisible
 — both facts recorded honestly rather than one asserted and the other
 ignored.
 
-Back at Lucy's shop: this is the difference between following a contractor
+For Lucy, this is the difference between following a contractor
 around the shop (which nobody does) and checking the till afterward (which
 Lucy always can) — detection instead of a promise you cannot keep.
 

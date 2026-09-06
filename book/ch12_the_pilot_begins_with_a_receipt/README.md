@@ -62,6 +62,8 @@ flowchart LR
     V --> I[Internal consistency claim]
 ```
 
+**Figure:** Pilot-start uniqueness and proof-pack consistency are separate boundaries: one governs the live slot, while the other proves only that declared artifacts agree internally.
+
 The left side is a compare-and-set state machine. Replay equality covers the
 whole request identity, not only `pilot_id`; otherwise a colliding customer can
 receive another customer's canonical record. The single active slot makes
@@ -110,6 +112,8 @@ flowchart LR
     L -. does not prove .-> H
     H -. does not prove .-> R
 ```
+
+**Figure:** Each release environment adds evidence the rung below cannot supply; no deterministic suite, provider evaluation, or reviewed pilot silently proves wider rollout.
 
 The arrows are promotions of evidence, not automatic transitions. A scripted
 provider is ideal for reproducibility and fault injection, but cannot prove a
@@ -214,6 +218,8 @@ Same-id-different-request is not a retry; it is a different customer
 holding the same ticket number.
 
 ### Replay on exact identity; refuse everything else
+
+**Listing:** Start or replay one pilot identity atomically
 
 ```python
 def start_pilot(db, pilot_id, store_org, profile):
@@ -513,7 +519,7 @@ one slice of that proof matrix, running.
 
 ## Summary
 
-This chapter built `start_pilot` as a compare-and-set state machine — exact
+The final mechanism makes `start_pilot` a compare-and-set state machine: exact
 identity replay returns the canonical row, a colliding id with a different
 request refuses outright, a singleton `active_pilot` slot enforces one
 pilot at a time as a schema constraint, and a refused start strands nothing
@@ -521,19 +527,19 @@ because the pilot row and the active-slot claim share one transaction — and
 a proof-pack verifier that checks a manifest's digests and status
 vocabulary for internal consistency.
 
-The invariant it establishes is the sharpest one in the book: internal
+Its sharpest invariant is that internal
 consistency is not authenticity. A forged pack that rewrites both an
 artifact and its manifest digest together passes every check this
 verifier can run, and the chapter proves that by forging one and watching
 it pass.
 
-The failure it prevents, where it can, is the confident half-truth — "pilot
+Where it can, it prevents the confident half-truth: "pilot
 started" standing in for "pilot finished," or a `NOT_RUN` status dressed in
 success-shaped prose — and it prevents the failure it cannot yet check
 (a completion protocol does not exist) by refusing to claim it can, which is
 itself the load-bearing act.
 
-Back at Lucy's shop: this is the difference between a receipt that says the
+For Lucy, this is the difference between a receipt that says the
 delivery truck left the warehouse and a receipt that says the ice cream
 arrived — the book ends by handing you the first receipt, honestly labeled,
 and refusing to forge the second.

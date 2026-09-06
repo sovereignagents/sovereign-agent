@@ -46,6 +46,8 @@ flowchart LR
     A -. refuses if false .-> P
 ```
 
+**Figure:** A governed shift begins with a world fact and may reach acceptance only after host validation, durable evidence, independent review, and a fresh check.
+
 Read the arrow labels as changes of epistemic status—changes in what the
 organization is entitled to claim. A signal says *something happened*. A SOW
 says *someone has specified work*. A receipt says *an execution ended*. Evidence
@@ -98,6 +100,8 @@ flowchart LR
     C -->|false or stale| R[Repair or new governed work]
     C -->|true| A[Acceptance may be recorded]
 ```
+
+**Figure:** The provider proposes an action; the host alone admits and executes it, and a later verifier may still send the work back for repair.
 
 This diagram also tells you where to debug. If the provider proposes the wrong
 action, inspect the assignment and model boundary. If the proposal is right but
@@ -169,6 +173,8 @@ A `replenishment.committed` event sits between `assignment.finished` and
 
 Here is the exercise that earns this chapter its place. One command checks that
 the accepted outcome is *actually true*:
+
+**Listing:** Verify the store outcome against current state
 
 ```bash
 uv run python scripts/verify_store_outcome.py /tmp/first-shift
@@ -253,22 +259,22 @@ re-run the demo into a fresh `--root` to get a clean `0` again.)
 
 ## Summary
 
-This chapter built nothing yet — it ran the finished mechanism once, end to
+This first shift builds nothing yet. It runs the finished mechanism once, end to
 end, so every later chapter has a shape to recognize pieces of. The
 mechanism you watched was one sale traveling through five distinct proof
 roles (signal, SOW, receipt, evidence, acceptance) rather than collapsing
 into a single `status="done"` field.
 
-The invariant it establishes is that `ACCEPTED` is checked against the
+The governing rule is that `ACCEPTED` is checked against the
 world at the moment you ask, not trusted from history: `verify_store_outcome.py`
 re-reads the database rather than the status string.
 
-The failure it prevents is the ordinary one — paperwork that says done while
+The failure made visible here is ordinary: paperwork says done while
 the shelf is empty — and you produced that exact failure by hand, by
 editing `on_hand` directly under an already-`ACCEPTED` outcome, and watched
 the checker refuse it with the precise row that no longer holds.
 
-Back at Lucy's shop: if a supplier's invoice says delivered and the freezer
+For Lucy, if a supplier's invoice says delivered and the freezer
 is still empty, the invoice is not evidence, and neither is this book's
 `ACCEPTED` unless something re-checked the freezer after the invoice was
 filed.

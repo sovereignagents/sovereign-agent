@@ -62,6 +62,8 @@ flowchart LR
     S --> A
 ```
 
+**Figure:** Acceptance is the terminal claim of a connected proof graph: outcome, scope, assignment, receipt, evidence, fresh verification, and independent review must agree.
+
 Acceptance is permitted only when the necessary paths converge at `A`. A receipt
 without evidence proves an execution ended, not that it worked. Evidence without
 an execution binding may have been borrowed from another run. A review by the
@@ -98,6 +100,8 @@ flowchart LR
     O -->|"cut here: stale check"| A
     S --> A
 ```
+
+**Figure:** Cutting any proof edge admits a distinct lie, from paperwork-only completion and borrowed evidence to self-review and a stale world check.
 
 **What this figure shows:** each labeled edge is the exact relation a weaker
 `accept()` forgot to check, taken from the table above — this is the same ten
@@ -570,9 +574,13 @@ sequenceDiagram
     end
 ```
 
+**Figure:** Acceptance re-reads the world and compares its current digest with recorded evidence, refusing when the verified state has changed.
+
 The check can still return `PASS` in both worlds. The digest rejects the
 stronger lie: that today's passing state is the same state an independent
 reviewer actually examined.
+
+**Listing:** Recheck evidence against the current world before acceptance
 
 ```python
 def accept_v7(db, outcome_id, accepter):
@@ -665,6 +673,8 @@ flowchart TB
     V7 -. refuses back to .-> VERIFYING
     VERIFYING -->|"Exercise 7: repair, new assignment, new batch"| V2
 ```
+
+**Figure:** Seven successive implementations close seven different false-acceptance paths; every refusal returns to new governed work rather than forcing the old evidence through.
 
 **What this figure shows:** each rung's refusal edge names a specific lie a
 weaker `accept` would let through, and the dashed edges share one thing —
@@ -1029,25 +1039,25 @@ have actually caused the effect it claims.
 
 ## Summary
 
-This chapter built `accept()` as seven composed layers, each one closing a
+Acceptance now consists of seven composed layers, each one closing a
 specific lie the layer before it still let through: re-reading the world,
 recording evidence, binding that evidence to the right outcome and
 execution, requiring a distinct reviewer, requiring the credited execution
 to have actually produced the required effect, and refusing evidence whose
 observed world has since moved.
 
-The invariant it establishes is that `ACCEPTED` is a proof graph that must
+The governing rule is that `ACCEPTED` is a proof graph that must
 fully converge, not a workflow status: an outcome, its SOW (a **statement of
 work**, this book's own term for the deliverable and its acceptance checks),
 its evidence, and its review all have to point at each other correctly, or
 acceptance refuses.
 
-The failure it prevents is not one bug but a family: paperwork-only
+The refused cases form a family: paperwork-only
 acceptance, stale evidence, borrowed evidence, self-review, and crediting an
 execution for a condition that became true for unrelated reasons — five
 distinct attacks, five distinct refusals, each with its own failing test.
 
-Back at Lucy's shop: this is why a restock actually has to happen before the
+For Lucy, this is why a restock actually has to happen before the
 freezer counts as "handled" — and why the person who did the restock is
 never the same person who signs off that it was done correctly.
 

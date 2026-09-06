@@ -41,6 +41,7 @@ verify: lint test
 	$(UV) run --python 3.14 python scripts/verify_curriculum.py
 	$(UV) run --python 3.14 python scripts/verify_book_snippets.py
 	$(UV) run --python 3.14 python scripts/verify_book_depth.py
+	$(UV) run --python 3.14 python scripts/verify_book_structure_v1.py
 	$(UV) run --python 3.14 python scripts/verify_book_labs.py
 	$(UV) run --python 3.14 sovereign-agent --help >/dev/null
 	$(UV) run --python 3.14 sovereign-agent doctor
