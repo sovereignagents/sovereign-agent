@@ -10,6 +10,7 @@ import json
 import re
 import socket
 import sqlite3
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
@@ -44,7 +45,19 @@ class SupplierClient:
             or parsed.path not in {"", "/"}
         ):
             raise ValueError("simulated supplier requires a loopback HTTP endpoint")
-        self.endpoint, self.timeout = endpoint.rstrip("/"), timeout
+        self._endpoint, self._timeout = endpoint.rstrip("/"), timeout
+
+    @property
+    def endpoint(self) -> str:
+        return self._endpoint
+
+    @property
+    def timeout(self) -> float:
+        return self._timeout
+
+    @property
+    def identity(self) -> str:
+        return "lucy-local@" + self._endpoint
 
     def _call(
         self, operation: str, proposal: dict[str, Any] | None = None
@@ -78,8 +91,17 @@ class SupplierClient:
 
 
 def serve(
-    path: Path, port: int, *, drop_first_response: bool = False, ready: Path | None = None
+    path: Path,
+    port: int,
+    *,
+    drop_first_response: bool = False,
+    ready: Path | None = None,
+    hold_response_seconds: float = 0,
+    committed: Path | None = None,
+    reject: bool = False,
 ) -> None:
+    if not 0 <= hold_response_seconds <= 10:
+        raise ValueError("supplier experiment delay must be between zero and ten seconds")
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
     connection.execute("PRAGMA journal_mode=WAL")
@@ -89,6 +111,10 @@ def serve(
     )
 
     class Handler(BaseHTTPRequestHandler):
+        def setup(self) -> None:
+            super().setup()
+            self.connection.settimeout(5)
+
         def log_message(self, format: str, *args: Any) -> None:
             pass  # No request or credentials in a teaching service log.
 
@@ -98,7 +124,10 @@ def serve(
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(raw)))
             self.end_headers()
-            self.wfile.write(raw)
+            try:
+                self.wfile.write(raw)
+            except BrokenPipeError, ConnectionResetError:
+                pass  # A bounded client may already have stopped waiting.
 
         def operation(self) -> str | None:
             match = re.fullmatch(r"/orders/([a-f0-9]{32})", self.path)
@@ -132,11 +161,18 @@ def serve(
                     409, {"error": "identity_conflict"}
                 )
                 return
-            receipt = {"operation": operation, "proposal": proposal, "status": "ACCEPTED"}
+            receipt = {
+                "operation": operation,
+                "proposal": proposal,
+                "status": "REJECTED" if reject else "ACCEPTED",
+            }
             with connection:
                 connection.execute(
                     "INSERT INTO orders VALUES (?,?,?)", (operation, encoded, json.dumps(receipt))
                 )
+            if committed:
+                committed.write_text(operation)
+            time.sleep(hold_response_seconds)
             if drop_first_response:
                 # The supplier has committed. Only its reply disappears.
                 self.connection.shutdown(socket.SHUT_RDWR)
@@ -161,8 +197,19 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--ready", type=Path)
     parser.add_argument("--drop-first-response", action="store_true")
+    parser.add_argument("--hold-response-seconds", type=float, default=0)
+    parser.add_argument("--committed", type=Path)
+    parser.add_argument("--reject", action="store_true")
     args = parser.parse_args()
-    serve(args.database, args.port, drop_first_response=args.drop_first_response, ready=args.ready)
+    serve(
+        args.database,
+        args.port,
+        drop_first_response=args.drop_first_response,
+        ready=args.ready,
+        hold_response_seconds=args.hold_response_seconds,
+        committed=args.committed,
+        reject=args.reject,
+    )
 
 
 if __name__ == "__main__":

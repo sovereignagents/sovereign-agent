@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
@@ -11,8 +14,72 @@ from reference_organizations.store.agent import DraftArguments, shop_dispatcher
 from sovereign_agent import assistant_context, assistant_orders, assistant_work
 from sovereign_agent.agent_loop import Limits, run_loop
 from sovereign_agent.database import Database
+from sovereign_agent.events import append_event
 from sovereign_agent.model_turn import Model
 from sovereign_agent.tool_dispatch import Dispatcher, ExecutableTool
+
+
+def _orders(
+    db: Database,
+    work: assistant_work.Claim,
+    supplier: assistant_orders.Supplier,
+    policy: assistant_orders.SpendingPolicy | None,
+    *,
+    automatic: bool = False,
+    should_stop: Callable[[], bool] = lambda: False,
+) -> dict[str, Any]:
+    """Finish only when every persisted proposal has a conclusive disposition."""
+    orders = db.connection.execute(
+        "SELECT * FROM assistant_orders WHERE work_id=? ORDER BY created,id", (work.id,)
+    ).fetchall()
+    for order in orders:
+        if should_stop():
+            break
+        if policy is None:
+            continue
+        if automatic and order["status"] == "DRAFT" and not order["revoked"]:
+            if order["amount"] <= policy.automatic_order_pence:
+                try:
+                    assistant_orders.approve(
+                        db,
+                        order["id"],
+                        order["digest"],
+                        actor=sorted(policy.operators)[0],
+                        policy=policy,
+                        expires=time.time() + 3600,
+                        automatic=True,
+                    )
+                except PermissionError:
+                    # Insufficient aggregate allowance leaves an explicit pending draft.
+                    continue
+        current = db.connection.execute(
+            "SELECT status FROM assistant_orders WHERE id=?", (order["id"],)
+        ).fetchone()[0]
+        if current in {"APPROVED", "SENDING", "UNKNOWN"}:
+            if should_stop():
+                break
+            try:
+                assistant_orders.execute(db, work, order["id"], supplier, policy=policy)
+            except PermissionError:
+                # Reconciliation can retain uncertainty after revocation. Preserve it;
+                # a stale worker is rejected again by finish below.
+                continue
+    rows = db.connection.execute(
+        "SELECT * FROM assistant_orders WHERE work_id=? ORDER BY created,id", (work.id,)
+    ).fetchall()
+    pending = any(row["status"] in {"DRAFT", "APPROVED", "SENDING", "UNKNOWN"} for row in rows)
+    cancelled = db.connection.execute(
+        "SELECT cancelled FROM assistant_work WHERE id=?", (work.id,)
+    ).fetchone()[0]
+    state = "BLOCKED" if pending else ("CANCELLED" if cancelled else "DONE")
+    lines = ["Recorded order outcomes:"]
+    for row in rows:
+        lines.append(f"Order {row['id']}: {row['status']}, {row['amount']} pence.")
+        if row["status"] == "DRAFT":
+            lines.append(f"Approval required: /approve {row['id']} {row['digest']}")
+    answer = "\n".join(lines)
+    assistant_work.finish(db, work, state, answer)
+    return {"status": state, "work": work.id, "answer": answer}
 
 
 def run_once(
@@ -23,9 +90,13 @@ def run_once(
     policy: assistant_orders.SpendingPolicy | None = None,
     supplier: assistant_orders.Supplier | None = None,
     limits: Limits | None = None,
+    should_stop: Callable[[], bool] = lambda: False,
+    control_only: bool = False,
 ) -> dict[str, Any]:
     limits = limits or Limits()
-    work = assistant_work.claim(db, owner or uuid.uuid4().hex, ttl=limits.seconds + 10)
+    work = assistant_work.claim(
+        db, owner or uuid.uuid4().hex, ttl=limits.seconds + 10, control_only=control_only
+    )
     if work is None:
         return {"status": "IDLE"}
     try:
@@ -34,7 +105,7 @@ def run_once(
         ).fetchone()
         assert row
         # Commands come from an allowlisted adapter, never a model-selected tool.
-        if row["channel"] == "telegram" and work.prompt.startswith("/"):
+        if row["channel"].startswith("telegram:") and work.prompt.startswith("/"):
             if policy is None or row["recipient"] not in policy.operators:
                 raise PermissionError("operator command is not authorized")
             parts = work.prompt.split(maxsplit=2)
@@ -49,7 +120,8 @@ def run_once(
                 )
                 with db.immediate() as connection:
                     connection.execute(
-                        "UPDATE assistant_work SET status='READY' WHERE status='BLOCKED' "
+                        "UPDATE assistant_work SET status='READY',available_after=0 "
+                        "WHERE status='BLOCKED' "
                         "AND id=(SELECT work_id FROM assistant_orders WHERE id=?)",
                         (parts[1],),
                     )
@@ -60,6 +132,9 @@ def run_once(
             elif len(parts) == 2 and parts[0] == "/forget":
                 assistant_context.forget(db, work.session, parts[1])
                 answer = "Preference revisions erased. Historical reports and backups are separate."
+            elif len(parts) == 2 and parts[0] == "/cancel":
+                assistant_work.cancel(db, parts[1])
+                answer = "Cancellation recorded; transmitted orders still need reconciliation."
             elif len(parts) == 2 and parts[0] == "/revoke":
                 assistant_orders.revoke(db, parts[1], actor=row["recipient"], policy=policy)
                 answer = (
@@ -72,11 +147,20 @@ def run_once(
                 )
             assistant_work.finish(db, work, "DONE", answer)
             return {"status": "DONE", "work": work.id, "answer": answer}
+        existing = db.connection.execute(
+            "SELECT 1 FROM assistant_orders WHERE work_id=? AND status!='DRAFT' LIMIT 1",
+            (work.id,),
+        ).fetchone()
+        if existing and supplier is not None:
+            return _orders(db, work, supplier, policy, should_stop=should_stop)
         tools = shop_dispatcher(db)
         if supplier is not None:
             # Persisting a proposal has no remote effect and grants no permission.
             def proposal(args: DraftArguments) -> dict[str, Any]:
-                identifier = assistant_orders.propose(db, work, args.sku, args.quantity)
+                assert supplier is not None
+                identifier = assistant_orders.propose(
+                    db, work, args.sku, args.quantity, target=supplier.identity
+                )
                 order = db.connection.execute(
                     "SELECT * FROM assistant_orders WHERE id=?", (identifier,)
                 ).fetchone()
@@ -84,7 +168,8 @@ def run_once(
                 return {
                     "sku": args.sku,
                     "quantity": args.quantity,
-                    "total_cents": order["amount"],
+                    "total_pence": order["amount"],
+                    "currency": "GBP",
                     "status": order["status"],
                     "order": identifier,
                     "digest": order["digest"],
@@ -101,6 +186,19 @@ def run_once(
             )
             tools = Dispatcher(replacements, allowed=tools.allowed)
         messages = assistant_context.context(db, work.session, work.prompt, allowed=tools.allowed)
+        with db.immediate():
+            assistant_work.assert_current(db.connection, work)
+            append_event(
+                db,
+                "assistant.context.assembled",
+                {
+                    "work": work.id,
+                    "generation": work.generation,
+                    "sha256": hashlib.sha256(
+                        json.dumps(messages, sort_keys=True).encode()
+                    ).hexdigest(),
+                },
+            )
         for message in messages:
             assistant_work.observe(db, work, message)
         result = run_loop(
@@ -110,45 +208,22 @@ def run_once(
             limits=limits,
             observe=lambda message: assistant_work.observe(db, work, message),
             check_current=lambda: assistant_work.assert_current(db.connection, work),
+            should_stop=should_stop,
+            reserve_call=lambda: assistant_work.reserve_model_call(
+                db, work, limits.estimated_call_pence
+            ),
         )
         answer = result.answer or "The agent stopped: " + result.status
         state = "DONE" if result.status == "COMPLETED" else "BLOCKED"
-        if supplier is not None:
-            orders = db.connection.execute(
-                "SELECT * FROM assistant_orders WHERE work_id=? ORDER BY created", (work.id,)
-            ).fetchall()
-            for order in orders:
-                if (
-                    order["status"] == "DRAFT"
-                    and policy
-                    and order["amount"] <= policy.automatic_order_pence
-                ):
-                    assistant_orders.approve(
-                        db,
-                        order["id"],
-                        order["digest"],
-                        actor=sorted(policy.operators)[0],
-                        policy=policy,
-                        expires=time.time() + 3600,
-                        automatic=True,
-                    )
-                current = db.connection.execute(
-                    "SELECT * FROM assistant_orders WHERE id=?", (order["id"],)
-                ).fetchone()
-                assert current
-                if current["status"] in {"APPROVED", "SENDING", "UNKNOWN"}:
-                    receipt = assistant_orders.execute(db, work, order["id"], supplier)
-                    answer += f"\nOrder {order['id']}: {receipt['status']}."
-                    if receipt["status"] == "UNKNOWN":
-                        state = "BLOCKED"
-                elif current["status"] == "DRAFT":
-                    state = "BLOCKED"
-                    answer += (
-                        f"\nApproval needed: {current['amount']} pence. "
-                        f"/approve {order['id']} {order['digest']}"
-                    )
-                else:
-                    answer += f"\nOrder {order['id']}: {current['status']}."
+        if supplier is not None and result.status == "COMPLETED":
+            has_orders = db.connection.execute(
+                "SELECT 1 FROM assistant_orders WHERE work_id=? LIMIT 1", (work.id,)
+            ).fetchone()
+            if has_orders:
+                outcome = _orders(
+                    db, work, supplier, policy, automatic=True, should_stop=should_stop
+                )
+                return {**outcome, "loop": asdict(result)}
         assistant_work.finish(db, work, state, answer)
         return {"status": state, "work": work.id, "answer": answer, "loop": asdict(result)}
     except PermissionError:
@@ -170,4 +245,30 @@ def run_once(
             "BLOCKED",
             "A bounded operation failed; inspect the recorded work and retry explicitly.",
         )
+        return {"status": "BLOCKED", "work": work.id}
+
+
+def reconcile_once(
+    db: Database,
+    supplier: assistant_orders.Supplier,
+    policy: assistant_orders.SpendingPolicy,
+    *,
+    should_stop: Callable[[], bool] = lambda: False,
+) -> dict[str, Any]:
+    """Read uncertain effects before new intake; never consult a model for recovery."""
+    work = assistant_work.claim(db, uuid.uuid4().hex, recovery_only=True)
+    if work is None:
+        return {"status": "RECOVERY_WAIT"}
+    try:
+        return _orders(db, work, supplier, policy, should_stop=should_stop)
+    except PermissionError:
+        try:
+            assistant_work.finish(
+                db,
+                work,
+                "BLOCKED",
+                "Reconciliation requires current authority or supplier evidence.",
+            )
+        except PermissionError:
+            return {"status": "STALE", "work": work.id}
         return {"status": "BLOCKED", "work": work.id}

@@ -155,8 +155,8 @@ def test_lucy_draft_uses_sqlite_observations_and_changes_no_stock(tmp_path: Path
         [{"role": "user", "content": "What should Lucy order?"}],
     )
     assert result.status == "COMPLETED"
-    assert "SKU-VANILLA: 6 units, 1500 cents" in result.answer
-    assert "SKU-STRAWBERRY: 4 units, 1100 cents" in result.answer
+    assert "SKU-VANILLA: 6 units, 1500 pence GBP" in result.answer
+    assert "SKU-STRAWBERRY: 4 units, 1100 pence GBP" in result.answer
     assert "SKU-CHOCOLATE" not in result.answer
     assert [tuple(x) for x in before] == [
         tuple(x) for x in db.connection.execute("SELECT sku,on_hand FROM inventory ORDER BY sku")

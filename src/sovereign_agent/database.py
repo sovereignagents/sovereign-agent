@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from sovereign_agent.assistant_schema import SCHEMA as MIGRATION_19
+from sovereign_agent.assistant_schema import SCHEMA_20 as MIGRATION_20
 
 MIGRATION_1 = """
 PRAGMA foreign_keys = ON;
@@ -818,6 +819,7 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
     (17, MIGRATION_17),
     (18, MIGRATION_18),
     (19, MIGRATION_19),
+    (20, MIGRATION_20),
 )
 
 
@@ -929,6 +931,10 @@ class Database:
         so two connections cannot both read a row, both decide to act, and both
         write. Deferred transactions -- SQLite's default -- allow exactly that.
         """
+        if self.connection.in_transaction:
+            raise RuntimeError(
+                "immediate requires no pending transaction; commit or rollback explicitly"
+            )
         previous = self.connection.isolation_level
         self.connection.isolation_level = None
         try:

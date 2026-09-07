@@ -138,7 +138,7 @@ def context(
         raise ValueError("invalid context budget")
     items = []
     for row in db.connection.execute(
-        "SELECT content FROM assistant_skills WHERE active=1 ORDER BY name"
+        "SELECT content,source FROM assistant_skills WHERE active=1 ORDER BY name"
     ):
         skill = Skill.model_validate_json(row[0])
         if set(skill.requires).issubset(allowed):
@@ -148,9 +148,26 @@ def context(
                     "name": skill.name,
                     "version": skill.version,
                     "content": skill.instructions,
+                    "content_sha256": hashlib.sha256(skill.instructions.encode()).hexdigest(),
+                    "source_sha256": row["source"],
                 }
             )
     items.extend({"kind": "preference", **row} for row in preferences(db, session, prompt))
+    history = db.connection.execute(
+        "SELECT id,prompt,result FROM assistant_work WHERE session=? AND status='DONE' "
+        "AND result IS NOT NULL ORDER BY created DESC,rowid DESC LIMIT 4",
+        (session,),
+    ).fetchall()
+    for row in reversed(history):
+        items.append(
+            {
+                "kind": "past_work",
+                "source": row["id"],
+                "request": row["prompt"][:512],
+                "recorded_result": row["result"][:2048],
+                "excerpt": True,
+            }
+        )
     selected: list[dict[str, Any]] = []
     for item in items:
         candidate = [*selected, item]

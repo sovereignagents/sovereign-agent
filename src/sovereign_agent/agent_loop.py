@@ -22,8 +22,14 @@ class Limits:
     context_bytes: int = 32_768
     output_tokens: int = 1_024
     total_output_tokens: int = 4_096
+    estimated_call_pence: int = 0
+    model_budget_pence: int = 100
 
     def __post_init__(self) -> None:
+        if type(self.estimated_call_pence) is not int or self.estimated_call_pence < 0:
+            raise ValueError("nonnegative integral model estimate required")
+        if type(self.model_budget_pence) is not int or self.model_budget_pence < 1:
+            raise ValueError("positive integral model budget required")
         if not math.isfinite(self.seconds):
             raise ValueError("finite loop duration required")
         integers = (
@@ -57,6 +63,7 @@ class LoopResult:
     model_calls: int
     tool_calls: int
     output_tokens: int
+    estimated_cost_pence: int
 
 
 def run_loop(
@@ -68,6 +75,8 @@ def run_loop(
     clock: Callable[[], float] = time.monotonic,
     observe: Callable[[Message], None] | None = None,
     check_current: Callable[[], None] | None = None,
+    reserve_call: Callable[[], None] | None = None,
+    should_stop: Callable[[], bool] = lambda: False,
 ) -> LoopResult:
     """Keep effects behind dispatch; reject reused call identities before a batch.
 
@@ -78,11 +87,11 @@ def run_loop(
     limits = limits or Limits()
     transcript = copy.deepcopy(messages)
     deadline = clock() + limits.seconds
-    model_count = tool_count = tokens = 0
+    model_count = tool_count = tokens = exposure = 0
     seen: set[str] = set()
 
     def finish(status: str, answer: str = "") -> LoopResult:
-        return LoopResult(status, answer, transcript, model_count, tool_count, tokens)
+        return LoopResult(status, answer, transcript, model_count, tool_count, tokens, exposure)
 
     def append(message: dict[str, Any]) -> None:
         if observe:
@@ -90,6 +99,8 @@ def run_loop(
         transcript.append(message)
 
     while model_count < limits.model_calls:
+        if should_stop():
+            return finish("STOP_REQUESTED")
         if clock() >= deadline:
             return finish("TIME_LIMIT")
         schemas = dispatcher.schemas()
@@ -101,6 +112,11 @@ def run_loop(
         try:
             if check_current:
                 check_current()
+            if exposure + limits.estimated_call_pence > limits.model_budget_pence:
+                return finish("MODEL_COST_LIMIT")
+            if reserve_call:
+                reserve_call()
+            exposure += limits.estimated_call_pence
             model_count += 1
             turn = model.complete(
                 copy.deepcopy(transcript),
@@ -127,6 +143,8 @@ def run_loop(
                 finish("COMPLETED", turn.content) if turn.content.strip() else finish("EMPTY_REPLY")
             )
         for call in turn.calls:
+            if should_stop():
+                return finish("STOP_REQUESTED")
             if clock() >= deadline:
                 return finish("TIME_LIMIT")
             if check_current:

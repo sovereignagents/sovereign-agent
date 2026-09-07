@@ -1,6 +1,9 @@
 """External-review regressions: intake, privacy, restore, deadlines, and tool identity."""
 
+import json
 import os
+import signal
+import subprocess
 import sys
 import threading
 import time
@@ -83,6 +86,8 @@ def test_skills_are_immutable_guidance_with_required_regressions(tmp_path):
 
 
 class FakeBot:
+    account = "test"
+
     def __init__(self, updates):
         self.updates = updates
         self.offsets = []
@@ -143,6 +148,8 @@ def test_ambiguous_delivery_is_not_blindly_repeated(tmp_path):
     run_once(db, OfflineShopModel())
 
     class LostReply:
+        account = "test"
+
         def call(self, *args):
             raise TimeoutError("reply lost")
 
@@ -181,7 +188,13 @@ def test_restore_pauses_old_and_new_workers_and_obsolete_approval(tmp_path):
             pytest.fail("restored runtime must not contact supplier")
 
     with pytest.raises(PermissionError):
-        execute(Database(db.path), original, identifier, NoCall())
+        execute(
+            Database(db.path),
+            original,
+            identifier,
+            NoCall(),
+            policy=SpendingPolicy(frozenset({"lucy"})),
+        )
     with pytest.raises(FileExistsError):
         backup(db, snapshot)
 
@@ -281,3 +294,22 @@ def test_service_unit_refuses_expansion_and_names_explicit_run_path(tmp_path):
     assert "NoNewPrivileges=true" in unit
     with pytest.raises(ValueError):
         unit_text(Path("/tmp/with space"), Path("/usr/bin/sovereign-agent"))
+
+
+def test_http_child_has_its_own_deadline_without_a_supervising_parent(hostile_http):
+    result = subprocess.run(
+        [sys.executable, "-m", "sovereign_agent.http_transport"],
+        input=json.dumps(
+            {
+                "url": hostile_http + "/slow",
+                "data": None,
+                "headers": {},
+                "timeout": 0.2,
+                "maximum": 4096,
+            }
+        ).encode(),
+        capture_output=True,
+        timeout=2,
+    )
+    assert result.returncode == -signal.SIGALRM
+    assert result.stdout == b"" and hostile_http.encode() not in result.stderr

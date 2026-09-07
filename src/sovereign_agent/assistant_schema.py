@@ -49,3 +49,24 @@ CREATE TABLE assistant_spending (
 );
 CREATE TABLE assistant_channel_cursor (channel TEXT PRIMARY KEY, offset INTEGER NOT NULL);
 """
+
+
+SCHEMA_20 = """
+CREATE TABLE assistant_daily (
+    session TEXT NOT NULL, day INTEGER NOT NULL,
+    controls INTEGER NOT NULL DEFAULT 0,
+    admitted INTEGER NOT NULL DEFAULT 0, model_calls INTEGER NOT NULL DEFAULT 0,
+    estimated_cost_pence INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(session,day)
+);
+CREATE TABLE assistant_channel_leases (
+    channel TEXT PRIMARY KEY, owner TEXT NOT NULL, expires REAL NOT NULL
+);
+ALTER TABLE assistant_orders ADD COLUMN target TEXT NOT NULL DEFAULT 'lucy-local';
+ALTER TABLE assistant_work ADD COLUMN estimated_cost_pence INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE assistant_work ADD COLUMN available_after REAL NOT NULL DEFAULT 0;
+ALTER TABLE assistant_work ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE assistant_work ADD COLUMN control INTEGER NOT NULL DEFAULT 0;
+CREATE TRIGGER assistant_order_identity_immutable
+BEFORE UPDATE OF id,work_id,proposal,digest,amount,target ON assistant_orders
+BEGIN SELECT RAISE(ABORT, 'order identity is immutable'); END;
+"""

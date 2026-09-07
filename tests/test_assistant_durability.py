@@ -56,12 +56,12 @@ def test_schedule_transaction_rolls_back_before_ack(tmp_path, monkeypatch):
     assert db.connection.execute("SELECT next_due FROM assistant_jobs").fetchone()[0] == 10
 
 
-def order_context(tmp_path):
+def order_context(tmp_path, target="lucy-local"):
     db = Database(tmp_path / "agent.db")
     seed_lucy(db)
     enqueue(db, "first", "lucy", "replenish")
     work = claim(db, "worker")
-    identifier = propose(db, work, "SKU-VANILLA", 6)
+    identifier = propose(db, work, "SKU-VANILLA", 6, target=target)
     row = db.connection.execute(
         "SELECT * FROM assistant_orders WHERE id=?", (identifier,)
     ).fetchone()
@@ -121,11 +121,11 @@ def supplier(tmp_path):
 
 
 def test_lost_supplier_response_then_restart_never_duplicates(tmp_path, supplier):
-    db, work, identifier, digest = order_context(tmp_path)
+    db, work, identifier, digest = order_context(tmp_path, supplier[0].identity)
     policy = SpendingPolicy(frozenset({"lucy"}))
     approve(db, identifier, digest, actor="lucy", policy=policy, expires=time.time() + 60)
     client, supplier_path = supplier
-    result = execute(db, work, identifier, client)
+    result = execute(db, work, identifier, client, policy=policy)
     assert result["status"] == "UNKNOWN"
     with sqlite3.connect(supplier_path) as connection:
         assert connection.execute("SELECT count(*) FROM orders").fetchone()[0] == 1
@@ -136,10 +136,10 @@ def test_lost_supplier_response_then_restart_never_duplicates(tmp_path, supplier
     replacement_db = Database(db.path)
     replacement = claim(replacement_db, "replacement")
     with pytest.raises(PermissionError):
-        execute(db, work, identifier, client)
-    recovered = execute(replacement_db, replacement, identifier, client)
+        execute(db, work, identifier, client, policy=policy)
+    recovered = execute(replacement_db, replacement, identifier, client, policy=policy)
     assert recovered["status"] == "ACCEPTED"
-    assert execute(replacement_db, replacement, identifier, client) == recovered
+    assert execute(replacement_db, replacement, identifier, client, policy=policy) == recovered
     with sqlite3.connect(supplier_path) as connection:
         assert connection.execute("SELECT count(*) FROM orders").fetchone()[0] == 1
     budget = replacement_db.connection.execute("SELECT * FROM assistant_spending").fetchone()
@@ -147,16 +147,16 @@ def test_lost_supplier_response_then_restart_never_duplicates(tmp_path, supplier
 
 
 def test_revocation_still_reconciles_already_accepted_order(tmp_path, supplier):
-    db, work, identifier, digest = order_context(tmp_path)
+    db, work, identifier, digest = order_context(tmp_path, supplier[0].identity)
     policy = SpendingPolicy(frozenset({"lucy"}))
     approve(db, identifier, digest, actor="lucy", policy=policy, expires=time.time() + 60)
     client, _ = supplier
-    assert execute(db, work, identifier, client)["status"] == "UNKNOWN"
+    assert execute(db, work, identifier, client, policy=policy)["status"] == "UNKNOWN"
     revoke(db, identifier, actor="lucy", policy=policy)
     assert (
         db.connection.execute("SELECT reserved_pence FROM assistant_spending").fetchone()[0] == 1500
     )
-    assert execute(db, work, identifier, client)["status"] == "ACCEPTED"
+    assert execute(db, work, identifier, client, policy=policy)["status"] == "ACCEPTED"
 
 
 def test_unknown_without_discovery_never_retries(tmp_path):
@@ -172,6 +172,8 @@ def test_unknown_without_discovery_never_retries(tmp_path):
 
     class BlindSupplier:
         idempotent = False
+        identity = "lucy-local"
+        timeout = 3
         calls = 0
 
         def order(self, *args):
@@ -182,6 +184,16 @@ def test_unknown_without_discovery_never_retries(tmp_path):
             raise OSError("discovery unavailable")
 
     supplier = BlindSupplier()
-    assert execute(db, work, identifier, supplier)["status"] == "UNKNOWN"
-    assert execute(db, work, identifier, supplier)["status"] == "UNKNOWN"
+    assert (
+        execute(db, work, identifier, supplier, policy=SpendingPolicy(frozenset({"lucy"})))[
+            "status"
+        ]
+        == "UNKNOWN"
+    )
+    assert (
+        execute(db, work, identifier, supplier, policy=SpendingPolicy(frozenset({"lucy"})))[
+            "status"
+        ]
+        == "UNKNOWN"
+    )
     assert supplier.calls == 1

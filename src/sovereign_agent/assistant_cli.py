@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from sovereign_agent import assistant_context, assistant_orders, assistant_service, assistant_work
+from sovereign_agent.agent_loop import Limits
 from sovereign_agent.database import Database
 from sovereign_agent.model_turn import HTTPModel, Model
 from sovereign_agent.telegram_channel import Telegram, deliver_one, poll
@@ -21,7 +22,7 @@ from sovereign_agent.telegram_channel import Telegram, deliver_one, poll
 
 def handle(args: argparse.Namespace) -> int:
     from reference_organizations.store.agent import OfflineShopModel, seed_lucy
-    from reference_organizations.store.assistant import run_once
+    from reference_organizations.store.assistant import reconcile_once, run_once
     from reference_organizations.store.supplier import SupplierClient
 
     root = Path(args.root).resolve()
@@ -43,6 +44,9 @@ def handle(args: argparse.Namespace) -> int:
         )
     endpoint = args.supplier or os.environ.get("SOVEREIGN_AGENT_SUPPLIER", "")
     supplier = SupplierClient(endpoint) if endpoint else None
+    limits = Limits(
+        estimated_call_pence=args.estimated_call_pence, model_budget_pence=args.model_budget_pence
+    )
     result: Any = {"status": "INITIALIZED", "root": str(root)}
     action = args.action
     if action == "ask":
@@ -51,10 +55,10 @@ def handle(args: argparse.Namespace) -> int:
         )
         result = {"work": identifier, "status": "QUEUED"}
         if not args.enqueue_only:
-            result = run_once(db, model, policy=policy, supplier=supplier)
+            result = run_once(db, model, policy=policy, supplier=supplier, limits=limits)
     elif action == "work":
         assistant_work.tick(db)
-        result = run_once(db, model, policy=policy, supplier=supplier)
+        result = run_once(db, model, policy=policy, supplier=supplier, limits=limits)
     elif action == "schedule":
         assistant_work.schedule(
             db,
@@ -98,7 +102,8 @@ def handle(args: argparse.Namespace) -> int:
             )
             with db.immediate() as connection:
                 connection.execute(
-                    "UPDATE assistant_work SET status='READY' WHERE status='BLOCKED' "
+                    "UPDATE assistant_work SET status='READY',available_after=0 "
+                    "WHERE status='BLOCKED' "
                     "AND id=(SELECT work_id FROM assistant_orders WHERE id=?)",
                     (args.value,),
                 )
@@ -108,7 +113,8 @@ def handle(args: argparse.Namespace) -> int:
     elif action == "retry":
         with db.immediate() as connection:
             changed = connection.execute(
-                "UPDATE assistant_work SET status='READY' WHERE id=? AND status='BLOCKED'",
+                "UPDATE assistant_work SET status='READY',available_after=0 "
+                "WHERE id=? AND status='BLOCKED'",
                 (args.value,),
             ).rowcount
         result = {"status": "READY" if changed else "UNCHANGED"}
@@ -148,11 +154,44 @@ def handle(args: argparse.Namespace) -> int:
         failures = 0
         while not stop.is_set():
             try:
-                if bot:
-                    poll(db, bot, numeric)
-                assistant_work.tick(db)
-                item = run_once(db, model, policy=policy, supplier=supplier)
-                if bot:
+                uncertain = db.connection.execute(
+                    "SELECT count(*) FROM assistant_orders WHERE status IN ('UNKNOWN','SENDING')"
+                ).fetchone()[0]
+                if uncertain:
+                    item = (
+                        reconcile_once(db, supplier, policy, should_stop=stop.is_set)
+                        if supplier
+                        else {"status": "RECOVERY_NEEDS_SUPPLIER"}
+                    )
+                    # An unresolved supplier must not make the operator's revoke
+                    # and cancel commands unreachable. Ordinary turns stay held.
+                    if bot and not stop.is_set():
+                        poll(db, bot, numeric)
+                        if not stop.is_set():
+                            run_once(
+                                db,
+                                model,
+                                policy=policy,
+                                supplier=supplier,
+                                limits=limits,
+                                should_stop=stop.is_set,
+                                control_only=True,
+                            )
+                else:
+                    if bot:
+                        poll(db, bot, numeric)
+                    if stop.is_set():
+                        break
+                    assistant_work.tick(db)
+                    item = run_once(
+                        db,
+                        model,
+                        policy=policy,
+                        supplier=supplier,
+                        limits=limits,
+                        should_stop=stop.is_set,
+                    )
+                if bot and not stop.is_set():
                     deliver_one(db, bot, numeric)
                 # Logs describe work state, never prompts or channel credentials.
                 print(json.dumps({"status": item["status"], "work": item.get("work")}), flush=True)
@@ -204,4 +243,6 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
     parser.add_argument("--supplier", default="")
     parser.add_argument("--enqueue-only", action="store_true")
     parser.add_argument("--live", action="store_true")
+    parser.add_argument("--estimated-call-pence", type=int, default=0)
+    parser.add_argument("--model-budget-pence", type=int, default=100)
     parser.set_defaults(handler=handle)

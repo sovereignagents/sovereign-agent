@@ -1227,6 +1227,10 @@ def test_migration_15_foreign_key_uniqueness_and_append_only_enforcement(tmp_pat
             "'SKU-TEA', datetime('now'))"
         )
 
+    # A rejected sqlite statement still leaves its implicit transaction open.
+    # Close this deliberate invalid probe before entering the production boundary.
+    db.connection.rollback()
+
     # A real, production-created decision and origin row, through the same
     # mechanism the rest of the proof matrix uses -- gives this test a real
     # row to enforce append-only and duplicate-prevention against.

@@ -1,0 +1,46 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "8fec79d3f439a456ee12b9103e92935bfeca7acf",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "fc46c2c2f721f6ad27ba4abc9b52f0433e53b89c6145b2a7b1d1247b3fd8c13b",
+  "tests": {
+    "passed": 524,
+    "live_deselected": 13
+  },
+  "clean_install_tests": {
+    "passed": 519,
+    "git_only_skipped": 5,
+    "live_deselected": 13
+  },
+  "preserved_book": {
+    "chapters": 13,
+    "python_snippets": 102,
+    "matched_output_pairs": 92,
+    "labs_run_twice": 13
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9323,
+    "installed_modules": 59,
+    "installed_nonblank_lines": 10999
+  },
+  "container": {
+    "passed": 3,
+    "image": "python@sha256:c6ead215bfd31f1e433d968853b7a769989117115b728874824e6c0a27cb96fc",
+    "engine": "separate Colima profile on macOS",
+    "log_sha256": "d8c53d86f13452ac94c37850ec1b10d6217bf396dd6145aa1d38446fb89ef4f1"
+  },
+  "live_model": {
+    "provider": "Ollama 0.32.5",
+    "model": "qwen3:latest",
+    "model_id": "500a1f067a9f",
+    "first_run": "completed four model calls and five tools; correct quantities, incorrect euro label exposed ambiguous currency fields",
+    "correction": "teaching tool results now explicitly use GBP and pence",
+    "subsequent_run": "MODEL_FAILED within the loop limit; no tools executed; bounded raw request succeeded with 876 output tokens",
+    "acceptance": "not a passing live quality evaluation; explicit reasoning configuration and repeated scenario checks remain"
+  },
+  "new_book_chapters_completed": 0,
+  "external_reviews": "issue 603; design/base-source review, not approval of new bytes"
+}

@@ -12,7 +12,7 @@ from reference_organizations.store.agent import CATALOG
 def main() -> None:
     initialized = False
     negotiated = False
-    for raw in sys.stdin.buffer:
+    for raw in iter(lambda: sys.stdin.buffer.readline(16_385), b""):
         if len(raw) > 16_384:
             return
         request = json.loads(raw)

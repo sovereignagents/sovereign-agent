@@ -34,11 +34,19 @@ class SpendingPolicy:
 class Supplier(Protocol):
     idempotent: bool
 
+    @property
+    def identity(self) -> str: ...
+
+    @property
+    def timeout(self) -> float: ...
+
     def lookup(self, operation: str) -> dict[str, Any] | None: ...
     def order(self, operation: str, proposal: dict[str, Any]) -> dict[str, Any]: ...
 
 
-def propose(db: Database, work: Claim, sku: str, quantity: int) -> str:
+def propose(
+    db: Database, work: Claim, sku: str, quantity: int, *, target: str = "lucy-local"
+) -> str:
     if type(quantity) is not int or not 1 <= quantity <= 1000:
         raise ValueError("positive integral bounded quantity required")
     with db.immediate() as connection:
@@ -57,14 +65,15 @@ def propose(db: Database, work: Claim, sku: str, quantity: int) -> str:
             "currency": "GBP",
         }
         encoded = json.dumps(proposal, sort_keys=True, separators=(",", ":"))
-        digest = hashlib.sha256(encoded.encode()).hexdigest()
+        digest = hashlib.sha256((target + "\n" + encoded).encode()).hexdigest()
         # One stable intent for this exact proposal in this assignment. A deliberate
         # second purchase requires another work item, not another random tool-call ID.
         identifier = uuid.uuid5(uuid.NAMESPACE_URL, work.id + ":" + digest).hex
         connection.execute(
-            "INSERT OR IGNORE INTO assistant_orders(id,work_id,proposal,digest,amount,created) "
-            "VALUES (?,?,?,?,?,?)",
-            (identifier, work.id, encoded, digest, quantity * cost, time.time()),
+            "INSERT OR IGNORE INTO assistant_orders"
+            "(id,work_id,proposal,digest,amount,created,target) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (identifier, work.id, encoded, digest, quantity * cost, time.time(), target),
         )
         return identifier
 
@@ -143,7 +152,11 @@ def revoke(db: Database, identifier: str, *, actor: str, policy: SpendingPolicy)
             connection.execute(
                 "UPDATE assistant_orders SET status='REVOKED' WHERE id=?", (identifier,)
             )
-        connection.execute("UPDATE assistant_orders SET revoked=1 WHERE id=?", (identifier,))
+        connection.execute(
+            "UPDATE assistant_orders SET revoked=1,status=CASE WHEN status='DRAFT' "
+            "THEN 'REVOKED' ELSE status END WHERE id=?",
+            (identifier,),
+        )
         append_event(db, "assistant.order.revoked", {"order": identifier, "actor": actor})
 
 
@@ -154,8 +167,12 @@ def _record(db: Database, work: Claim, identifier: str, receipt: dict[str, Any])
             "SELECT * FROM assistant_orders WHERE id=? AND work_id=?", (identifier, work.id)
         ).fetchone()
         assert row
-        if receipt.get("operation") != identifier or receipt.get("proposal") != json.loads(
-            row["proposal"]
+        if (
+            receipt.get("operation") != identifier
+            or json.dumps(
+                receipt.get("proposal"), sort_keys=True, separators=(",", ":"), allow_nan=False
+            )
+            != row["proposal"]
         ):
             raise ValueError("supplier receipt does not match the exact intent")
         if receipt.get("status") not in {"ACCEPTED", "REJECTED"}:
@@ -180,7 +197,9 @@ def _record(db: Database, work: Claim, identifier: str, receipt: dict[str, Any])
     return receipt
 
 
-def execute(db: Database, work: Claim, identifier: str, supplier: Supplier) -> dict[str, Any]:
+def execute(
+    db: Database, work: Claim, identifier: str, supplier: Supplier, *, policy: SpendingPolicy
+) -> dict[str, Any]:
     """A recovered uncertain intent is discovered before any possible retransmission.
 
     Supplier idempotency is an explicit adapter contract, not a property inferred
@@ -192,6 +211,8 @@ def execute(db: Database, work: Claim, identifier: str, supplier: Supplier) -> d
     if row is None:
         raise PermissionError("order belongs to another work item")
     assert_current(db.connection, work)
+    if row["target"] != supplier.identity:
+        raise PermissionError("supplier destination differs from the approved proposal")
     if row["status"] in {"CONFIRMED", "REJECTED"}:
         return dict(json.loads(row["receipt"]))
     if row["status"] in {"SENDING", "UNKNOWN"}:
@@ -209,6 +230,31 @@ def execute(db: Database, work: Claim, identifier: str, supplier: Supplier) -> d
             "SELECT * FROM assistant_orders WHERE id=?", (identifier,)
         ).fetchone()
         assert current
+        budget = connection.execute("SELECT * FROM assistant_spending WHERE id=1").fetchone()
+        held = connection.execute(
+            "SELECT coalesce(sum(amount),0) FROM assistant_orders "
+            "WHERE status IN ('APPROVED','SENDING','UNKNOWN')"
+        ).fetchone()[0]
+        if (
+            budget is None
+            or budget["reserved_pence"] < held
+            or budget["spent_pence"] + budget["reserved_pence"]
+            > min(budget["limit_pence"], policy.total_pence)
+            or current["approved_by"] not in policy.operators
+        ):
+            raise PermissionError("current spending authority or reservation is insufficient")
+        expires = connection.execute(
+            "SELECT expires FROM assistant_work WHERE id=? AND cancelled=0", (work.id,)
+        ).fetchone()
+        if expires is None:
+            raise PermissionError("cancelled work cannot authorize a new send")
+        expires = expires[0]
+        if (
+            not math.isfinite(supplier.timeout)
+            or supplier.timeout <= 0
+            or expires - time.time() <= supplier.timeout
+        ):
+            raise PermissionError("supplier wait would exceed current ownership")
         if (
             current["status"] not in {"APPROVED", "SENDING", "UNKNOWN"}
             or current["revoked"]

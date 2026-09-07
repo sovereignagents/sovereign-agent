@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import uuid
 from typing import Any, Protocol
 
 from sovereign_agent.assistant_work import _enqueue
@@ -13,6 +14,8 @@ from sovereign_agent.http_transport import request
 
 
 class Bot(Protocol):
+    account: str
+
     def call(self, method: str, data: dict[str, Any]) -> Any: ...
 
 
@@ -21,6 +24,7 @@ class Telegram:
         if not re.fullmatch(r"[0-9]+:[a-zA-Z0-9_-]+", token):
             raise ValueError("invalid Telegram credential format")
         self._token = token
+        self.account = token.split(":", 1)[0]
 
     def call(self, method: str, data: dict[str, Any]) -> Any:
         if method not in {"getUpdates", "sendMessage"}:
@@ -46,8 +50,33 @@ class Telegram:
 def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
     if not operators or any(type(actor) is not int or actor <= 0 for actor in operators):
         raise ValueError("explicit numeric operator allowlist required")
+    channel = "telegram:" + bot.account
+    owner = uuid.uuid4().hex
+    with db.immediate() as connection:
+        lease = connection.execute(
+            "SELECT * FROM assistant_channel_leases WHERE channel=?", (channel,)
+        ).fetchone()
+        if lease and lease["expires"] > time.time():
+            raise PermissionError("another poller owns this bot account")
+        connection.execute(
+            "INSERT INTO assistant_channel_leases(channel,owner,expires) VALUES (?,?,?) "
+            "ON CONFLICT(channel) DO UPDATE SET owner=excluded.owner,expires=excluded.expires",
+            (channel, owner, time.time() + 40),
+        )
+    try:
+        return _poll_owned(db, bot, operators, channel, owner)
+    finally:
+        with db.immediate() as connection:
+            connection.execute(
+                "DELETE FROM assistant_channel_leases WHERE channel=? AND owner=?", (channel, owner)
+            )
+
+
+def _poll_owned(
+    db: Database, bot: Bot, operators: frozenset[int], channel: str, owner: str
+) -> list[str]:
     cursor = db.connection.execute(
-        "SELECT offset FROM assistant_channel_cursor WHERE channel='telegram'"
+        "SELECT offset FROM assistant_channel_cursor WHERE channel=?", (channel,)
     ).fetchone()
     offset = cursor[0] if cursor else 0
     updates = bot.call(
@@ -58,18 +87,20 @@ def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
         raise ValueError("invalid Telegram update batch")
     identifiers = []
     with db.immediate() as connection:
-        # Re-read after network wait: another poller may have committed this batch.
         current = connection.execute(
-            "SELECT offset FROM assistant_channel_cursor WHERE channel='telegram'"
+            "SELECT 1 FROM assistant_channel_leases WHERE channel=? AND owner=? AND expires>?",
+            (channel, owner, time.time()),
         ).fetchone()
-        offset = current[0] if current else 0
+        if not current:
+            raise PermissionError("poller claim expired")
+        highest = offset - 1
         for update in updates:
             update_id = update.get("update_id")
             if type(update_id) is not int or update_id < 0:
                 raise ValueError("invalid update identity")
-            if update_id < offset:
-                continue
-            offset = update_id + 1
+            # Do not discard an earlier member of an unordered batch. The cursor
+            # is published only after every accepted payload is durable.
+            highest = max(highest, update_id)
             message = update.get("message", {})
             actor = message.get("from", {}).get("id")
             chat = message.get("chat", {})
@@ -84,21 +115,19 @@ def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
                 and text.strip()
                 and len(text.encode()) <= 16_384
             ):
-                identifiers.append(
-                    _enqueue(
-                        connection,
-                        f"telegram:{update_id}",
-                        f"telegram:{actor}",
-                        text,
-                        time.time(),
-                        "telegram",
-                        str(actor),
-                    )
+                origin = f"{channel}:{update_id}"
+                existed = connection.execute(
+                    "SELECT id FROM assistant_work WHERE origin=?", (origin,)
+                ).fetchone()
+                identifier = _enqueue(
+                    connection, origin, f"{channel}:{actor}", text, time.time(), channel, str(actor)
                 )
+                if not existed:
+                    identifiers.append(identifier)
         connection.execute(
-            "INSERT INTO assistant_channel_cursor(channel,offset) VALUES ('telegram',?) "
+            "INSERT INTO assistant_channel_cursor(channel,offset) VALUES (?,?) "
             "ON CONFLICT(channel) DO UPDATE SET offset=excluded.offset",
-            (offset,),
+            (channel, max(offset, highest + 1)),
         )
     return identifiers
 
@@ -106,9 +135,10 @@ def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
 def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None:
     with db.immediate() as connection:
         row = connection.execute(
-            "SELECT * FROM assistant_work WHERE channel='telegram' AND "
-            "status IN ('DONE','BLOCKED','CANCELLED') AND delivery='PENDING' "
-            "ORDER BY created LIMIT 1"
+            "SELECT * FROM assistant_work WHERE channel=? AND "
+            "status IN ('DONE','BLOCKED','CANCELLED','REJECTED') AND delivery='PENDING' "
+            "ORDER BY created LIMIT 1",
+            ("telegram:" + bot.account,),
         ).fetchone()
         if row is None:
             return None

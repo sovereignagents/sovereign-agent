@@ -11,6 +11,7 @@ import base64
 import json
 import math
 import os
+import signal
 import subprocess
 import sys
 import urllib.error
@@ -81,6 +82,11 @@ def request(
 def _main() -> int:
     try:
         spec = json.loads(sys.stdin.buffer.read(1_048_577))
+        if hasattr(signal, "setitimer"):
+            # A killed parent cannot enforce its deadline. POSIX children retain
+            # their own default-terminating alarm, including during a slow body.
+            signal.signal(signal.SIGALRM, signal.SIG_DFL)
+            signal.setitimer(signal.ITIMER_REAL, spec["timeout"])
         data = spec["data"]
         outgoing = urllib.request.Request(
             spec["url"],

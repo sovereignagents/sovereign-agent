@@ -60,7 +60,11 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         return [
             dict(row)
             for row in db.connection.execute(
-                "SELECT sku,on_hand,reserved,reorder_point FROM inventory ORDER BY sku"
+                "SELECT i.sku,i.on_hand,i.reserved,i.reorder_point,coalesce((SELECT "
+                "sum(json_extract(o.proposal,'$.quantity')) FROM assistant_orders o WHERE "
+                "json_extract(o.proposal,'$.sku')=i.sku AND "
+                "o.status IN ('APPROVED','SENDING','UNKNOWN','CONFIRMED')),0) AS on_order "
+                "FROM inventory i ORDER BY i.sku"
             )
         ]
 
@@ -73,7 +77,8 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         return {
             "supplier": "lucy-local",
             "sku": args.sku,
-            "unit_cost_cents": json.loads(row["record"])["unit_cost_cents"],
+            "unit_cost_pence": json.loads(row["record"])["unit_cost_cents"],
+            "currency": "GBP",
         }
 
     def draft(args: DraftArguments) -> dict[str, Any]:
@@ -81,7 +86,7 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         return {
             **quote,
             "quantity": args.quantity,
-            "total_cents": args.quantity * quote["unit_cost_cents"],
+            "total_pence": args.quantity * quote["unit_cost_pence"],
             "status": "DRAFT",
         }
 
@@ -91,7 +96,7 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         ),
         ExecutableTool(
             "supplier",
-            "Look up a product's supplier and unit cost in cents.",
+            "Look up a product's supplier and unit cost in GBP pence.",
             StockArguments,
             supplier,
         ),
@@ -130,17 +135,23 @@ class OfflineShopModel:
                     name="draft_order",
                     arguments={
                         "sku": row["sku"],
-                        "quantity": row["reorder_point"] - row["on_hand"] + row["reserved"],
+                        "quantity": row["reorder_point"]
+                        - row["on_hand"]
+                        + row["reserved"]
+                        - row["on_order"],
                     },
                 )
                 for i, row in enumerate(stock)
-                if row["on_hand"] - row["reserved"] < row["reorder_point"]
+                if row["on_hand"] - row["reserved"] + row["on_order"] < row["reorder_point"]
             )
             if calls:
                 return ModelTurn(calls=calls)
-            return ModelTurn("All products are at or above their thresholds.")
+            return ModelTurn(
+                "Stock plus pending replenishment covers each threshold; "
+                "no additional draft is needed."
+            )
         drafts = [o["value"] for o in observations[1:] if o.get("ok")]
         if not drafts:
             return ModelTurn("I could not prepare the draft; inspect the tool errors.")
-        lines = [f"{d['sku']}: {d['quantity']} units, {d['total_cents']} cents" for d in drafts]
+        lines = [f"{d['sku']}: {d['quantity']} units, {d['total_pence']} pence GBP" for d in drafts]
         return ModelTurn("Replenishment draft:\n" + "\n".join(lines) + "\nNo purchases made.")
