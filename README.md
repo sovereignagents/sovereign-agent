@@ -110,7 +110,7 @@ credential allowlists: Claude (`ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`,
 ```bash
 uv run python -m pytest -q
 uv run python scripts/verify_runtime_dependencies.py
-uv run python scripts/verify_source_budget.py
+uv run python scripts/verify_source_budget_v2.py
 uv run sovereign-agent --help
 uv run sovereign-agent doctor
 ```

@@ -24,7 +24,7 @@ def test_runtime_dependency_gate() -> None:
 
 
 def test_source_budget_gate() -> None:
-    result = run_script("verify_source_budget.py")
+    result = run_script("verify_source_budget_v2.py")
     assert "modules=" in result.stdout
     assert "root_exports=" in result.stdout
 

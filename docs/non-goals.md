@@ -86,6 +86,12 @@ Authorized 2026-08-25. See the
 1.x **does** include minimum local governance (outcomes, SOWs, rulings,
 authority, acceptance) in order to teach a complete organization.
 
+The [2026-09-07 always-on teaching ruling](rulings/2026-09-07-always-on-teaching-scope.md)
+authorizes one Telegram adapter, a bounded MCP client, local versioned skills,
+an explicit OS-supervised service, and an optional isolated container tool in
+this distribution. These are educational implementations; ZeoCore remains
+optional. The exclusions below apply outside that bounded teaching scope.
+
 1.x still refuses:
 
 - distributed fleet scheduling, Docker, Podman, SSH workers, Kubernetes, or

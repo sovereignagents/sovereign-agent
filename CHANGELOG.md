@@ -6,6 +6,15 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Replace the core-only source gate with a versioned gate counting all installed
+  teaching code: 55 core modules / 11,000 lines and 80 installed modules / 14,000
+  lines, under the measured 2026-09-07 budget ruling. Historical gates are retained.
+
+- Authorize the self-contained always-on teaching scope: a reader-owned model
+  loop, Telegram, bounded MCP, local skills, explicit service hosting and one
+  isolated tool. ZeoCore remains optional. The 1.x non-goals are amended by the
+  dated ruling; published 0.x contracts remain unchanged.
+
 ## [1.4.0] — 2026-09-05
 
 Sovereign Agent 1.4.0 is a correctness release for two boundaries the

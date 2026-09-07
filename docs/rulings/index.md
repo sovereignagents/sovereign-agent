@@ -22,3 +22,5 @@ list, so the list cannot silently drift behind the directory.
 - [Ruling: Unit 11 scope — pilot start marker, multi-SKU catalog, Chapters 8-12](2026-08-30-unit11-scope.md)
 - [Ruling: Unit 11 closes on local, learner-controlled SQLite — the real-deployment pilot-start gate is withdrawn](2026-08-30-unit11-local-closure-supersedes-real-deployment-gate.md)
 - [Ruling: Unit 12 scope — release evaluation, proof pack, Andrea protocol, provider truthfulness, release sequence](2026-08-31-unit12-scope.md)
+- [Ruling: build the complete always-on teaching agent](2026-09-07-always-on-teaching-scope.md)
+- [Ruling: count the complete always-on teaching distribution](2026-09-07-always-on-source-budget.md)

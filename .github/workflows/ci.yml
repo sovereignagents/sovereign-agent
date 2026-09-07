@@ -34,7 +34,7 @@ jobs:
       - name: Verify sole runtime dependency
         run: python scripts/verify_runtime_dependencies.py
       - name: Verify source budgets
-        run: python scripts/verify_source_budget.py
+        run: python scripts/verify_source_budget_v2.py
       - name: Verify public repository structure
         run: python -m pytest -q tests/test_repository_hygiene.py
       - name: Verify the curriculum is runnable
@@ -57,7 +57,7 @@ jobs:
         # git-archive extraction with a fresh uv cache/venv and a hostile
         # PATH (decoy python/sovereign-agent shims), and fails by name if any
         # documented step's real exit code is not 0.
-        run: python scripts/verify_readme_onboarding.py
+        run: python scripts/verify_readme_onboarding_v3.py
       - name: Verify the accepted outcome is actually TRUE
         # The demo exiting 0 is not proof. The previous version of this pipeline
         # ran the demo and stopped there, and the demo printed ACCEPTED while the

@@ -426,6 +426,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the isolation, scheduling, context, fencing, tool, and memory lesson",
     )
     mechanisms.set_defaults(handler=_mechanisms)
+    from sovereign_agent.assistant_cli import register
+
+    register(subparsers, shared)
     return parser
 
 

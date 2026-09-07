@@ -1,0 +1,31 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "dbbb42b1494f0380ee94ad99a5f71e5de8a95c8a",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "d51b694032bf4ff688414cbeaa51a18c39327f9762562426dffed47b0c06b386",
+  "tests": {
+    "passed": 506,
+    "live_deselected": 10
+  },
+  "clean_install_tests": {
+    "passed": 501,
+    "git_only_skipped": 5,
+    "live_deselected": 10
+  },
+  "preserved_book": {
+    "chapters": 13,
+    "python_snippets": 102,
+    "matched_output_pairs": 92,
+    "labs_run_twice": 13
+  },
+  "source": {
+    "core_modules": 47,
+    "core_nonblank_lines": 8850,
+    "installed_modules": 58,
+    "installed_nonblank_lines": 10375
+  },
+  "new_book_chapters_completed": 0,
+  "external_reviews": "org issue 603; contract/base-source review only, not acceptance of this implementation"
+}

@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from sovereign_agent.assistant_schema import SCHEMA as MIGRATION_19
+
 MIGRATION_1 = """
 PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -815,6 +817,7 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
     (16, MIGRATION_16),
     (17, MIGRATION_17),
     (18, MIGRATION_18),
+    (19, MIGRATION_19),
 )
 
 
@@ -850,7 +853,19 @@ class Database:
         # Without recursive triggers, `INSERT OR REPLACE` deletes the old row
         # WITHOUT firing the BEFORE DELETE guard, silently defeating append-only.
         self.connection.execute("PRAGMA recursive_triggers = ON")
+        first_assistant_migration = 19 not in self.applied_versions()
         self.migrate()
+        if first_assistant_migration:
+            epoch = self.connection.execute(
+                "SELECT epoch FROM assistant_control WHERE id=1"
+            ).fetchone()[0]
+            marker = self.path.with_suffix(".authority")
+            try:
+                with marker.open("x") as authority:
+                    authority.write(epoch)
+            except FileExistsError:
+                if marker.read_text() != epoch:
+                    raise ValueError("authority marker disagrees with database") from None
 
     def __del__(self) -> None:
         # sqlite3.Connection participates in an internal reference cycle. On a
