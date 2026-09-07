@@ -6,6 +6,10 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Make evaluation acceptance explicit: named-check passes require explanation
+  review, failures are rejected, terminal causes remain in case reports, and
+  baseline calculation time is measured with its acquisition limit stated.
+
 - Give isolated reports a container-owned deadline that survives host-runner
   death. Drop report privileges before execution and verify hostile signal,
   identity, filesystem and network attempts on Linux. Validate MCP response

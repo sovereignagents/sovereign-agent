@@ -99,7 +99,7 @@
       "title": "Measure whether the agent helps",
       "path": "ch12_evaluation/README.md",
       "checkpoint": "checkpoints/ch12.py",
-      "status": "PLANNED"
+      "status": "DRAFT"
     },
     {
       "number": 13,

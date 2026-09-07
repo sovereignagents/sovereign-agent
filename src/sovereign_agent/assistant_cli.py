@@ -233,7 +233,12 @@ def handle(args: argparse.Namespace) -> int:
         report = evaluate(lambda: model, skills=active, repeats=args.repeats, limits=limits)
         report["active_skill_state"] = baseline
         path, digest = save_report(root / "evaluations", report)
-        result = {"passed": report["passed"], "report": str(path), "sha256": digest}
+        result = {
+            "passed": report["passed"],
+            "acceptance": report["acceptance"]["status"],
+            "report": str(path),
+            "sha256": digest,
+        }
     elif action == "skill-stage":
         skill = assistant_context.stage_skill(db, Path(args.value))
         result = {"status": "STAGED", "name": skill.name, "version": skill.version}

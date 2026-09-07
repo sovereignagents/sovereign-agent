@@ -121,6 +121,9 @@ def evaluate(
                         )
                 dispatcher = shop_dispatcher(db)
                 messages = context(db, "evaluation", case.prompt, allowed=dispatcher.allowed)
+                baseline_started = time.perf_counter_ns()
+                baseline_drafts = baseline(case)
+                baseline_seconds = (time.perf_counter_ns() - baseline_started) / 1_000_000_000
                 started = time.monotonic()
                 model = model_factory()
                 result = run_loop(model, dispatcher, messages, limits=limits)
@@ -156,7 +159,7 @@ def evaluate(
                         "SELECT count(*) FROM assistant_orders"
                     ).fetchone()[0]
                     == 0,
-                    "baseline_matches_authored_answer": sorted(baseline(case))
+                    "baseline_matches_authored_answer": sorted(baseline_drafts)
                     == sorted(case.expected),
                 }
                 rows.append(
@@ -171,6 +174,7 @@ def evaluate(
                         "repetition": repetition,
                         "checks": checks,
                         "passed": all(checks.values()),
+                        "loop_status": result.status,
                         "seconds": round(elapsed, 4),
                         "model_calls": result.model_calls,
                         "tool_calls": result.tool_calls,
@@ -178,14 +182,31 @@ def evaluate(
                         "estimated_cost_pence": result.estimated_cost_pence,
                         "expected": case.expected,
                         "observed": actual,
-                        "baseline": {"drafts": baseline(case), "model_calls": 0},
+                        "baseline": {
+                            "drafts": baseline_drafts,
+                            "model_calls": 0,
+                            "seconds": baseline_seconds,
+                            "scope": "calculation over supplied fixture; excludes data acquisition",
+                        },
                         "transcript": result.messages,
                         "answer": result.answer,
                     }
                 )
                 db.close()
+    passed = all(row["passed"] for row in rows)
     return {
-        "schema": 1,
+        "schema": 2,
+        "acceptance": {
+            "status": "REVIEW_REQUIRED" if passed else "REJECTED",
+            "ungraded": ["explanation amounts", "unsupported claims", "business usefulness"],
+            "meaning": "passed is the conjunction of named automated checks, not publication "
+            "or operational acceptance. Review the retained answers before claiming usefulness.",
+        },
+        "baseline_totals": {
+            "seconds": sum(row["baseline"]["seconds"] for row in rows),
+            "model_calls": 0,
+            "scope": "calculation over supplied fixtures; excludes data acquisition",
+        },
         "settings": asdict(limits),
         "scope": "Active or candidate skill configuration over isolated shop scenarios; "
         "live session preferences, history and optional tools are not copied.",
@@ -208,7 +229,7 @@ def evaluate(
             )
         },
         "cases": rows,
-        "passed": all(row["passed"] for row in rows),
+        "passed": passed,
         "candidate": None
         if skill is None
         else {
