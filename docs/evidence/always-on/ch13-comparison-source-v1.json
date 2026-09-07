@@ -1,0 +1,8 @@
+{
+  "checked": "2026-09-07",
+  "project": "NousResearch/hermes-agent",
+  "commit": "d538f4e9297d7fa46193f638215d002d7a22edd7",
+  "path": "tools/skills_tool.py",
+  "sha256": "0f205b8c2d9266d272d8c6cae3d189b86a5aebce98f03b61605d266b65f9497c",
+  "scope": "Inspected _org_provenance_header and rendered provenance text. No verification of the sync plane, whole update workflow or universal security policy."
+}

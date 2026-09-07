@@ -1,0 +1,41 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "753b61d40e583e698231c98bcce0e7bfbfb94a3c",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "1a915cb25111e14a350003a072b2d521384f7de7a83668539bb68ec6e4f90267",
+  "tests": {
+    "passed": 687,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 682,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "planned": 3,
+    "python_examples": 122,
+    "matched_output_pairs": 115,
+    "publication_acceptance": false
+  },
+  "runtime_changes": "None in this chapter increment.",
+  "improvement_checkpoint": "Actual context-sensitive regression, guarded activation, evaluated rollback, changed configuration, retained proposal provenance and reopened selected-state proof. Deterministic fixture, not a language-quality claim.",
+  "remaining": "Three chapters, integrated day, live phone, proposal and exact-source site integration"
+}

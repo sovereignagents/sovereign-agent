@@ -1,0 +1,42 @@
+{
+  "scope": "draft shape only; source synchronization, link verification, rendered review and publication acceptance remain open",
+  "source_sha256": "974a688ce1a7d87095780921b2ed3f9bf72030d319bf398c2096f5ada44e5edc",
+  "site_instrument_commit": "15736177430e7c0449d237a55f8e50efaa00e709",
+  "score": 99,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 100,
+    "practice": 100,
+    "visuals": 100,
+    "seo": 100,
+    "craft": 94
+  },
+  "metrics": {
+    "words": 4879,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 13,
+    "exercises": 5,
+    "maxProseWall": 207,
+    "internalLinks": 1,
+    "descriptionChars": 197
+  },
+  "nextActions": [
+    {
+      "ruleId": "ai-writing/bullet-np-list",
+      "action": "1 run(s) of 5+ bare noun-phrase bullets with no finite verb",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 6,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 3.5 sentences, CV 0.22 across 57 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}
