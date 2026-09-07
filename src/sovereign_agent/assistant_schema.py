@@ -90,3 +90,23 @@ CREATE TABLE assistant_deliveries (
     received_at REAL NOT NULL
 );
 """
+
+
+SCHEMA_22 = """
+ALTER TABLE assistant_work ADD COLUMN role TEXT NOT NULL DEFAULT 'shop';
+ALTER TABLE assistant_work ADD COLUMN billing_session TEXT NOT NULL DEFAULT '';
+CREATE TRIGGER assistant_work_role_immutable BEFORE UPDATE OF role,billing_session
+ON assistant_work BEGIN SELECT RAISE(ABORT, 'work role and billing are immutable'); END;
+CREATE TRIGGER assistant_work_intake_immutable BEFORE UPDATE OF origin,session,prompt
+ON assistant_work BEGIN SELECT RAISE(ABORT, 'work intake is immutable'); END;
+CREATE TABLE assistant_delegations (
+    work_id TEXT PRIMARY KEY REFERENCES assistant_work(id),
+    parent_id TEXT NOT NULL UNIQUE REFERENCES assistant_work(id),
+    deadline REAL NOT NULL, model_calls_limit INTEGER NOT NULL,
+    estimated_call_pence INTEGER NOT NULL, budget_pence INTEGER NOT NULL,
+    model_calls INTEGER NOT NULL DEFAULT 0
+);
+CREATE TRIGGER assistant_delegation_immutable
+BEFORE UPDATE OF work_id,parent_id,deadline,model_calls_limit,estimated_call_pence,budget_pence
+ON assistant_delegations BEGIN SELECT RAISE(ABORT, 'assignment contract is immutable'); END;
+"""

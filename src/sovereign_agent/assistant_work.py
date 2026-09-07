@@ -24,6 +24,7 @@ class Claim:
     owner: str
     epoch: str
     subject: str = ""
+    role: str = "shop"
 
 
 class IntakeLimitError(ValueError):
@@ -41,6 +42,8 @@ def _enqueue(
     subject: str = "",
     *,
     require_admission: bool = False,
+    role: str = "shop",
+    billing_session: str = "",
 ) -> str:
     if (
         not origin
@@ -52,6 +55,8 @@ def _enqueue(
         or not math.isfinite(now)
         or not isinstance(subject, str)
         or len(subject) > 100
+        or role not in {"shop", "research"}
+        or len(billing_session) > 200
     ):
         raise ValueError("nonempty bounded intake required")
     existing = connection.execute(
@@ -64,7 +69,9 @@ def _enqueue(
             existing["channel"],
             existing["recipient"],
             existing["subject"],
-        ) != (session, prompt, channel, recipient, subject):
+            existing["role"],
+            existing["billing_session"],
+        ) != (session, prompt, channel, recipient, subject, role, billing_session):
             raise ValueError("intake identity reused for different content")
         if require_admission and existing["status"] == "REJECTED":
             raise IntakeLimitError("existing intake was rejected")
@@ -92,8 +99,8 @@ def _enqueue(
     identifier = uuid.uuid4().hex
     connection.execute(
         "INSERT INTO assistant_work"
-        "(id,origin,session,prompt,created,channel,recipient,status,result,control,subject) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "(id,origin,session,prompt,created,channel,recipient,status,result,control,subject,role,"
+        "billing_session) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             identifier,
             origin,
@@ -106,6 +113,8 @@ def _enqueue(
             "Request limit reached; resolve pending work or return tomorrow." if rejected else None,
             int(control),
             subject,
+            role,
+            billing_session,
         ),
     )
     if not rejected:
@@ -209,6 +218,8 @@ def claim(
     ttl: float = 90,
     recovery_only: bool = False,
     control_only: bool = False,
+    role: str = "shop",
+    identifier: str = "",
 ) -> Claim | None:
     now = time.time() if now is None else now
     if not owner or not math.isfinite(now) or not math.isfinite(ttl) or not 0 < ttl <= 3600:
@@ -220,7 +231,8 @@ def claim(
         if control["paused"]:
             return None
         row = connection.execute(
-            "SELECT w.* FROM assistant_work w WHERE w.available_after<=? AND "
+            "SELECT w.* FROM assistant_work w WHERE w.role=? AND (?='' OR w.id=?) "
+            "AND w.available_after<=? AND "
             "(?=0 OR w.control=1) AND "
             "((?=0 AND w.status='READY') OR (w.status='RUNNING' AND w.expires<=?) OR "
             "(?=1 AND w.status IN ('READY','BLOCKED','CANCELLED'))) AND "
@@ -229,7 +241,18 @@ def claim(
             "(SELECT 1 FROM assistant_work other WHERE other.session=w.session "
             "AND other.status='RUNNING' AND other.expires>?) "
             "ORDER BY w.control DESC,w.created,w.rowid LIMIT 1",
-            (now, control_only, recovery_only, now, recovery_only, recovery_only, now),
+            (
+                role,
+                identifier,
+                identifier,
+                now,
+                control_only,
+                recovery_only,
+                now,
+                recovery_only,
+                recovery_only,
+                now,
+            ),
         ).fetchone()
         if row is None:
             return None
@@ -247,6 +270,7 @@ def claim(
             owner,
             control["epoch"],
             row["subject"],
+            row["role"],
         )
 
 
@@ -267,11 +291,28 @@ def assert_current(connection: sqlite3.Connection, work: Claim, now: float | Non
         raise PermissionError("runtime paused or replaced by restore")
     row = connection.execute(
         "SELECT 1 FROM assistant_work WHERE id=? AND owner=? AND generation=? "
-        "AND status='RUNNING' AND expires>? AND subject=?",
-        (work.id, work.owner, work.generation, now, work.subject),
+        "AND status='RUNNING' AND expires>? AND subject=? AND role=? AND session=? AND prompt=?",
+        (
+            work.id,
+            work.owner,
+            work.generation,
+            now,
+            work.subject,
+            work.role,
+            work.session,
+            work.prompt,
+        ),
     ).fetchone()
     if row is None:
         raise PermissionError("worker claim expired or superseded")
+    if work.role == "research":
+        contract = connection.execute(
+            "SELECT d.deadline,p.cancelled FROM assistant_delegations d "
+            "JOIN assistant_work p ON p.id=d.parent_id WHERE d.work_id=?",
+            (work.id,),
+        ).fetchone()
+        if contract is None or contract["deadline"] <= now or contract["cancelled"]:
+            raise PermissionError("delegation expired or parent cancelled")
 
 
 def observe(db: Database, work: Claim, message: dict[str, Any]) -> None:
@@ -328,6 +369,16 @@ def cancel(db: Database, identifier: str) -> None:
             "WHERE id=? AND status IN ('READY','RUNNING','BLOCKED')",
             (identifier,),
         ).rowcount
+        # A parent may have finished its stock task while its child still works.
+        # Stop that child without rewriting the parent's completed business result.
+        changed += connection.execute(
+            "UPDATE assistant_work SET cancelled=1,generation=generation+1 "
+            "WHERE id=? AND status='DONE' AND cancelled=0 AND EXISTS "
+            "(SELECT 1 FROM assistant_delegations d JOIN assistant_work child "
+            "ON child.id=d.work_id WHERE d.parent_id=assistant_work.id "
+            "AND child.status IN ('READY','RUNNING','BLOCKED'))",
+            (identifier,),
+        ).rowcount
         if changed:
             append_event(db, "assistant.work.cancelled", {"work": identifier})
 
@@ -344,18 +395,37 @@ def reserve_model_call(
     day = int(now // 86400)
     with db.immediate() as connection:
         assert_current(connection, work, now)
+        ledger = connection.execute(
+            "SELECT billing_session,estimated_cost_pence FROM assistant_work WHERE id=?",
+            (work.id,),
+        ).fetchone()
+        billing = ledger["billing_session"] or work.session
+        if work.role == "research":
+            contract = connection.execute(
+                "SELECT * FROM assistant_delegations WHERE work_id=?", (work.id,)
+            ).fetchone()
+            if (
+                contract["model_calls"] >= contract["model_calls_limit"]
+                or estimate_pence != contract["estimated_call_pence"]
+                or ledger["estimated_cost_pence"] + estimate_pence > contract["budget_pence"]
+            ):
+                raise PermissionError("delegation model allowance exhausted")
+            connection.execute(
+                "UPDATE assistant_delegations SET model_calls=model_calls+1 WHERE work_id=?",
+                (work.id,),
+            )
         connection.execute(
-            "INSERT OR IGNORE INTO assistant_daily(session,day) VALUES (?,?)", (work.session, day)
+            "INSERT OR IGNORE INTO assistant_daily(session,day) VALUES (?,?)", (billing, day)
         )
         row = connection.execute(
-            "SELECT * FROM assistant_daily WHERE session=? AND day=?", (work.session, day)
+            "SELECT * FROM assistant_daily WHERE session=? AND day=?", (billing, day)
         ).fetchone()
         if row["model_calls"] >= 100 or row["estimated_cost_pence"] + estimate_pence > 1000:
             raise PermissionError("daily model allowance exhausted")
         connection.execute(
             "UPDATE assistant_daily SET model_calls=model_calls+1,"
             "estimated_cost_pence=estimated_cost_pence+? WHERE session=? AND day=?",
-            (estimate_pence, work.session, day),
+            (estimate_pence, billing, day),
         )
         connection.execute(
             "UPDATE assistant_work SET estimated_cost_pence=estimated_cost_pence+? WHERE id=?",

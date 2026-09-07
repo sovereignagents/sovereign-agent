@@ -62,7 +62,34 @@ def handle(args: argparse.Namespace) -> int:
     edges = tuple(optional_tools(db, mcp_catalog=args.mcp_catalog, sandbox=sandbox))
     result: Any = {"status": "INITIALIZED", "root": str(root)}
     action = args.action
-    if action == "ask":
+    if action == "delegate":
+        from reference_organizations.store.delegation import Inquiry, delegate
+
+        result = {
+            "status": "QUEUED",
+            "work": delegate(
+                db,
+                args.value,
+                Inquiry(sku=args.sku, guests=args.guests),
+                deadline=args.deadline if args.deadline is not None else time.time() + 300,
+                estimated_call_pence=args.estimated_call_pence,
+                budget_pence=args.model_budget_pence,
+            ),
+        }
+    elif action == "research-work":
+        from reference_organizations.store.delegation import (
+            OfflineCateringModel,
+        )
+        from reference_organizations.store.delegation import (
+            run_once as research,
+        )
+
+        result = research(
+            db,
+            model if isinstance(model, HTTPModel) else OfflineCateringModel(),
+            identifier=args.value,
+        )
+    elif action == "ask":
         identifier = assistant_work.enqueue(
             db, args.id or "local:" + uuid.uuid4().hex, args.session, args.value
         )
@@ -198,20 +225,42 @@ def handle(args: argparse.Namespace) -> int:
         )
     elif action == "service":
         result = assistant_service.service(
-            args.value, root, Path(sys.executable).with_name("sovereign-agent")
+            args.value,
+            root,
+            Path(sys.executable).with_name("sovereign-agent"),
+            research=args.research_worker,
         )
     elif action == "serve":
         stop = threading.Event()
         for sig in (signal.SIGINT, signal.SIGTERM):
             signal.signal(sig, lambda *_: stop.set())
         token = os.environ.get("SOVEREIGN_AGENT_TELEGRAM_TOKEN", "")
-        bot = Telegram(token) if token else None
+        bot = Telegram(token) if token and not args.research_worker else None
         numeric = frozenset(int(actor) for actor in operators if actor.isdigit())
         if bot and (not numeric or len(numeric) != len(operators)):
             raise ValueError("Telegram requires numeric SOVEREIGN_AGENT_OPERATORS")
         failures = 0
         while not stop.is_set():
             try:
+                if args.research_worker:
+                    from reference_organizations.store.delegation import (
+                        OfflineCateringModel,
+                    )
+                    from reference_organizations.store.delegation import (
+                        run_once as research,
+                    )
+
+                    item = research(
+                        db,
+                        model if isinstance(model, HTTPModel) else OfflineCateringModel(),
+                        should_stop=stop.is_set,
+                    )
+                    print(
+                        json.dumps({"status": item["status"], "work": item.get("work")}), flush=True
+                    )
+                    failures = 0
+                    stop.wait(1)
+                    continue
                 uncertain = db.connection.execute(
                     "SELECT count(*) FROM assistant_orders WHERE status IN ('UNKNOWN','SENDING')"
                 ).fetchone()[0]
@@ -276,6 +325,8 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "init",
             "ask",
             "work",
+            "delegate",
+            "research-work",
             "watch-stock",
             "unwatch-stock",
             "receive",
@@ -299,6 +350,14 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("value", nargs="?", default="")
     parser.add_argument("--session", default="lucy")
+    parser.add_argument(
+        "--research-worker",
+        action="store_true",
+        help="serve or install the separate read-only catering worker",
+    )
+    parser.add_argument("--sku", default="SKU-VANILLA")
+    parser.add_argument("--guests", type=int, default=40)
+    parser.add_argument("--deadline", type=float, help="absolute epoch UTC delegation deadline")
     parser.add_argument(
         "--channel", default="local", help="output route for schedules and stock watches"
     )

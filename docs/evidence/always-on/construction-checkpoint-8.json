@@ -1,0 +1,26 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "f5b1870597c61f7962029a7ea18d152df6d558ec",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "5180e55698782b5e449c0e0f25262ed112be9e8da2d3a17cca30156feb0cb020",
+  "tests": {
+    "passed": 581,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 576,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9700,
+    "installed_modules": 64,
+    "installed_nonblank_lines": 12211
+  },
+  "delegation_tests": 15,
+  "live_construction": "Failed and successful qwen3 runs retained in delegation-live-construction-v1.json. Explicit schema and immutable inquiry checks repair the observed interface mismatch.",
+  "remaining": "Account-wide restore reconciliation, Linux operations and integrated acceptance, twelve chapters, publisher material, comparisons and exact-source site migration"
+}

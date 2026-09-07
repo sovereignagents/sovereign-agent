@@ -107,7 +107,7 @@ def restore(db: Database, source: Path) -> None:
     # account, including effects newer than this snapshot, and reauthorize work.
 
 
-def unit_text(root: Path, executable: Path) -> str:
+def unit_text(root: Path, executable: Path, *, research: bool = False) -> str:
     root, executable = root.resolve(), executable.resolve()
     # systemd has expansion rules distinct from shell quoting. Keep the tutorial's
     # installation path deliberately narrow rather than invent an escaping DSL.
@@ -115,6 +115,8 @@ def unit_text(root: Path, executable: Path) -> str:
         raise ValueError(
             "service paths must be absolute and contain no spaces or expansion characters"
         )
+    worker_flag = " --research-worker" if research else ""
+    env_file = "research.env" if research else "agent.env"
     return f"""[Unit]
 Description=Lucy's always-on teaching agent
 After=network-online.target
@@ -122,8 +124,8 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory={root}
-ExecStart={executable} agent serve --root {root}
-EnvironmentFile={root}/agent.env
+ExecStart={executable} agent serve --root {root}{worker_flag}
+EnvironmentFile={root}/{env_file}
 Restart=on-failure
 RestartSec=10
 TimeoutStopSec=90
@@ -138,18 +140,18 @@ WantedBy=default.target
 """
 
 
-def service(action: str, root: Path, executable: Path) -> dict[str, Any]:
+def service(action: str, root: Path, executable: Path, *, research: bool = False) -> dict[str, Any]:
     if sys.platform != "linux":
         raise ValueError("service installation requires Linux and a user systemd manager")
     if action not in {"install", "status", "uninstall"}:
         raise ValueError("invalid service action")
-    name = "sovereign-agent.service"
+    name = "sovereign-agent-research.service" if research else "sovereign-agent.service"
     path = Path.home() / ".config/systemd/user" / name
     if action == "install":
-        env = root.resolve() / "agent.env"
+        env = root.resolve() / ("research.env" if research else "agent.env")
         if not env.is_file() or env.stat().st_mode & 0o077:
-            raise ValueError("create an operator-owned agent.env with mode 0600 first")
-        content = unit_text(root, executable)
+            raise ValueError("create the worker environment file with mode 0600 first")
+        content = unit_text(root, executable, research=research)
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists() and path.read_text() != content:
             raise FileExistsError("different service already installed")
@@ -157,7 +159,7 @@ def service(action: str, root: Path, executable: Path) -> dict[str, Any]:
         subprocess.run(["systemctl", "--user", "daemon-reload"], check=True, timeout=20)
         subprocess.run(["systemctl", "--user", "enable", "--now", name], check=True, timeout=20)
     elif action == "uninstall":
-        if path.exists() and path.read_text() != unit_text(root, executable):
+        if path.exists() and path.read_text() != unit_text(root, executable, research=research):
             raise ValueError("refuse to remove another installation")
         subprocess.run(["systemctl", "--user", "disable", "--now", name], check=True, timeout=20)
         path.unlink(missing_ok=True)

@@ -51,6 +51,8 @@ def propose(
         raise ValueError("positive integral bounded quantity required")
     with db.immediate() as connection:
         assert_current(connection, work)
+        if work.role != "shop":
+            raise PermissionError("delegated research has no purchasing authority")
         if work.subject and work.subject != sku:
             raise PermissionError("proposal differs from the work item's subject")
         product = connection.execute("SELECT record FROM products WHERE sku=?", (sku,)).fetchone()
