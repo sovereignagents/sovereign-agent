@@ -1,0 +1,231 @@
+{
+  "created": "2026-09-07",
+  "scope": "Four live construction samples, including two failures; not a statistical reliability claim",
+  "model": "qwen3:latest",
+  "model_digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+  "reasoning_effort": "none",
+  "variants": [
+    {
+      "variant": 1,
+      "stdout_sha256": "8657157d17444d95b794c4b12d3e6009209279aba07a1c606bbb63450d07be95",
+      "reported_result": "COMPLETED 2 1\nThe products that need ordering this morning are:\n\n- **SKU-STRAWBERRY**: 4 units needed\n- **SKU-VANILLA**: 6 units needed\n\nTotal quantity to be drafted: 10 units.",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "Help Lucy prepare replenishment drafts. First call list_stock. For each product with needed > 0, call draft_order with exactly that quantity. Do not draft products with needed = 0. Summarize the tool results in GBP pence. Drafts are proposals, never purchases."
+        },
+        {
+          "role": "user",
+          "content": "What needs ordering this morning?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_4cp8cvb0",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_4cp8cvb0",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"name\": \"Chocolate\", \"on_hand\": 12, \"reorder_point\": 6, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"name\": \"Strawberry\", \"on_hand\": 1, \"reorder_point\": 5, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"name\": \"Vanilla\", \"on_hand\": 2, \"reorder_point\": 8, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "The products that need ordering this morning are:\n\n- **SKU-STRAWBERRY**: 4 units needed\n- **SKU-VANILLA**: 6 units needed\n\nTotal quantity to be drafted: 10 units."
+        }
+      ],
+      "draft_evidence_passed": false
+    },
+    {
+      "variant": 2,
+      "stdout_sha256": "34dbb5c63a6ae0e422fc8546d3c5b0201996f3e71691009ded8ba7bf0274a5cb",
+      "reported_result": "COMPLETED 2 1\nThe products that need ordering are:\n\n- **SKU-STRAWBERRY**: 4 units needed\n- **SKU-VANILLA**: 6 units needed\n\nI will now create draft orders for these quantities.\ndraft evidence FAIL",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "Help Lucy prepare replenishment drafts. First call list_stock. For each product with needed > 0, call draft_order with exactly that quantity. Do not draft products with needed = 0. Summarize the tool results in GBP pence. A verbal recommendation does not replace creating the draft through the tool. Drafts are proposals, never purchases."
+        },
+        {
+          "role": "user",
+          "content": "What needs ordering this morning?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_q6jv32ig",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_q6jv32ig",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"name\": \"Chocolate\", \"on_hand\": 12, \"reorder_point\": 6, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"name\": \"Strawberry\", \"on_hand\": 1, \"reorder_point\": 5, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"name\": \"Vanilla\", \"on_hand\": 2, \"reorder_point\": 8, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "The products that need ordering are:\n\n- **SKU-STRAWBERRY**: 4 units needed\n- **SKU-VANILLA**: 6 units needed\n\nI will now create draft orders for these quantities."
+        }
+      ],
+      "draft_evidence_passed": false
+    },
+    {
+      "variant": 3,
+      "stdout_sha256": "2bfbf06e01954fefe3ff5ad94c0421d1632c458da7eb8d87135199802cacd0e4",
+      "reported_result": "COMPLETED 3 3\nThe replenishment drafts have been created successfully. Here's the summary of the GBP amounts:\n\n- **SKU-STRAWBERRY**: Total cost is 1100 pence.\n- **SKU-VANILLA**: Total cost is 1500 pence.\n\nThese drafts are proposals and do not constitute purchases. Let me know if you need further assistance!\ndraft evidence PASS",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "Help Lucy prepare replenishment drafts. First call list_stock. For each product with needed > 0, call draft_order with exactly that quantity. Do not draft products with needed = 0. Summarize the tool results in GBP pence. A verbal recommendation does not replace creating the draft through the tool. Drafts are proposals, never purchases."
+        },
+        {
+          "role": "user",
+          "content": "Prepare replenishment drafts from current stock. State GBP amounts."
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_rmeefq1x",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_rmeefq1x",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"name\": \"Chocolate\", \"on_hand\": 12, \"reorder_point\": 6, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"name\": \"Strawberry\", \"on_hand\": 1, \"reorder_point\": 5, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"name\": \"Vanilla\", \"on_hand\": 2, \"reorder_point\": 8, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_4r0k3ovq",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-STRAWBERRY\", \"quantity\": 4}"
+              }
+            },
+            {
+              "id": "call_t16g666a",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-VANILLA\", \"quantity\": 6}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_4r0k3ovq",
+          "content": "{\"ok\": true, \"value\": {\"sku\": \"SKU-STRAWBERRY\", \"supplier\": \"lucy-local\", \"currency\": \"GBP\", \"unit_cost_pence\": 275, \"quantity\": 4, \"total_pence\": 1100, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_t16g666a",
+          "content": "{\"ok\": true, \"value\": {\"sku\": \"SKU-VANILLA\", \"supplier\": \"lucy-local\", \"currency\": \"GBP\", \"unit_cost_pence\": 250, \"quantity\": 6, \"total_pence\": 1500, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "assistant",
+          "content": "The replenishment drafts have been created successfully. Here's the summary of the GBP amounts:\n\n- **SKU-STRAWBERRY**: Total cost is 1100 pence.\n- **SKU-VANILLA**: Total cost is 1500 pence.\n\nThese drafts are proposals and do not constitute purchases. Let me know if you need further assistance!"
+        }
+      ],
+      "draft_evidence_passed": true
+    },
+    {
+      "variant": 4,
+      "stdout_sha256": "f0de1d7ff65efd41d559712eefa14fbf3ef0a99e08ee3cb8dc1a7b95ee338544",
+      "reported_result": "COMPLETED 3 3\nThe replenishment drafts have been created successfully. Here's the summary of the GBP amounts:\n\n- **SKU-STRAWBERRY**: Total cost is 1100 pence.\n- **SKU-VANILLA**: Total cost is 1500 pence.\n\nThese drafts are proposals and do not constitute purchases. Let me know if you need further assistance!\ndraft evidence PASS",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "Help Lucy prepare replenishment drafts. First call list_stock. For each product with needed > 0, call draft_order with exactly that quantity. Do not draft products with needed = 0. Summarize the tool results in GBP pence. A verbal recommendation does not replace creating the draft through the tool. Drafts are proposals, never purchases."
+        },
+        {
+          "role": "user",
+          "content": "Prepare replenishment drafts from current stock. State GBP amounts."
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_nyra633z",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_nyra633z",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"name\": \"Chocolate\", \"on_hand\": 12, \"reorder_point\": 6, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"name\": \"Strawberry\", \"on_hand\": 1, \"reorder_point\": 5, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"name\": \"Vanilla\", \"on_hand\": 2, \"reorder_point\": 8, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_zq55elfa",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-STRAWBERRY\", \"quantity\": 4}"
+              }
+            },
+            {
+              "id": "call_li0memiw",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-VANILLA\", \"quantity\": 6}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_zq55elfa",
+          "content": "{\"ok\": true, \"value\": {\"sku\": \"SKU-STRAWBERRY\", \"supplier\": \"lucy-local\", \"currency\": \"GBP\", \"unit_cost_pence\": 275, \"quantity\": 4, \"total_pence\": 1100, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_li0memiw",
+          "content": "{\"ok\": true, \"value\": {\"sku\": \"SKU-VANILLA\", \"supplier\": \"lucy-local\", \"currency\": \"GBP\", \"unit_cost_pence\": 250, \"quantity\": 6, \"total_pence\": 1500, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "assistant",
+          "content": "The replenishment drafts have been created successfully. Here's the summary of the GBP amounts:\n\n- **SKU-STRAWBERRY**: Total cost is 1100 pence.\n- **SKU-VANILLA**: Total cost is 1500 pence.\n\nThese drafts are proposals and do not constitute purchases. Let me know if you need further assistance!"
+        }
+      ],
+      "draft_evidence_passed": true
+    }
+  ],
+  "final_checkpoint_sha256": "2e28f7427cf60d50a93b535f098909bb435b63e96216082e88455b6b44c83e03",
+  "limitation": "Earlier variants were uncommitted construction code. Exact prompts, requests and observations are retained here. The named draft evidence does not grade all natural-language claims."
+}

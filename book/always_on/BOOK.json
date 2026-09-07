@@ -19,7 +19,7 @@
       "title": "Give the agent reliable shop tools",
       "path": "ch02_shop_tools/README.md",
       "checkpoint": "checkpoints/ch02.py",
-      "status": "PLANNED"
+      "status": "DRAFT"
     },
     {
       "number": 3,
@@ -27,7 +27,7 @@
       "title": "Build the model and tool loop",
       "path": "ch03_agent_loop/README.md",
       "checkpoint": "checkpoints/ch03.py",
-      "status": "PLANNED"
+      "status": "DRAFT"
     },
     {
       "number": 4,
