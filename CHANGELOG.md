@@ -6,6 +6,12 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Persist the basis of order approvals and revalidate automatic grants against
+  current policy before sending. Historical grants require explicit reapproval
+  when their basis is unknown. Same-product revisions revoke obsolete unsent
+  proposals and release their reservations atomically; transmitted effects
+  remain subject to reconciliation.
+
 - Replace the core-only source gate with a versioned gate counting all installed
   teaching code: 55 core modules / 11,000 lines and 80 installed modules / 14,000
   lines, under the measured 2026-09-07 budget ruling. Historical gates are retained.

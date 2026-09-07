@@ -252,6 +252,8 @@ The order workflow first checks ownership and target identity. Terminal orders r
 
 Only after that discovery step may an eligible send reach its local admission transaction. The transaction rechecks current authority, cumulative spending, held reservations, approval expiry, cancellation, and the remaining work lease. It then records `SENDING`. This commit is the authorization point for transmission.
 
+Chapter 8 also records the basis of each grant. An automatic approval must still fit the current automatic allowance; an operator approval remains subject to the current operator list and cumulative ceiling. A historical grant with an unknown basis requires explicit reapproval before a new send. These restrictions do not prevent recording a receipt for an effect that the supplier already accepted.
+
 **Listing:** Discover an existing effect before admitting another transmission of its stable identity.
 
 ```python
@@ -291,6 +293,11 @@ def execute_order(db, work, identifier, supplier, *, policy):
             or budget["spent_pence"] + budget["reserved_pence"]
             > min(budget["limit_pence"], policy.total_pence)
             or current["approved_by"] not in policy.operators
+            or current["approval_basis"] == "UNKNOWN"
+            or (
+                current["approval_basis"] == "AUTOMATIC"
+                and current["amount"] > policy.automatic_order_pence
+            )
         ):
             raise PermissionError("current spending authority or reservation is insufficient")
         lease = connection.execute(

@@ -134,3 +134,9 @@ ALTER TABLE assistant_work ADD COLUMN context_revision INTEGER NOT NULL DEFAULT 
 CREATE TRIGGER assistant_work_context_revision_immutable BEFORE UPDATE OF context_revision
 ON assistant_work BEGIN SELECT RAISE(ABORT, 'work context revision is immutable'); END;
 """
+
+
+SCHEMA_25 = """
+ALTER TABLE assistant_orders ADD COLUMN approval_basis TEXT NOT NULL DEFAULT 'UNKNOWN'
+CHECK(approval_basis IN ('UNKNOWN','OPERATOR','AUTOMATIC'));
+"""

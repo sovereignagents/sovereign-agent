@@ -73,6 +73,35 @@ def propose(
         # One stable intent for this exact proposal in this assignment. A deliberate
         # second purchase requires another work item, not another random tool-call ID.
         identifier = uuid.uuid5(uuid.NAMESPACE_URL, work.id + ":" + digest).hex
+        if connection.execute(
+            "SELECT 1 FROM assistant_orders WHERE id=?", (identifier,)
+        ).fetchone():
+            return identifier  # Repeating an old revision never resurrects its authority.
+        previous = connection.execute(
+            "SELECT id,status,amount FROM assistant_orders "
+            "WHERE work_id=? AND json_extract(proposal,'$.sku')=?",
+            (work.id, sku),
+        ).fetchall()
+        if any(
+            row["status"] in {"SENDING", "UNKNOWN", "CONFIRMED", "DELIVERED"} for row in previous
+        ):
+            raise PermissionError(
+                "existing product effect must be resolved; new purchase needs new work"
+            )
+        for row in previous:
+            if row["status"] not in {"DRAFT", "APPROVED"}:
+                continue
+            if row["status"] == "APPROVED":
+                connection.execute(
+                    "UPDATE assistant_spending SET reserved_pence=reserved_pence-? WHERE id=1",
+                    (row["amount"],),
+                )
+            connection.execute(
+                "UPDATE assistant_orders SET status='REVOKED',revoked=1 WHERE id=?", (row["id"],)
+            )
+            append_event(
+                db, "assistant.order.superseded", {"order": row["id"], "replacement": identifier}
+            )
         connection.execute(
             "INSERT OR IGNORE INTO assistant_orders"
             "(id,work_id,proposal,digest,amount,created,target) "
@@ -94,6 +123,8 @@ def approve(
     now: float | None = None,
 ) -> None:
     now = time.time() if now is None else now
+    if type(automatic) is not bool:
+        raise ValueError("approval basis must be explicit")
     if not math.isfinite(expires) or not now < expires <= now + 86400:
         raise ValueError("approval must expire within one day")
     if actor not in policy.operators:
@@ -127,9 +158,9 @@ def approve(
             "UPDATE assistant_spending SET reserved_pence=reserved_pence+? WHERE id=1", (addition,)
         )
         connection.execute(
-            "UPDATE assistant_orders SET status='APPROVED',approved_by=?,approved_until=? "
-            "WHERE id=?",
-            (actor, expires, identifier),
+            "UPDATE assistant_orders SET status='APPROVED',approved_by=?,approved_until=?,"
+            "approval_basis=? WHERE id=?",
+            (actor, expires, "AUTOMATIC" if automatic else "OPERATOR", identifier),
         )
         append_event(
             db,
@@ -245,6 +276,11 @@ def execute(
             or budget["spent_pence"] + budget["reserved_pence"]
             > min(budget["limit_pence"], policy.total_pence)
             or current["approved_by"] not in policy.operators
+            or current["approval_basis"] == "UNKNOWN"
+            or (
+                current["approval_basis"] == "AUTOMATIC"
+                and current["amount"] > policy.automatic_order_pence
+            )
         ):
             raise PermissionError("current spending authority or reservation is insufficient")
         expires = connection.execute(

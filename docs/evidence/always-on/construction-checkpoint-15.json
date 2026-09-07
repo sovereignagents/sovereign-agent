@@ -1,0 +1,38 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "f3e2cfe30d697bef9b2dcae31650b334fdd70b17",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "0b8ef696847f47fc2c809e63656d9ed73c4ed115ca1b96f6d8493b788872e78e",
+  "tests": {
+    "passed": 673,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 668,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "planned": 7,
+    "python_examples": 97,
+    "matched_output_pairs": 91,
+    "publication_acceptance": false
+  },
+  "schema": 25,
+  "approval": "Persisted grant basis, execution-time automatic allowance, atomic same-product supersession, explicit historical reapproval and unchanged discovery of prior effects.",
+  "supplier_checkpoint": "Separate actual HTTP supplier process; zero orders during refusals, one seven-tub authorized purchase, zero reserved and 1750 spent pence.",
+  "remaining": "Seven chapters, integrated acceptance, live phone proof, sandbox kill boundary, publisher proposal and exact-source site integration"
+}

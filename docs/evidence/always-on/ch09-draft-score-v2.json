@@ -1,0 +1,42 @@
+{
+  "scope": "draft shape only; source synchronization, link verification, rendered review and publication acceptance remain open",
+  "source_sha256": "2ac2143a32805cc71643f126c53197a8a0df34de256258fdd645747b5760b705",
+  "site_instrument_commit": "53012bad64af7293da6ab140650b6fc32626472b",
+  "score": 100,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 100,
+    "practice": 100,
+    "visuals": 100,
+    "seo": 100,
+    "craft": 97.6
+  },
+  "metrics": {
+    "words": 4971,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 19,
+    "exercises": 4,
+    "maxProseWall": 201,
+    "internalLinks": 1,
+    "descriptionChars": 195
+  },
+  "nextActions": [
+    {
+      "ruleId": "ai-writing/low-ttr",
+      "action": "Type-token ratio 0.274 on 3498 words (below 0.40 threshold)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 3.5 sentences, CV 0.23 across 63 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}
