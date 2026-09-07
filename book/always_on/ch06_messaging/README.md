@@ -500,7 +500,7 @@ sequenceDiagram
     participant B as Replacement worker
     participant C as Competing worker
     A->>D: Commit two requests for one session
-    Note over A: Process exits; Python list is lost
+    Note over A: Process exits and its Python list is lost
     B->>D: Query durable ready work
     D-->>B: Both requests remain
     B->>D: Claim first request

@@ -1,0 +1,9 @@
+{
+  "created": "2026-09-07",
+  "status": "source correction; rendered visual acceptance remains open",
+  "source_sha256": "7baff37ccedaa512f0445ff67abb03d99e81fe53eca578ecbfe465861c84a3bf",
+  "instrument": "profrod-site locked Mermaid through JSDOM, mermaid.parse on each actual source fence",
+  "passed_diagrams": 4,
+  "before": "Sequence diagram 3 failed at semicolon in Note over A",
+  "after": "Conjunction preserves meaning and parses; site will rederive exact committed source"
+}
