@@ -11,6 +11,7 @@ import re
 import socket
 import sqlite3
 import time
+import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
@@ -33,7 +34,9 @@ class Proposal(BaseModel):
 class SupplierClient:
     idempotent = True
 
-    def __init__(self, endpoint: str, *, timeout: float = 3) -> None:
+    def __init__(
+        self, endpoint: str, *, timeout: float = 3, account: str = "", epoch: int = 0
+    ) -> None:
         parsed = urlsplit(endpoint)
         if (
             parsed.scheme != "http"
@@ -46,6 +49,40 @@ class SupplierClient:
         ):
             raise ValueError("simulated supplier requires a loopback HTTP endpoint")
         self._endpoint, self._timeout = endpoint.rstrip("/"), timeout
+        if (
+            (account and not re.fullmatch("[a-f0-9]{32}", account))
+            or type(epoch) is not int
+            or epoch < 0
+        ):
+            raise ValueError("invalid supplier account binding")
+        self.account, self.epoch = account, epoch
+
+    def account_call(
+        self,
+        path: str = "/account",
+        *,
+        data: dict[str, Any] | None = None,
+        epoch: int | None = None,
+    ) -> dict[str, Any]:
+        if path not in {"/account", "/account/fence", "/account/snapshot"}:
+            raise ValueError("invalid account operation")
+        response = request(
+            self.endpoint + path,
+            data=None if data is None else json.dumps(data).encode(),
+            headers={
+                "Content-Type": "application/json",
+                "X-Sovereign-Account": self.account,
+                "X-Sovereign-Epoch": str(self.epoch if epoch is None else epoch),
+            },
+            timeout=self.timeout,
+            maximum_bytes=1_048_576,
+        )
+        if response.status != 200:
+            raise OSError("supplier account discovery or fencing failed")
+        result = json.loads(response.body)
+        if not isinstance(result, dict):
+            raise ValueError("invalid supplier account response")
+        return result
 
     @property
     def endpoint(self) -> str:
@@ -67,7 +104,11 @@ class SupplierClient:
         response = request(
             self.endpoint + "/orders/" + operation,
             data=None if proposal is None else json.dumps(proposal).encode(),
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "X-Sovereign-Account": self.account,
+                "X-Sovereign-Epoch": str(self.epoch),
+            },
             timeout=self.timeout,
             maximum_bytes=16_384,
         )
@@ -109,6 +150,15 @@ def serve(
         "CREATE TABLE IF NOT EXISTS orders(operation TEXT PRIMARY KEY,"
         "proposal TEXT NOT NULL,receipt TEXT NOT NULL)"
     )
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS account(id INTEGER PRIMARY KEY CHECK(id=1),"
+        "identity TEXT NOT NULL,epoch INTEGER NOT NULL)"
+    )
+    connection.execute("INSERT OR IGNORE INTO account VALUES (1,?,0)", (uuid.uuid4().hex,))
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS rotations(id TEXT PRIMARY KEY,epoch INTEGER NOT NULL)"
+    )
+    connection.commit()
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self) -> None:
@@ -133,14 +183,83 @@ def serve(
             match = re.fullmatch(r"/orders/([a-f0-9]{32})", self.path)
             return match[1] if match else None
 
+        def account(self) -> dict[str, Any]:
+            row = connection.execute("SELECT identity,epoch FROM account WHERE id=1").fetchone()
+            return {"account": row[0], "epoch": row[1]}
+
+        def current_account(self, *, legacy: bool = False) -> bool:
+            state = self.account()
+            identity = self.headers.get("X-Sovereign-Account", "")
+            epoch = self.headers.get("X-Sovereign-Epoch", "0")
+            return epoch == str(state["epoch"]) and (
+                identity == state["account"] or (legacy and not identity and state["epoch"] == 0)
+            )
+
         def do_GET(self) -> None:  # noqa: N802
+            if self.path == "/account":
+                self.reply(200, self.account())
+                return
+            if self.path == "/account/snapshot":
+                if not self.current_account():
+                    self.reply(409, {"error": "account_fence_changed"})
+                    return
+                rows = connection.execute(
+                    "SELECT receipt FROM orders ORDER BY operation LIMIT 1001"
+                ).fetchall()
+                if len(rows) > 1000:
+                    self.reply(409, {"error": "account_export_too_large"})
+                    return
+                self.reply(
+                    200,
+                    {
+                        **self.account(),
+                        "complete": True,
+                        "receipts": [json.loads(row[0]) for row in rows],
+                    },
+                )
+                return
             operation = self.operation()
+            identity = self.headers.get("X-Sovereign-Account", "")
+            state = self.account()
+            if identity != state["account"] and (identity or state["epoch"] != 0):
+                self.reply(409, {"error": "account_identity_changed"})
+                return
             row = connection.execute(
                 "SELECT receipt FROM orders WHERE operation=?", (operation,)
             ).fetchone()
             self.reply(200, json.loads(row[0])) if row else self.reply(404, {"error": "not_found"})
 
         def do_POST(self) -> None:  # noqa: N802
+            if self.path == "/account/fence":
+                try:
+                    length = int(self.headers.get("Content-Length", "0"))
+                    if not 1 <= length <= 4096:
+                        raise ValueError("bounded rotation required")
+                    body = json.loads(self.rfile.read(length))
+                    if (
+                        not isinstance(body, dict)
+                        or set(body) != {"account", "rotation"}
+                        or body["account"] != self.account()["account"]
+                        or not isinstance(body["rotation"], str)
+                        or not re.fullmatch("[a-f0-9]{32}", body["rotation"])
+                    ):
+                        raise ValueError("invalid rotation")
+                    with connection:
+                        prior = connection.execute(
+                            "SELECT epoch FROM rotations WHERE id=?", (body["rotation"],)
+                        ).fetchone()
+                        if prior is None:
+                            connection.execute("UPDATE account SET epoch=epoch+1 WHERE id=1")
+                            epoch = self.account()["epoch"]
+                            connection.execute(
+                                "INSERT INTO rotations VALUES (?,?)", (body["rotation"], epoch)
+                            )
+                        else:
+                            epoch = prior[0]
+                    self.reply(200, {"account": body["account"], "epoch": epoch})
+                except ValueError:
+                    self.reply(400, {"error": "invalid_rotation"})
+                return
             operation = self.operation()
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -152,6 +271,9 @@ def serve(
                 encoded = json.dumps(proposal, sort_keys=True)
             except ValueError:
                 self.reply(400, {"error": "invalid_proposal"})
+                return
+            if not self.current_account(legacy=True):
+                self.reply(409, {"error": "account_fence_changed"})
                 return
             row = connection.execute(
                 "SELECT proposal,receipt FROM orders WHERE operation=?", (operation,)

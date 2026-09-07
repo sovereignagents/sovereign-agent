@@ -21,11 +21,11 @@ from sovereign_agent.telegram_channel import Telegram, deliver_one, poll
 
 
 def handle(args: argparse.Namespace) -> int:
+    from reference_organizations.store.account_recovery import configured_supplier
     from reference_organizations.store.agent import OfflineShopModel, seed_lucy
     from reference_organizations.store.assistant import reconcile_once, run_once
     from reference_organizations.store.extra_tools import Sandbox, optional_tools
     from reference_organizations.store.stock_conditions import disable, scan, watch
-    from reference_organizations.store.supplier import SupplierClient
 
     root = Path(args.root).resolve()
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -48,7 +48,14 @@ def handle(args: argparse.Namespace) -> int:
             else args.reasoning_effort,
         )
     endpoint = args.supplier or os.environ.get("SOVEREIGN_AGENT_SUPPLIER", "")
-    supplier = SupplierClient(endpoint) if endpoint else None
+    supplier = (
+        configured_supplier(db, endpoint)
+        if endpoint
+        and not args.research_worker
+        and args.action
+        in {"ask", "work", "serve", "bind-supplier", "inspect-account", "recover-account"}
+        else None
+    )
     limits = Limits(
         estimated_call_pence=args.estimated_call_pence, model_budget_pence=args.model_budget_pence
     )
@@ -62,7 +69,24 @@ def handle(args: argparse.Namespace) -> int:
     edges = tuple(optional_tools(db, mcp_catalog=args.mcp_catalog, sandbox=sandbox))
     result: Any = {"status": "INITIALIZED", "root": str(root)}
     action = args.action
-    if action == "delegate":
+    if action == "bind-supplier":
+        if supplier is None:
+            raise ValueError("a simulated supplier endpoint is required")
+        result = {"status": "BOUND", "target": supplier.identity, "account": supplier.account}
+    elif action in {"inspect-account", "recover-account"}:
+        from reference_organizations.store.account_recovery import inspect_account, recover
+
+        if supplier is None:
+            raise ValueError("the bound simulated supplier endpoint is required")
+        if action == "inspect-account":
+            result = inspect_account(db, supplier, actor=args.actor or "lucy", policy=policy)
+        else:
+            with Path(args.value).open("rb") as stream:
+                raw = stream.read(262_145)
+            result = recover(
+                db, supplier, raw, args.digest, actor=args.actor or "lucy", policy=policy
+            )
+    elif action == "delegate":
         from reference_organizations.store.delegation import Inquiry, delegate
 
         result = {
@@ -340,6 +364,9 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "forget",
             "backup",
             "restore",
+            "bind-supplier",
+            "inspect-account",
+            "recover-account",
             "service",
             "serve",
             "evaluate",

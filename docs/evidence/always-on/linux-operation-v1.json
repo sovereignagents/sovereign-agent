@@ -1,0 +1,32 @@
+{
+  "created": "2026-09-07",
+  "tested_tree": "f5b1870597c61f7962029a7ea18d152df6d558ec",
+  "python": "Python 3.14.7",
+  "boot_before": "6723ac35-bf7b-4e92-b67b-3ae985cdd0c5",
+  "boot_after": "7387bef7-9b7f-4050-b778-cce85b55a7cd",
+  "main_pid_before_kill": 2458,
+  "main_pid_after_kill": 2502,
+  "restart_count_after_kill": 1,
+  "units_after_reboot": "MainPID=476\nId=sovereign-agent.service\nActiveState=active\nSubState=running\n\nMainPID=475\nId=sovereign-agent-research.service\nActiveState=active\nSubState=running\n",
+  "completed_after_reboot_before_new_intake": 2,
+  "concurrent_service_results": [
+    {
+      "id": "0ee68574289f4017abe733cdbf8a696a",
+      "status": "DONE",
+      "result": "Replenishment draft:\nSKU-STRAWBERRY: 4 units, 1100 pence GBP\nSKU-VANILLA: 6 units, 1500 pence GBP\nNo purchases made."
+    },
+    {
+      "id": "94a5ccc45dfe4dfba2b6383999668e6d",
+      "status": "DONE",
+      "result": "Catering draft: 5 tubs for 41 guests, GBP 25.00. No stock reserved."
+    }
+  ],
+  "orders": 0,
+  "backup": "/home/rodbot.guest/sovereign-teaching/state/before-upgrade.sqlite",
+  "limits": "Offline model; isolated Linux VM; not a month of uptime, live phone delivery or completed account restore acceptance.",
+  "uv_version": "0.12.2",
+  "uv_linux_archive_sha256": "19b7f1f66895261fbaa07f8ea91da0f86337ad4e47efa594e87641c1718ffc52",
+  "distribution": "Ubuntu 24.04.4 LTS aarch64",
+  "user_linger": true,
+  "installation": "uv sync --frozen --no-dev --python 3.14"
+}

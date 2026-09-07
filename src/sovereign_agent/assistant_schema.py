@@ -110,3 +110,17 @@ CREATE TRIGGER assistant_delegation_immutable
 BEFORE UPDATE OF work_id,parent_id,deadline,model_calls_limit,estimated_call_pence,budget_pence
 ON assistant_delegations BEGIN SELECT RAISE(ABORT, 'assignment contract is immutable'); END;
 """
+
+
+SCHEMA_23 = """
+ALTER TABLE assistant_daily ADD COLUMN call_limit INTEGER NOT NULL DEFAULT 100;
+ALTER TABLE assistant_daily ADD COLUMN cost_limit INTEGER NOT NULL DEFAULT 1000;
+ALTER TABLE assistant_daily ADD COLUMN history_complete INTEGER NOT NULL DEFAULT 1;
+CREATE TABLE assistant_supplier_bindings (
+    target TEXT PRIMARY KEY, account TEXT NOT NULL, epoch INTEGER NOT NULL
+);
+CREATE TABLE assistant_recovery_runs (
+    epoch TEXT PRIMARY KEY, plan_digest TEXT NOT NULL, account TEXT NOT NULL,
+    provider_epoch INTEGER NOT NULL, completed_at REAL NOT NULL
+);
+"""

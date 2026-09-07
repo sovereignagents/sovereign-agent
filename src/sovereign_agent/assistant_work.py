@@ -420,7 +420,10 @@ def reserve_model_call(
         row = connection.execute(
             "SELECT * FROM assistant_daily WHERE session=? AND day=?", (billing, day)
         ).fetchone()
-        if row["model_calls"] >= 100 or row["estimated_cost_pence"] + estimate_pence > 1000:
+        if (
+            row["model_calls"] >= row["call_limit"]
+            or row["estimated_cost_pence"] + estimate_pence > row["cost_limit"]
+        ):
             raise PermissionError("daily model allowance exhausted")
         connection.execute(
             "UPDATE assistant_daily SET model_calls=model_calls+1,"
