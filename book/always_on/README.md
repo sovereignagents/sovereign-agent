@@ -43,7 +43,7 @@ uv run --python 3.14 python book/always_on/checkpoints/ch16.py
 The final checkpoint combines one morning routine, model failure and retry,
 duplicate and unauthorized message delivery, corrected memory, scoped shortages,
 exact approvals, lost supplier responses, a killed worker, receiving and bounded
-research. Its independent supplier retains two orders totaling2600pence. The
+research. Its independent supplier retains two orders totaling 2600 pence. The
 readable report distinguishes physical stock, pending replenishment and purchase
 expenditure. Telegram transport and models are fixtures in this accelerated run;
 Linux service, live model and container evidence are separate pinned experiments.
