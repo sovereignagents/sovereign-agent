@@ -858,6 +858,11 @@ class Database:
         self.path = path
         self.connection = sqlite3.connect(path)
         self.connection.row_factory = sqlite3.Row
+        try:
+            self.supported_versions()
+        except Exception:
+            self.connection.close()
+            raise
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA journal_mode = WAL")
         # Without recursive triggers, `INSERT OR REPLACE` deletes the old row
@@ -890,11 +895,23 @@ class Database:
 
     def applied_versions(self) -> set[int]:
         """Versions already recorded. Empty when the ledger table does not exist yet."""
-        try:
-            rows = self.connection.execute("SELECT version FROM schema_migrations").fetchall()
-        except sqlite3.OperationalError:
+        if (
+            self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='schema_migrations' AND type='table'"
+            ).fetchone()
+            is None
+        ):
             return set()
+        rows = self.connection.execute("SELECT version FROM schema_migrations").fetchall()
         return {int(row["version"]) for row in rows}
+
+    def supported_versions(self) -> set[int]:
+        """Refuse unknown schema before writes; this does not fence running old code."""
+        applied = self.applied_versions()
+        unknown = applied - {version for version, _ in MIGRATIONS}
+        if unknown:
+            raise ValueError(f"database requires unknown migrations: {sorted(unknown)}")
+        return applied
 
     def migrate(self) -> None:
         """Apply pending migrations in order. Forward-only; never downgrades.
@@ -909,7 +926,7 @@ class Database:
         then hit invalid SQL left the table behind, unstamped, so reopening
         re-ran it and failed forever.
         """
-        applied = self.applied_versions()
+        applied = self.supported_versions()
         for version, script in MIGRATIONS:
             if version in applied:
                 continue

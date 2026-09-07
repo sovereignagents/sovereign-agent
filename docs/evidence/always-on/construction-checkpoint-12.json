@@ -1,0 +1,32 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "b5af59111b0058b6706513d6102130eba51437b1",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "4b093e05a50c8ce317736cd7706573830c825521f15434bac410a8ace172a44f",
+  "tests": {
+    "passed": 616,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 611,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      9
+    ],
+    "planned": 10,
+    "publication_acceptance": false
+  },
+  "maintenance": "Actual schema-22 to 24 Linux upgrade, supplier account recovery and same-schema code rollback/return. Pinned reports explicitly distinguish historical preflight from new loader guard.",
+  "schema_guard": "Unknown migration IDs and malformed existing ledgers are refused before mutation; rejected connections close. Four focused regressions and existing migration/recovery cases pass.",
+  "remaining": "Ten chapters, integrated day, live Telegram credentials, proposal and exact-source site integration; deploy latest guarded release into isolated test VM"
+}

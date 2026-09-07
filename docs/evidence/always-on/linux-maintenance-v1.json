@@ -1,0 +1,300 @@
+{
+  "created": "2026-09-07",
+  "scope": "Actual isolated Ubuntu 24.04.4 aarch64 host, Python 3.14.7, user systemd, controlled supplier; no live Telegram proof",
+  "upgrade": {
+    "old_release": "/home/rodbot.guest/sovereign-teaching/releases/f5b1870597c61f7962029a7ea18d152df6d558ec/.venv/bin/sovereign-agent",
+    "before_schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    "backup": "/home/rodbot.guest/sovereign-teaching/state/before-schema24.sqlite",
+    "old_unit_removal": [
+      {
+        "action": "uninstall",
+        "unit": "/home/rodbot.guest/.config/systemd/user/sovereign-agent.service",
+        "status": "ActiveState=inactive\nSubState=dead",
+        "exit_code": 0
+      },
+      {
+        "action": "uninstall",
+        "unit": "/home/rodbot.guest/.config/systemd/user/sovereign-agent-research.service",
+        "status": "ActiveState=inactive\nSubState=dead",
+        "exit_code": 0
+      }
+    ],
+    "before_work": [
+      [
+        "0195ec92e1f74c62981ae747e10f1bd8",
+        "DONE",
+        "Replenishment draft:\nSKU-STRAWBERRY: 4 units, 1100 pence GBP\nSKU-VANILLA: 6 units, 1500 pence GBP\nNo purchases made."
+      ],
+      [
+        "0ee68574289f4017abe733cdbf8a696a",
+        "DONE",
+        "Replenishment draft:\nSKU-STRAWBERRY: 4 units, 1100 pence GBP\nSKU-VANILLA: 6 units, 1500 pence GBP\nNo purchases made."
+      ],
+      [
+        "94a5ccc45dfe4dfba2b6383999668e6d",
+        "DONE",
+        "Catering draft: 5 tubs for 41 guests, GBP 25.00. No stock reserved."
+      ],
+      [
+        "d392648bdbcb4113a4b9d59186faf7fe",
+        "DONE",
+        "Replenishment draft:\nSKU-STRAWBERRY: 4 units, 1100 pence GBP\nSKU-VANILLA: 6 units, 1500 pence GBP\nNo purchases made."
+      ]
+    ],
+    "inode": 268461,
+    "after_schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "retained_work": 4,
+    "new_release": "/home/rodbot.guest/sovereign-teaching/releases/cec045235adb8de943692069b6a5db7e5d51b4c3/.venv/bin/sovereign-agent",
+    "new_unit_installation": [
+      {
+        "action": "install",
+        "unit": "/home/rodbot.guest/.config/systemd/user/sovereign-agent.service",
+        "status": "ActiveState=active\nSubState=running",
+        "exit_code": 0
+      },
+      {
+        "action": "install",
+        "unit": "/home/rodbot.guest/.config/systemd/user/sovereign-agent-research.service",
+        "status": "ActiveState=active\nSubState=running",
+        "exit_code": 0
+      }
+    ]
+  },
+  "account_recovery": {
+    "release": "cec045235adb8de943692069b6a5db7e5d51b4c3",
+    "schema": 24,
+    "same_inode_restore": true,
+    "supplier_epoch": 1,
+    "stale_send_refused": true,
+    "stale_worker_refused": true,
+    "recovery": {
+      "status": "ACTIVE",
+      "duplicate": false,
+      "orders": 2,
+      "spent_pence": 2600
+    },
+    "duplicate_plan_preserved": true,
+    "plan_digest": "456324455b70e904d3667cff36f3d6442ab61ae94bc5cde3ceb3f15d8af7b7e5",
+    "orders": {
+      "74778dea2405583db7c23d1618a7927f": "DELIVERED",
+      "0d544377ed235e82888341a7b4870ae8": "CONFIRMED"
+    },
+    "inventory": [
+      {
+        "sku": "SKU-CHOCOLATE",
+        "on_hand": 12,
+        "reserved": 0
+      },
+      {
+        "sku": "SKU-STRAWBERRY",
+        "on_hand": 1,
+        "reserved": 0
+      },
+      {
+        "sku": "SKU-VANILLA",
+        "on_hand": 8,
+        "reserved": 0
+      }
+    ],
+    "paused": false,
+    "service_work_id": "813848a6264a484b97cf4913394387d6",
+    "service_work_result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "model_history_complete": 0,
+    "remote_orders": 2
+  },
+  "compatible_upgrade": {
+    "status": "ACTIVE",
+    "from": "cec045235adb8de943692069b6a5db7e5d51b4c3",
+    "to": "313ac0687a4a4254b17699466a81c1d1f3aae914",
+    "schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "work_id": "8eb138ae00b34315882520dfd8632031",
+    "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "order_inventory_spending_preserved": true,
+    "retained": {
+      "orders": [
+        [
+          "0d544377ed235e82888341a7b4870ae8",
+          "CONFIRMED",
+          1100,
+          1
+        ],
+        [
+          "74778dea2405583db7c23d1618a7927f",
+          "DELIVERED",
+          1500,
+          1
+        ]
+      ],
+      "inventory": [
+        [
+          "SKU-CHOCOLATE",
+          12,
+          0
+        ],
+        [
+          "SKU-STRAWBERRY",
+          1,
+          0
+        ],
+        [
+          "SKU-VANILLA",
+          8,
+          0
+        ]
+      ],
+      "spending": [
+        [
+          0,
+          2600
+        ]
+      ]
+    }
+  },
+  "compatible_rollback": {
+    "status": "ACTIVE",
+    "from": "313ac0687a4a4254b17699466a81c1d1f3aae914",
+    "to": "cec045235adb8de943692069b6a5db7e5d51b4c3",
+    "schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "work_id": "7a609c6e707f44aeb27c1ee4af06a503",
+    "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "order_inventory_spending_preserved": true,
+    "retained": {
+      "orders": [
+        [
+          "0d544377ed235e82888341a7b4870ae8",
+          "CONFIRMED",
+          1100,
+          1
+        ],
+        [
+          "74778dea2405583db7c23d1618a7927f",
+          "DELIVERED",
+          1500,
+          1
+        ]
+      ],
+      "inventory": [
+        [
+          "SKU-CHOCOLATE",
+          12,
+          0
+        ],
+        [
+          "SKU-STRAWBERRY",
+          1,
+          0
+        ],
+        [
+          "SKU-VANILLA",
+          8,
+          0
+        ]
+      ],
+      "spending": [
+        [
+          0,
+          2600
+        ]
+      ]
+    }
+  },
+  "limits": "Schema-22 downgrade refused by a read-only compatibility preflight; startup guard was subsequently added to Database. Already running old processes must be stopped before migration. Account observations were explicitly authored from the executed delivery fixture. Temporary supplier endpoint stopped after the experiment. Same-schema compatibility also requires code/authority review; matching migration IDs alone is not a semantic guarantee."
+}
