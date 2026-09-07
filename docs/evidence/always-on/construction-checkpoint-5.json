@@ -1,0 +1,38 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "5ef712c1a75e58413e15e32a3344c762b38711cc",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "951b210655c3fea73b187b18e2310670d384ee98dbfcaee56ea0cd17e07f6272",
+  "tests": {
+    "passed": 547,
+    "live_deselected": 14
+  },
+  "clean_install_tests": {
+    "passed": 542,
+    "git_only_skipped": 5,
+    "live_deselected": 14
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "planned": 12,
+    "python_examples": 44,
+    "matched_output_pairs": 39,
+    "draft_shape_scores": {
+      "1": 100,
+      "2": 100,
+      "3": 100,
+      "9": 100
+    },
+    "publication_acceptance": false
+  },
+  "supplier_experiment": "Independent process commits one order then drops its reply; reconciliation retains one order and moves 1500 pence from reserved to spent once",
+  "protocol_regression": "The prior committed HTTP adapter raised AttributeError for message arrays; malformed envelopes now return MODEL_FAILED through the owned loop",
+  "remaining": "Twelve chapters, stock events, receiving/account reconciliation, bounded delegation, active-skill evaluation alignment, deployment and integrated acceptance, proposal and pinned references, exact-source site migration and rendered review"
+}

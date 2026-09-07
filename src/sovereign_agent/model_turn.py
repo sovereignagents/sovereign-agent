@@ -130,22 +130,38 @@ class HTTPModel:
             if response.status != 200:
                 raise ModelError(f"model HTTP {response.status}")
             data = json.loads(response.body)
-            choice = data["choices"][0]
-            message = choice["message"]
+            if not isinstance(data, dict):
+                raise ModelError("model response must be an object")
+            choices, usage = data.get("choices"), data.get("usage")
+            if (
+                not isinstance(choices, list)
+                or len(choices) != 1
+                or not isinstance(choices[0], dict)
+                or not isinstance(usage, dict)
+            ):
+                raise ModelError("one model choice and usage object required")
+            choice = choices[0]
+            message = choice.get("message")
+            if not isinstance(message, dict):
+                raise ModelError("model message must be an object")
             if choice.get("finish_reason") not in {"stop", "tool_calls"}:
                 raise ModelError("model response incomplete or refused")
             if message.get("refusal"):
                 raise ModelError("model refused the request")
+            requested = message.get("tool_calls", [])
+            if not isinstance(requested, list) or len(requested) > 32:
+                raise ModelError("bounded model tool-call array required")
             calls = tuple(
                 ToolCall(
                     id=item["id"],
                     name=item["function"]["name"],
                     arguments=json.loads(item["function"]["arguments"]),
                 )
-                for item in message.get("tool_calls", [])
+                for item in requested
             )
-            content = message.get("content") or ""
-            tokens = data.get("usage", {}).get("completion_tokens")
+            content = message.get("content")
+            content = "" if content is None else content
+            tokens = usage.get("completion_tokens")
             if not isinstance(content, str) or type(tokens) is not int or tokens < 0:
                 raise ModelError("invalid model content or usage")
             if tokens > max_output_tokens or len(calls) > 32:

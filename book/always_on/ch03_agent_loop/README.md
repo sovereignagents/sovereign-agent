@@ -69,6 +69,12 @@ The adapter's `complete` method accepts messages, tool schemas, a remaining time
 
 Reported token usage is evidence supplied by that adapter. The loop checks its type and range, but cannot independently recount a provider's private tokenization or billing. A local model returning zero usage in an authored fixture is useful for control-flow tests; it says nothing about the consumption of a live request.
 
+### Architectural comparison — Who owns the inner cycle?
+
+At commit `acc69a70962af6707aa8a6abba699bdaa7da95f8`, NanoClaw's authors describe its native use of Claude Code through the Claude Agent SDK and explain the choice in terms of access to Claude models and the existing toolset. They also describe alternative providers as configurable per agent group. This is documented project rationale, not a claim that every provider follows the same implementation. [Pinned NanoClaw README](https://github.com/nanocoai/nanoclaw/blob/acc69a70962af6707aa8a6abba699bdaa7da95f8/README.md)
+
+Our interpretation of the teaching trade-off is that delegation can supply substantial existing agent behavior, while owning the cycle makes each admission and observation visible to the reader. This chapter chooses the latter. A useful comparison experiment would run the same stock task through a delegated provider and inspect which tool attempts, usage, and stopping reasons the surrounding program can actually observe. That evidence would determine whether the delegated boundary satisfies a particular operating requirement; a project's overall size would not answer it.
+
 ## Build the conversation as an evidence trail
 
 The sequence has three distinct messages: an assistant request, a tool observation referring to its identifier, and a subsequent assistant turn. The tool observation's `tool_call_id` must match the request's `id`. When a turn asks for two tools, each gets a separate observation.
