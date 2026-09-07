@@ -22,6 +22,12 @@ six compact, production-shaped lessons in isolation, unattended schedules,
 context compaction, session incarnations, progressive tool discovery, and
 hybrid memory retrieval.
 
+The chapters are organized into three parts:
+
+- [Part 1: Durable foundations](parts/part-1-durable-foundations.md), Chapters 0–3
+- [Part 2: Bounded autonomy](parts/part-2-bounded-autonomy.md), Chapters 4–7
+- [Part 3: Proof at scale](parts/part-3-proof-at-scale.md), Chapters 8–12
+
 - [Chapter 0: Lucy's first shift](ch00_first_shift/README.md) — run one
   complete piece of work and learn that `ACCEPTED` is a proved claim
 - [Chapter 1: The organization remembers](ch01_organization_remembers/README.md) —
@@ -56,35 +62,20 @@ hybrid memory retrieval.
   the pilot-start mechanism, exercised against a disposable identity, and
   what "started" does and does not mean
 
-## What is not here yet
+## Where the book goes
 
-Pulse — the organization waking itself up — was Unit 9's own future territory
-when Chapters 0-3 were written. Nothing in Chapters 0-3 simulates a Pulse
-event, and their store demo is explicitly manually dispatched. A chapter that
-promised proactive behaviour before the code could do it would be the same
-kind of lie this book spends Chapter 2 teaching you to catch. That claim is
-still true of Chapters 0-3 today, and is mechanically enforced: this
-project's own curriculum checker refuses any of them from claiming Pulse
-fired.
+Chapters 0–3 are manually dispatched because durable memory and governed work
+must exist before proactive execution can be honest. Chapters 4–6 add
+containment, fencing, and recovery. Chapter 7 is the first chapter in which a
+durable signal creates governed work without a human prompt. Chapters 8–12
+then add the second product, retries, causal attribution, and a pilot-start
+receipt that states exactly what has and has not been proven.
 
-**Added, Unit 9:** Pulse became real production code (`sovereign-agent pulse
---once`; see `docs/v1-unit9-pulse-proactive-work.md`).
-
-**Added, Unit 10:** Chapter 7 is where this book exercises it — the first and
-only chapter allowed to claim the organization wakes itself, and only because
-its own exercise genuinely invokes the mechanism and leaves durable,
-structured evidence behind, mechanically checked, not merely asserted in
-prose. Chapters 0-3 remain exactly as they were: manually dispatched, and
-truthful about it. Chapters 4-6 (workspace lifecycle, fencing, recovery)
-teach real, ACCEPTED Units 7 and 8 behavior that was already true before Unit
-10; they were simply not yet chapters.
-
-**Added, Unit 11:** Chapters 8 through 12 land alongside the Store's own
-expansion into a genuine multi-SKU catalog and the pilot-start mechanism.
-Chapter 12's own exercise runs against a disposable, exercise-scoped pilot
-identity — the real 30-day Store pilot has not started; that is a separate,
-later, separately-authorized act outside this book's own scope. See
-`docs/v1-unit11-store-expansion-pilot-start.md` for the full contract.
+After the main sequence, use the
+[field guide to the agent ecosystem](AGENT_ECOSYSTEM_MAP.md) to map the book's
+mechanisms to MCP, A2A, OpenTelemetry, OWASP agentic threats, and NIST AI risk
+practice. The map translates interfaces; it does not treat protocol support as
+proof of authority or outcome.
 
 ## Every chapter contains
 

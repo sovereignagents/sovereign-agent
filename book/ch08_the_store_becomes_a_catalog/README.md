@@ -58,6 +58,8 @@ erDiagram
     }
 ```
 
+**Figure:** Stable SKU identity binds products to inventory, signals, and effects even though each table owns a different part of the product's state.
+
 **What this figure shows:** three logical subject relationships, all keyed
 by the same opaque `sku`. The schema does not enforce a foreign key or a
 one-to-one relationship between `products.sku` and `inventory.sku` — SQLite
@@ -145,6 +147,8 @@ Three separate concerns get three separate homes: identity (`sku`, the
 primary key — opaque, stable, never shown to customers), the display name
 (mutable prose *about* the identity), and quantities (their own row, with a
 constraint that makes negative stock unrepresentable):
+
+**Listing:** Migrate live singleton data into a catalog transactionally
 
 ```python
 def migrate_to_catalog(db):
@@ -292,6 +296,8 @@ flowchart TD
     W2 --> W3[INSERT OR REPLACE\ncash_entries, once]
     W3 --> COMMIT[COMMIT]
 ```
+
+**Figure:** The entire catalog batch is validated before the transaction begins, so a short or duplicate batch touches no rows and an admitted batch commits every dependent table together.
 
 **What this figure shows:** both refusal paths (`C1`, `C2`) exit *before*
 `BEGIN transaction`, so a refused call and a call that never happened are
@@ -527,6 +533,8 @@ flowchart LR
     Before --> After
 ```
 
+**Figure:** Renaming a product changes its presentation while the stable SKU preserves its event history and every relationship keyed to that identity.
+
 **What this figure shows:** the `UPDATE` above changed exactly one column
 (`name`) on exactly one row. `sku` never appeared on the left side of that
 `UPDATE`, so every `events` row that references `SKU-TEA` stays correctly
@@ -636,19 +644,19 @@ isolation the next chapters rely on starts here, at the schema.
 
 ## Summary
 
-This chapter built the migration from a `CHECK (id = 1)` singleton shop to a
+The store has moved from a `CHECK (id = 1)` singleton to a
 real multi-SKU catalog: separate `products` and `inventory` tables keyed by
 a stable, opaque `sku`, plus `seed_catalog`, a validated batch write that
 refuses fewer than two SKUs, duplicate SKUs, and negative opening stock
 before it ever opens its transaction.
 
-The invariant it establishes is that identity and display name are
+The schema now makes identity and display name
 different concerns: the ledger binds to `sku`, so renaming a product never
 orphans a single row of its history, and every migration proof obligation
 from Chapter 1 — preservation, identity, totality, atomicity — applies to a
 populated shop, not an empty one.
 
-The failure it prevents is the migration that strands a shop mid-schema:
+The principal failure case is a migration that strands a shop mid-schema:
 built and crashed on purpose, after `products` existed but before
 `inventory` was copied and the old table dropped, and shown to leave the
 original singleton row completely untouched rather than half-migrated. A
@@ -660,7 +668,7 @@ gone. `products` and `inventory` have no database-level append-only guard
 the way `events` does; the Python check this chapter traces is the entire
 guarantee against that specific loss.
 
-Back at Lucy's shop: this is vanilla and chocolate finally getting their own
+At Lucy's shop, vanilla and chocolate finally get their own
 rows instead of sharing one, so a run on one flavor can never quietly change
 the other's count — the schema-level guarantee the rest of the book from
 here on depends on.

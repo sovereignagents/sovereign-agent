@@ -48,6 +48,8 @@ flowchart LR
     A -->|re-read| I[(Inventory\nSKU-VANILLA)]
 ```
 
+**Figure:** Subject identity must survive every edge from signal through outcome, work, execution, effect, and fresh inventory verification for acceptance to be causal.
+
 At each arrow, ask whether identity is **derived** from the preceding durable
 record or supplied again by a caller. Re-supplying `sku="vanilla"` at acceptance
 creates a confused-deputy opportunity: a caller can present a real effect for
@@ -264,6 +266,8 @@ caller simply pointed the whole apparatus at the wrong subject.
 
 ### Generation 5: the caller supplies one fact only
 
+**Listing:** Derive causal acceptance from the statement of work
+
 ```python
 def accept_v5(db, sow_id):
     outcome_id, required_kind = db.execute(
@@ -350,6 +354,8 @@ flowchart TD
     C -->|1| FIRE[WakeDecision\noutcome_id = the one match]
     C -->|2 or more| REFUSE2[return None\nno durable rule disambiguates more than one]
 ```
+
+**Figure:** The caller supplies only the SKU fact; durable outcomes determine ownership, and any cardinality other than exactly one produces refusal rather than a guess.
 
 **What this figure shows:** the gate has exactly one branch that fires,
 flanked by two refusal branches that look nothing alike in cause — one is
@@ -539,6 +545,8 @@ sequenceDiagram
     Gate-->>Gate: refuse, return None
     Note over Sig: severity still says "warning" --<br/>the field itself never changes
 ```
+
+**Figure:** A signal preserves the historical warning, while the gate re-reads live inventory and refuses obsolete work after an off-path restock.
 
 **What this figure shows:** everything the gate reads from the signal
 object — `kind`, `source`, `subject_ref` — is identity and provenance, set

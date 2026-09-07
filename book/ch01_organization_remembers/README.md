@@ -45,6 +45,8 @@ flowchart TB
     Q -->|mismatch means stale or edited| C
 ```
 
+**Figure:** Canonical rows, append-only history, and human-readable projections serve different guarantees; only the canonical database may feed a regenerated projection.
+
 | Memory | Question it answers | Principal guarantee | Deliberate limit |
 | --- | --- | --- | --- |
 | Canonical rows | What is true now? | Related writes commit or roll back together. | Most operational rows are mutable. |
@@ -78,6 +80,8 @@ sequenceDiagram
     end
 ```
 
+**Figure:** Inventory, cash, and event history become one fact only when the transaction commits all three statements or rolls all three back.
+
 Durability is a separate axis: after SQLite acknowledges the commit, its journal
 mode and filesystem decide what survives a crash. Atomicity answers "all or
 none"; durability answers "does the chosen one survive?" Keeping those words
@@ -98,6 +102,8 @@ flowchart LR
     H -. compare, never import .-> V[Projection verifier]
     V --> C
 ```
+
+**Figure:** Human-readable memory is a deterministic view of canonical rows and events, and verification compares that view with a fresh render rather than importing it.
 
 This is the same principle that makes filesystem handoffs safe only when their
 authority is explicit. A file can be an excellent transport and a terrible
@@ -186,6 +192,8 @@ A restock has to change three things together: inventory goes up, cash goes down
 and an event records it. If only some of those land, the organization is lying to
 itself — a full shelf with no money spent, or money spent with no stock. The tool
 that makes "all or nothing" real is a transaction.
+
+**Listing:** Commit inventory, cash, and event history as one transaction
 
 ```python
 def restock(db, sku, units, unit_cost):
@@ -739,6 +747,8 @@ flowchart LR
     M --> H[Hits with score provenance]
 ```
 
+**Figure:** Retrieval first enforces SQL visibility, then combines lexical, semantic, recency, and importance scores before a diversity pass returns traceable hits.
+
 The first arrow is the important one. Suppose Bob's private supplier note is a
 perfect semantic match for Alice's query. If code ranks every row and removes
 Bob's note only before display, its content has already influenced selection,
@@ -1013,7 +1023,7 @@ its history.
 
 ## Summary
 
-This chapter built the three-part memory split — canonical SQLite rows,
+Memory now has three distinct forms: canonical SQLite rows,
 append-only events enforced by database triggers, and regenerable Markdown
 projections — plus a migration runner that keeps the schema change and its
 version stamp inside one explicit transaction.
@@ -1022,18 +1032,18 @@ It also built a transparent retrieval policy over durable memory: SQL removes
 rows the actor may not see before lexical, optional semantic, recency, and
 importance signals are combined, then MMR avoids spending context on duplicates.
 
-The invariant it establishes is that only one thing is ever the authority
+One authority rule governs them: only one thing is ever the authority
 for a given fact, and every other representation is either derived from it
 or provably stale against it: a projection that disagrees with the ledger is
 wrong by definition, never the other way around.
 
-The failure it prevents is silent, permanent data loss disguised as a
+The chapter catches silent, permanent data loss disguised as a
 successful upgrade — the migration that half-applies outside its
 transaction and poisons the database forever, and the "helpful" verifier
 that overwrites tampered evidence instead of reporting it. Both are built
 and caught in this chapter, not merely described.
 
-Back at Lucy's shop: this is the difference between "we ordered the cones"
+For Lucy, this is the difference between "we ordered the cones"
 and a signed invoice you can still produce six months later. A memory that
 can half-happen is not a memory Lucy's business can be held to.
 

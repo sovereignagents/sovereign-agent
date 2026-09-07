@@ -60,6 +60,8 @@ sequenceDiagram
     end
 ```
 
+**Figure:** Competing attempts may both execute, but a unique effect key admits one transactional winner and makes every retry return the same canonical result.
+
 The idempotency key names the **logical operation**, not the process attempt. In
 production it is `(assignment_id, kind, subject)`. A retry of the same
 assignment and SKU is the same operation and must return the canonical result. A
@@ -175,6 +177,8 @@ oversell race, mirrored: there stale reads sold stock twice; here they
 Everything that decides — the idempotency claim, the authorization, the cash
 check — moves **inside** the transaction that acts, and the claim itself
 becomes an insert under the `UNIQUE` constraint:
+
+**Listing:** Converge retries on one canonical restock effect
 
 ```python
 db.execute("UPDATE inventory SET on_hand = 2 WHERE sku = 'SKU-TEA'")
@@ -326,6 +330,8 @@ flowchart LR
     A -->|invalid| F[Refuse with no writes]
     C -->|invalid| F
 ```
+
+**Figure:** Authorization and business checks precede the unique effect claim; a winner commits inventory, cash, and event changes together, while repeats converge on its stored payload.
 
 Returning the prior payload matters. A duplicate response that merely says
 “already done” forces the caller to guess what done means. Returning the
@@ -490,24 +496,24 @@ exercise cannot demonstrate by itself.
 
 ## Summary
 
-This chapter built `apply_restock`'s idempotency key — `UNIQUE(assignment_id,
+Restocking now depends on `apply_restock`'s idempotency key: `UNIQUE(assignment_id,
 kind, subject)` on the `effects` table — and ran two complete governed
 replenishment chains, each restocked twice under the same assignment id, to
 show every guarantee from Chapters 0-10 composes at more than one SKU
 without exception.
 
-The invariant it establishes is that "exactly once" is a ledger property,
+The resulting invariant is that "exactly once" is a ledger property,
 not an execution count: a retry of the same logical operation returns the
 canonical prior result rather than failing or repeating it, because the key
 names the operation's stable identity (this assignment, this kind, this
 subject), never a per-attempt value like a timestamp or a fresh id.
 
-The failure it prevents is the double-order this chapter reproduces to the
+The chapter reproduces and prevents the double-order to the
 digit — `on_hand=14, purchase_entries=2` from one intended restock — by
 building the naive "scan first, then act" version and watching two retries
 that each saw "not done yet" both place the order.
 
-Back at Lucy's shop: this is the guarantee that survives past the demo —
+At Lucy's shop, this guarantee survives past the demo:
 two restocks in flight, one for vanilla and one for chocolate, and neither
 a retried order nor a busy Saturday can make either SKU's effect land on the
 other or get charged twice.

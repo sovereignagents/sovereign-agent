@@ -1,9 +1,5 @@
 # Preface
 
-This is a source Markdown file with no site frontmatter, matching every other
-file in `book/` — see `book/CONTENT-SOURCE.md` for why a leading `---` block
-does not belong here.
-
 ## Why this book exists
 
 Most material about AI agents teaches you to write a prompt and trust the
@@ -28,23 +24,15 @@ Chapter 0.
 
 ## Who should read this book
 
-The book is calibrated to one specific reader, not an abstract "beginner."
-`book/INSTRUCTOR.md` names her directly: a master's student who knows some
-Python, has written scripts and notebooks, but has not run a service,
-debugged a transaction, or argued about governance. `docs/andrea-alpha-evaluation.md`
-records her name, Andrea, because she is a specific real evaluation
-participant this project measured itself against across several rounds
-(`docs/andrea-chapters-0-7-evaluation.md`, `docs/andrea-chapters-0-12-evaluation.md`)
-— not a fictional character and not the book's own narrative protagonist.
+The book is calibrated to a specific reader rather than an abstract
+"beginner": a master's student or working developer who knows some Python,
+has written scripts and notebooks, but has not yet operated a service,
+debugged a transaction, or designed authority boundaries. Independent learner
+sessions shaped which explanations stayed and which were rewritten.
 
-That second point is worth being precise about, because the book also has a
-fictional protagonist, and the two are not the same person. **Lucy**, who
-runs the ice cream shop every chapter returns to, is fiction: the running
-example the book uses to make each mechanism concrete. **Andrea** is real:
-the calibration target whose actual sessions shaped which explanations
-stayed and which were rewritten. If you are reading this book, you are
-reading it as Andrea's stand-in — not as Lucy, who owns no laptop and runs no
-`pytest`.
+Lucy, who runs the ice cream shop every chapter returns to, is fictional. She
+is the running case that makes each mechanism concrete. You are the engineer
+building the organization on her behalf.
 
 If you are comfortable with Python classes, can read a `pydantic` model, and
 have never had to explain why a status field can lie: this book is written
@@ -131,12 +119,10 @@ of failure.
 
 ## What this book is not
 
-It is not a claim of Manning acceptance, a stated page count, a certified
-learning outcome, or a claim of finished visual publication quality. It
-establishes manuscript structure and pedagogy for a real, executable
-thirteen-chapter curriculum; `book/CONTENT-SOURCE.md` states exactly what is
-mechanically guaranteed by `scripts/verify_curriculum.py`, and — just as
-importantly — what is deliberately not.
+It is not a catalogue of prompt patterns or a wrapper around one model vendor.
+It does not claim that a green test suite proves a deployment safe. It teaches
+how to state a narrower claim, preserve the evidence for it, and refuse to
+promote that claim when the evidence or authority is insufficient.
 
 Continue to [Chapter 0 — Lucy's first shift](ch00_first_shift/README.md), or
 read [`CONVENTIONS.md`](CONVENTIONS.md) first for the notation and the

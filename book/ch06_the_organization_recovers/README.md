@@ -49,6 +49,8 @@ stateDiagram-v2
     TERMINAL --> [*]
 ```
 
+**Figure:** After a deadline, worker and supervisor race through compare-and-set; exactly one terminal state wins and both outcomes remain explainable.
+
 The apparent fork at `EXPIRED` is intentional. Expiry makes recovery eligible;
 it does not itself prove the worker is dead. A late worker and the supervisor may
 race. The ledger's compare-and-set on `current_execution_attempt` selects one
@@ -162,6 +164,8 @@ the lie a governed ledger exists to make unwritable.
 The honest version writes the only thing that is actually known — *we don't
 know it finished, so it didn't* — and does all of its writes in **one
 transaction**:
+
+**Listing:** Reconcile an expired attempt without guessing success
 
 ```python
 def recover(db, assignment_id, now):
@@ -337,6 +341,8 @@ flowchart TD
     W -->|persistent| K[Keep workspace inspectable]
 ```
 
+**Figure:** Recovery first commits failure evidence and clears current work atomically, then reclaims only temporary workspaces while preserving persistent ones for inspection.
+
 There are two compare-and-set moments hidden in that flow. The first is the
 re-read of the assignment after the expired-attempt scan: the worker may have
 finished between observation and decision. The second is the guarded update
@@ -483,24 +489,24 @@ only after the recovery transaction is durable.
 
 ## Summary
 
-This chapter built the supervisor's recovery path: a compare-and-set on
+The supervisor now recovers through a compare-and-set on
 `state = 'RUNNING' AND attempt_expires_at <= now` that writes a `FAILED`
 receipt with `failure_category="worker_lost"`, clears the fence, and only
 afterward applies workspace reclamation — all in the order that makes a
 second tick, or a second supervisor, find nothing left to do.
 
-The invariant it establishes is that unknown is never success: a genuinely
+The recovery rule is that unknown is never success: a genuinely
 `SIGKILL`ed worker's ledger stays honestly `RUNNING` until the supervisor
 says otherwise, and what it says is always `worker_lost`, never a guess
 based on whatever the dead process happened to leave behind.
 
-The failure it prevents is the tempting, more "diligent"-looking recovery
+The rejected design is the tempting, more "diligent"-looking recovery
 logic that checks for a `report.json` claiming `completed` and honors it —
 built and shown converting a real hard-kill into a false success on the
 strength of a file that could have been preplanted, half-written, or left
 by a process that was never going to finish correctly.
 
-Back at Lucy's shop: this is someone else walking in on a collapsed
+At Lucy's shop, this is someone else walking in on a collapsed
 worker's half-counted till and writing down "we don't know it was
 finished," not "looked done to me" — because the second sentence is how
 real money goes missing.

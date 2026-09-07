@@ -58,6 +58,8 @@ flowchart LR
     G -->|do not fire| N[Nothing recorded\nre-evaluated next pass]
 ```
 
+**Figure:** A durable signal is evaluated by a pure gate; only a firing decision atomically creates one governed work chain, while a non-fire creates no false work record.
+
 The signal is not a task. It records that the world crossed a meaningful
 boundary. The gate is not a worker. It decides whether that signal still merits
 work and specifies the governed work shape. Pulse is not a scheduler. One call
@@ -114,6 +116,8 @@ Note the `UNIQUE` on `wake_decisions.source_signal_id`. It looks like a
 detail. It is the entire chapter.
 
 ### The gate decides WHAT — and nothing else
+
+**Listing:** Decide whether one durable signal still deserves work
 
 ```python
 def wake_gate(db, signal_sku):
@@ -350,6 +354,8 @@ flowchart TD
     Zero -->|2+| None2[Ambiguous ownership\ngate returns None]
 ```
 
+**Figure:** The wake gate fires only when exactly one active outcome governs the signal's subject, refusing both missing and ambiguous ownership.
+
 *Figure — the Store's outcome-disambiguation check inside `store_wake_gate`.
 The stock-level check from the section above narrows signals to real
 candidates; this second, independent check narrows candidates to signals
@@ -455,6 +461,8 @@ flowchart TD
     Bound -->|yes| Disable[Disable automation]
     Bound -->|no| Retry[Remain eligible for a later due slot]
 ```
+
+**Figure:** A scheduler records observations without inventing runs, uniquely claims each due slot, and commits new condition state only after successful payload execution.
 
 The condition is a pure function from prior JSON state to
 `WatchDecision(fire, message, state)`. Its serialized state is capped at 16
@@ -662,6 +670,8 @@ flowchart LR
     R2 -->|resumes SAME assignment| Done[assignment.state = COMPLETED\nledger: 1 SOW, 1 assignment]
 ```
 
+**Figure:** A process death after work creation leaves a resumable assignment; the next pulse completes that same identity instead of duplicating the SOW and assignment.
+
 *Figure — the crash window `_resumable_signals` closes. A hard kill between
 canonical creation and provider execution leaves an assignment stuck at
 `CREATED`; the next ordinary `run_pulse_once` pass — no special "resume"
@@ -781,7 +791,7 @@ this repository's own suite will otherwise fail on the next `make verify`.
 
 ## Summary
 
-This chapter built `run_pulse_once`'s wake gate and wake decision: a pure
+The organization can now wake itself through `run_pulse_once`: a pure
 gate that decides what work a signal warrants, and a `UNIQUE(source_signal_id)`
 claim, made inside one transaction with the SOW and origin rows it creates,
 that lets exactly one canonical decision exist per signal.
@@ -791,18 +801,18 @@ condition persists observation state without inventing a run, a firing slot is
 claimed once by `(automation_id, due_at)`, and payload failure never commits a
 false checkpoint.
 
-The invariant it establishes is that self-generated work is provable only
+The governing condition is that self-generated work is provable only
 positively — a real `pulse.work_created` event and a `pulse_origins` row
 naming a real signal — never inferred from the absence of a manual
 dispatch call, which this chapter's own curriculum checker enforces by
 re-deriving the claim from the database rather than trusting the prose.
 
-The failure it prevents is the naive tick's double-order: retried or
+The naive tick's double-order is now refused: retried or
 re-run against the same signal, it created two replenishment SOWs from one
 sale, and nothing about that retry was unreasonable — ticks get retried
 constantly. The claimed decision closes it structurally, at the database.
 
-Back at Lucy's shop: this is the freezer alarm that fires exactly once per
+For Lucy, this is the freezer alarm that fires exactly once per
 low-stock sale, however many times the alarm system itself gets restarted
 or double-checks its own work.
 

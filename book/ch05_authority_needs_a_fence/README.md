@@ -63,6 +63,8 @@ sequenceDiagram
     DB-->>A: zero rows changed → refused
 ```
 
+**Figure:** A monotonically increasing fencing token lets the database reject Process A's late commit after Process B has acquired newer authority.
+
 The safety property comes from the `WHERE` clause at the terminal write, not
 from comparing wall clocks in Python. Time tells the system when takeover is
 allowed; monotonic tokens tell the protected resource which generation is
@@ -200,6 +202,8 @@ serializes the two. Note the claim also stamped a **fencing token** — number
 the owner's name.
 
 ### Completing under the token, not the name
+
+**Listing:** Complete work only under the current fencing token
 
 ```python
 def complete(db, message_id, actor_id, fencing_token):
@@ -437,6 +441,8 @@ sequenceDiagram
     DB-->>A: zero rows updated, stale writer refused
 ```
 
+**Figure:** Lease expiry permits takeover, while the token predicate prevents the superseded worker from completing the same message afterward.
+
 Checking only `claim_owner == actor_id` fails when both processes host the same
 durable actor. Checking only time fails because clocks do not revoke a process's
 memory or file descriptors. The monotonically increasing token makes each
@@ -516,6 +522,8 @@ sequenceDiagram
     B->>DB: finish incarnation 2
     DB-->>B: committed
 ```
+
+**Figure:** A session incarnation distinguishes successive claims even when the session name repeats, making a delayed completion from the prior incarnation harmless.
 
 `finish_session()` re-reads both rows inside one immediate transaction. It
 requires the current session host, exact incarnation, unexpired session lease,
@@ -651,7 +659,7 @@ cannot bypass either.
 
 ## Summary
 
-This chapter built a fencing token drawn from one shared, strictly
+Authority now carries a fencing token drawn from one shared, strictly
 increasing counter, layered under an actor lease: every claim's terminal
 write is a compare-and-set (CAS) whose `WHERE` clause checks the caller's
 token in the same statement that performs the write, never a value read
@@ -661,18 +669,18 @@ For resumable conversations, the same idea appears as a session incarnation:
 completion checks the host, generation, session lease, and host lease in the
 same transaction that records the result.
 
-The invariant it establishes is that a worker who no longer holds the
+The resulting invariant is that a worker who no longer holds the
 current lease may still be running, but its writes can never become
 canonical — the resource, not the worker's good behavior, is what refuses a
 stale token.
 
-The failure it prevents is two processes both believing they are the same
+This closes the case where two processes both believe they are the same
 actor — the ordinary shape of a crash-and-restart, not an attack — which the
 naive read-then-write claim let through silently, and which the CAS with a
 monotonic token refuses by construction, even when the stale process is
 still alive and finishes its work.
 
-Back at Lucy's shop: this is the numbered key that only turns for the
+At Lucy's shop, this is the numbered key that only turns for the
 current holder, so two staff who each believe they are closing tonight can
 never both count the till, no matter which one actually still has a key in
 hand.

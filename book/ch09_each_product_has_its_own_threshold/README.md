@@ -48,6 +48,8 @@ flowchart LR
     E --> K
 ```
 
+**Figure:** One sale transaction derives availability and the SKU-specific reorder decision, then commits inventory, cash, signal, and event effects together or none at all.
+
 `available` and `total` are derived inside the toy operation rather than passed
 as precomputed values. The unit price is still caller-supplied; a stronger
 production contract would look it up from the product record. The inventory row
@@ -121,6 +123,8 @@ db.commit()
 ```
 
 ### One exact sale, traced through every write
+
+**Listing:** Record a sale and its five effects atomically
 
 ```python
 def record_sale(db, sku, quantity, unit_price_cents):
@@ -358,6 +362,8 @@ sequenceDiagram
     B->>DB: validate against the committed value
 ```
 
+**Figure:** `BEGIN IMMEDIATE` serializes competing sales so the second writer validates against the first writer's committed inventory rather than a stale read.
+
 The lock is not protecting subtraction as a CPU operation. It protects the
 relationship between the read, the decision, and all five writes. Move the read
 above the transaction and both sellers can observe the same stock. Move cash or
@@ -503,24 +509,24 @@ Expected: all pass.
 
 ## Summary
 
-This chapter built `record_sale` as five writes inside one transaction —
+A sale now enters `record_sale` as five writes inside one transaction:
 inventory down, cash up, a severity-judged signal, a committed event, and a
 derived total — with the read of current stock happening *inside* the same
 `BEGIN IMMEDIATE` block as the decrement, and the reorder-point comparison
 evaluated per SKU, against that SKU's own row.
 
-The invariant it establishes is that severity is a property of where a SKU
+The governing rule is that severity is a property of where a SKU
 lands relative to its *own* threshold, never a property of how much sold:
 two genuinely identical two-unit sales on tea and coffee produced a
 `warning` and an `info` signal respectively, because the two SKUs' reorder
 points differ.
 
-The failure it prevents is the oversell — a check-then-act race where two
+The prevented failure is an oversell: a check-then-act race where two
 sales both read "2 available" before either writes, and the naive version
 built here drove `on_hand` to `-2`, promising ice cream that does not exist.
 Moving the read inside the transaction closes it.
 
-Back at Lucy's shop: this is why vanilla (which flies off the shelf) and
+For Lucy, this is why vanilla, which flies off the shelf, and
 lavender-honey (which nobody buys) each get their own reorder line instead
 of one shared number — and why a sale of either one is checked against
 reality at the instant it happens, not against what the till believed a

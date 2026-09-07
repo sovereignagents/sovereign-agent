@@ -1,8 +1,7 @@
 # Notation, conventions, and the chapter-to-lab map
 
-Plain Markdown, no site frontmatter, same as every other file in `book/` —
-see [`CONTENT-SOURCE.md`](CONTENT-SOURCE.md). This file is the second half
-of the book's front matter, alongside [`PREFACE.md`](PREFACE.md).
+This is the second half of the book's front matter, alongside
+[`PREFACE.md`](PREFACE.md).
 
 ## Recurring terms
 
@@ -20,14 +19,7 @@ own recurring narrative and mechanism vocabulary.
   starts here instead of at Chapter 2.
 - **Lucy.** The book's fictional running example: the owner of an ice cream
   shop who hands progressively more governed work to the organization you
-  build. Every chapter's closing narrative returns to her shop. She is not
-  Andrea (below) — see [`PREFACE.md`](PREFACE.md#who-should-read-this-book)
-  for why the book keeps the two separate on purpose.
-- **Andrea.** The real evaluation participant this book calibrates itself
-  against (`docs/andrea-alpha-evaluation.md`). Mentioned here only so a
-  reader who encounters her name in an evaluation document does not mistake
-  her for a second name for Lucy — they measure different things: Lucy is
-  the teaching fiction, Andrea is the human comprehension check.
+  build. Every chapter returns to the operational consequence at her shop.
 - **Compare-and-set (CAS).** A single atomic database statement whose
   `WHERE` clause both decides *and* performs a write in one step, so that no
   window exists between "read the current state" and "act on it" for a

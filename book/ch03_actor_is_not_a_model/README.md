@@ -67,6 +67,8 @@ sequenceDiagram
     end
 ```
 
+**Figure:** Role policy and host validation surround the provider call, so a model response remains a proposal until authorized host code commits it.
+
 This is a capability-security idea expressed with ordinary Python. The provider
 does not receive "authority" as prose in a prompt; it receives inputs and can
 return data. The host looks up `ROLE_AUTHORITY`, validates the report schema, and
@@ -88,6 +90,8 @@ flowchart LR
     W -->|admit| X[Host-side execution]
     X --> R[Receipt plus evidence]
 ```
+
+**Figure:** A provider-neutral envelope can reach different models or scripts without transferring execution authority out of the host's schema, policy, and workspace checks.
 
 The provider never receives a Python function reference that carries authority
 by itself. It receives JSON describing an assignment and returns JSON describing
@@ -187,6 +191,8 @@ authority is actually decided.
 
 Here is the real source of authority: a table mapping each role to the actions it
 may take. (This mirrors `ROLE_AUTHORITY` in `sovereign_agent.policy`.)
+
+**Listing:** Grant authority by role without consulting the provider
 
 ```python
 ROLE_AUTHORITY = {
@@ -472,6 +478,8 @@ sequenceDiagram
     A-->>H: parsed proposal or explicit failure
 ```
 
+**Figure:** The adapter treats help text, streams, and exit status as untrusted observations and exposes only capabilities it has actually probed.
+
 Notice the asymmetry: an unknown capability becomes absent, while an unknown
 output shape becomes failure. Neither becomes a guessed success. This is why
 `run_spec` uses an argv list with `shell=False`, why provider-specific code owns
@@ -607,6 +615,8 @@ flowchart TB
     A2 --> V
 ```
 
+**Figure:** Compaction changes the rendered context while preserving every source message; the summary is a cache boundary, not permission to rewrite history.
+
 Only an eligible assistant/tool exchange is summarized. System and user turns
 stay verbatim, while a configurable head and tail remain in full. If the
 summarizer raises or returns empty text, no marker is committed and the cursor
@@ -668,6 +678,8 @@ sequenceDiagram
     H-->>P: REFUSED (deny wins)
     Note over P,T: The tool is never invoked
 ```
+
+**Figure:** Discovery may reveal a destructive tool, but deny-first host policy refuses authorization before the tool can be invoked.
 
 `ToolCatalog.discover()` scores overlap with the name, description, and
 keywords, sorts ties by tool name, caps the caller's limit at ten, and returns
@@ -812,13 +824,13 @@ shell strings.
 
 ## Summary
 
-This chapter built the actor/provider split: an **actor** carries its
+Actor identity is now separate from provider choice: an **actor** carries its
 swappable `provider` as a field, alongside its fixed `role` and `authority`,
 and rebinding that field — reserved to ruling roles, recorded as an
 `actor.provider_rebound` event — changes only the proposal generator, never
 the actor's identity (`identity_unchanged: true`).
 
-The invariant it establishes is that **authority is granted by role, through
+The authority rule is that **authority is granted by role, through
 a role-to-actions policy (`ROLE_AUTHORITY`), never by the model behind the
 actor**. `require_authority` looks the role up in that table; it never
 inspects `provider` at all.
@@ -833,7 +845,7 @@ matter which model it is bound to, because `accept` was never in the
 operator role's action set to begin with, and swapping `scripted` for
 `ollama` or `claude` cannot add an entry the check never reads.
 
-Back at Lucy's shop, this is the literal answer to her friend's question: a
+At Lucy's shop, this answers her friend's question directly: a
 sharper model behind the operator proposes better restock quantities, but it
 never gets a longer leash, because the leash was never attached to the
 model.

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "title": "Building Zero Employee Organizations",
+  "subtitle": "Durable authority, recovery, and proof for AI agent systems",
+  "author": {
+    "name": "Rod Rivera",
+    "url": "https://www.profrod.ai/about"
+  },
+  "language": "en",
+  "frontMatter": [
+    {
+      "slug": "preface",
+      "title": "Preface",
+      "path": "PREFACE.md"
+    },
+    {
+      "slug": "conventions",
+      "title": "How to use this book",
+      "path": "CONVENTIONS.md"
+    }
+  ],
+  "parts": [
+    {
+      "number": 1,
+      "slug": "durable-foundations",
+      "title": "Durable foundations",
+      "path": "parts/part-1-durable-foundations.md",
+      "chapters": [0, 1, 2, 3]
+    },
+    {
+      "number": 2,
+      "slug": "bounded-autonomy",
+      "title": "Bounded autonomy",
+      "path": "parts/part-2-bounded-autonomy.md",
+      "chapters": [4, 5, 6, 7]
+    },
+    {
+      "number": 3,
+      "slug": "proof-at-scale",
+      "title": "Proof at scale",
+      "path": "parts/part-3-proof-at-scale.md",
+      "chapters": [8, 9, 10, 11, 12]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "advanced-mechanisms",
+      "title": "Advanced mechanisms",
+      "path": "ADVANCED_MECHANISMS.md"
+    },
+    {
+      "slug": "agent-ecosystem-map",
+      "title": "Field guide to the agent ecosystem",
+      "path": "AGENT_ECOSYSTEM_MAP.md"
+    }
+  ],
+  "resources": [
+    {
+      "slug": "labs",
+      "title": "Companion labs",
+      "path": "labs/README.md"
+    }
+  ]
+}
