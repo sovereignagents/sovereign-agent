@@ -101,6 +101,18 @@ def stage_skill(db: Database, path: Path) -> Skill:
     return skill
 
 
+def skill_snapshot(db: Database) -> tuple[str, tuple[Skill, ...]]:
+    """One read binds active guidance and provenance to an evaluation baseline."""
+    rows = [
+        tuple(row)
+        for row in db.connection.execute(
+            "SELECT name,version,content,source FROM assistant_skills WHERE active=1 ORDER BY name"
+        )
+    ]
+    digest = hashlib.sha256(json.dumps(rows).encode()).hexdigest()
+    return digest, tuple(Skill.model_validate_json(row[2]) for row in rows)
+
+
 def activate_skill(
     db: Database,
     name: str,
@@ -108,6 +120,7 @@ def activate_skill(
     *,
     evaluate: Callable[[Skill], dict[str, bool]],
     required_cases: frozenset[str],
+    expected_state: str | None = None,
 ) -> dict[str, bool]:
     row = db.connection.execute(
         "SELECT content FROM assistant_skills WHERE name=? AND version=?", (name, version)
@@ -115,12 +128,19 @@ def activate_skill(
     if row is None or not required_cases:
         raise ValueError("staged skill and a nonempty regression suite required")
     skill = Skill.model_validate_json(row[0])
+    baseline = skill_snapshot(db)[0] if expected_state is None else expected_state
     results = evaluate(skill)
+    if skill.model_dump_json() != row[0]:
+        raise ValueError(
+            "evaluation changed the candidate instead of testing its immutable version"
+        )
     if not required_cases.issubset(results) or any(value is not True for value in results.values()):
         raise ValueError("candidate did not pass all required regression cases")
     with db.immediate() as connection:
         # The staged version is immutable; evaluating outside the transaction does
         # not turn a long model evaluation into a database-wide write lock.
+        if skill_snapshot(db)[0] != baseline:
+            raise PermissionError("active skill configuration changed during evaluation")
         connection.execute("UPDATE assistant_skills SET active=0 WHERE name=?", (name,))
         connection.execute(
             "UPDATE assistant_skills SET active=1 WHERE name=? AND version=?", (name, version)

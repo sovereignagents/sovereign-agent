@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from reference_organizations.store.evaluation import CASES, candidate_checks, evaluate
-from sovereign_agent.assistant_context import Skill, activate_skill
+from sovereign_agent.assistant_context import Skill, activate_skill, skill_snapshot
 from sovereign_agent.database import Database
 from sovereign_agent.events import append_event
 from sovereign_agent.model_turn import Model
@@ -55,14 +55,28 @@ def change_skill(
     ):
         raise ValueError("rollback requires a previously activated version")
     skill = Skill.model_validate_json(row["content"])
-    report = evaluate(model_factory, skill=skill, repeats=repeats)
+    baseline, active = skill_snapshot(db)
+    report = evaluate(model_factory, skill=skill, skills=active, repeats=repeats)
+    report["active_skill_state"] = baseline
     report["model_label"] = model_label
     report["operation"] = "rollback" if rollback else "activation"
     path, digest = save_report(report_root, report)
     checks = candidate_checks(report)
     required = frozenset(f"{case.name}:{repeat}" for case in CASES for repeat in range(repeats))
+    status = "REJECTED"
     if report["passed"]:
-        activate_skill(db, name, version, evaluate=lambda _: checks, required_cases=required)
+        try:
+            activate_skill(
+                db,
+                name,
+                version,
+                evaluate=lambda _: checks,
+                required_cases=required,
+                expected_state=baseline,
+            )
+            status = "ROLLED_BACK" if rollback else "ACTIVATED"
+        except PermissionError:
+            status = "STALE"
     with db.immediate():
         append_event(
             db,
@@ -74,15 +88,17 @@ def change_skill(
                 "report": path.name,
                 "sha256": digest,
                 "rollback": rollback,
+                "activation_status": status,
             },
         )
     return {
-        "status": ("ROLLED_BACK" if rollback else "ACTIVATED") if report["passed"] else "REJECTED",
+        "status": status,
         "passed": report["passed"],
         "name": name,
         "version": version,
         "report": str(path),
         "sha256": digest,
         "interpretation": "Passing named scenario checks is bounded evidence. "
+        "STALE requires a new evaluation before activation. "
         "The offline model does not measure a skill's language-model quality.",
     }

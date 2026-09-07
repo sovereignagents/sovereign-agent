@@ -78,12 +78,19 @@ def evaluate(
     *,
     cases: tuple[Case, ...] = CASES,
     skill: Skill | None = None,
+    skills: tuple[Skill, ...] = (),
     repeats: int = 1,
     limits: Limits | None = None,
 ) -> dict[str, Any]:
     if not cases or not 1 <= repeats <= 5 or len({c.name for c in cases}) != len(cases):
         raise ValueError("distinct cases and one to five bounded repetitions required")
     limits = limits or Limits()
+    selected = {item.name: item.model_copy(deep=True) for item in skills}
+    if len(selected) != len(skills):
+        raise ValueError("only one active version per skill name may be evaluated")
+    if skill is not None:
+        selected[skill.name] = skill.model_copy(deep=True)
+    configuration = tuple(selected[name] for name in sorted(selected))
     rows = []
     for case in cases:
         for repetition in range(repeats):
@@ -100,16 +107,16 @@ def evaluate(
                             "VALUES (?,?,?,?,?)",
                             (sku, stock, reserved, threshold, "{}"),
                         )
-                    if skill:
+                    for configured in configuration:
                         # Candidate context is isolated. Evaluating never changes an active skill.
                         connection.execute(
                             "INSERT INTO assistant_skills(name,version,content,source,active) "
                             "VALUES (?,?,?,?,1)",
                             (
-                                skill.name,
-                                skill.version,
-                                skill.model_dump_json(),
-                                hashlib.sha256(skill.model_dump_json().encode()).hexdigest(),
+                                configured.name,
+                                configured.version,
+                                configured.model_dump_json(),
+                                hashlib.sha256(configured.model_dump_json().encode()).hexdigest(),
                             ),
                         )
                 dispatcher = shop_dispatcher(db)
@@ -180,6 +187,16 @@ def evaluate(
     return {
         "schema": 1,
         "settings": asdict(limits),
+        "scope": "Active or candidate skill configuration over isolated shop scenarios; "
+        "live session preferences, history and optional tools are not copied.",
+        "skills": [
+            {
+                "name": configured.name,
+                "version": configured.version,
+                "sha256": hashlib.sha256(configured.model_dump_json().encode()).hexdigest(),
+            }
+            for configured in configuration
+        ],
         "totals": {
             key: sum(row[key] for row in rows)
             for key in (

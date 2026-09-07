@@ -158,7 +158,9 @@ def handle(args: argparse.Namespace) -> int:
         from reference_organizations.store.evaluation import evaluate
         from reference_organizations.store.improvement import save_report
 
-        report = evaluate(lambda: model, repeats=args.repeats, limits=limits)
+        baseline, active = assistant_context.skill_snapshot(db)
+        report = evaluate(lambda: model, skills=active, repeats=args.repeats, limits=limits)
+        report["active_skill_state"] = baseline
         path, digest = save_report(root / "evaluations", report)
         result = {"passed": report["passed"], "report": str(path), "sha256": digest}
     elif action == "skill-stage":
