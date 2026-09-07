@@ -23,6 +23,11 @@ class Claim:
     generation: int
     owner: str
     epoch: str
+    subject: str = ""
+
+
+class IntakeLimitError(ValueError):
+    """A condition may defer admission without consuming its pending episode."""
 
 
 def _enqueue(
@@ -33,6 +38,9 @@ def _enqueue(
     now: float,
     channel: str = "local",
     recipient: str = "",
+    subject: str = "",
+    *,
+    require_admission: bool = False,
 ) -> str:
     if (
         not origin
@@ -42,6 +50,8 @@ def _enqueue(
         or len(origin) > 250
         or len(session) > 200
         or not math.isfinite(now)
+        or not isinstance(subject, str)
+        or len(subject) > 100
     ):
         raise ValueError("nonempty bounded intake required")
     existing = connection.execute(
@@ -53,8 +63,11 @@ def _enqueue(
             existing["prompt"],
             existing["channel"],
             existing["recipient"],
-        ) != (session, prompt, channel, recipient):
+            existing["subject"],
+        ) != (session, prompt, channel, recipient, subject):
             raise ValueError("intake identity reused for different content")
+        if require_admission and existing["status"] == "REJECTED":
+            raise IntakeLimitError("existing intake was rejected")
         return str(existing["id"])
     control = channel.startswith("telegram:") and prompt.split(maxsplit=1)[0] in {
         "/approve",
@@ -74,11 +87,13 @@ def _enqueue(
         (session, int(control)),
     ).fetchone()[0]
     rejected = admitted >= (200 if control else 50) or pending >= 20
+    if rejected and require_admission:
+        raise IntakeLimitError("intake capacity exhausted; condition remains pending")
     identifier = uuid.uuid4().hex
     connection.execute(
         "INSERT INTO assistant_work"
-        "(id,origin,session,prompt,created,channel,recipient,status,result,control) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?)",
+        "(id,origin,session,prompt,created,channel,recipient,status,result,control,subject) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         (
             identifier,
             origin,
@@ -90,6 +105,7 @@ def _enqueue(
             "REJECTED" if rejected else "READY",
             "Request limit reached; resolve pending work or return tomorrow." if rejected else None,
             int(control),
+            subject,
         ),
     )
     if not rejected:
@@ -110,6 +126,7 @@ def enqueue(
     now: float | None = None,
     channel: str = "local",
     recipient: str = "",
+    subject: str = "",
 ) -> str:
     with db.immediate() as connection:
         return _enqueue(
@@ -120,6 +137,7 @@ def enqueue(
             time.time() if now is None else now,
             channel,
             recipient,
+            subject,
         )
 
 
@@ -221,7 +239,15 @@ def claim(
             (generation, owner, now + ttl, row["id"]),
         )
         append_event(db, "assistant.work.claimed", {"work": row["id"], "generation": generation})
-        return Claim(row["id"], row["session"], row["prompt"], generation, owner, control["epoch"])
+        return Claim(
+            row["id"],
+            row["session"],
+            row["prompt"],
+            generation,
+            owner,
+            control["epoch"],
+            row["subject"],
+        )
 
 
 def assert_current(connection: sqlite3.Connection, work: Claim, now: float | None = None) -> None:
@@ -241,8 +267,8 @@ def assert_current(connection: sqlite3.Connection, work: Claim, now: float | Non
         raise PermissionError("runtime paused or replaced by restore")
     row = connection.execute(
         "SELECT 1 FROM assistant_work WHERE id=? AND owner=? AND generation=? "
-        "AND status='RUNNING' AND expires>?",
-        (work.id, work.owner, work.generation, now),
+        "AND status='RUNNING' AND expires>? AND subject=?",
+        (work.id, work.owner, work.generation, now, work.subject),
     ).fetchone()
     if row is None:
         raise PermissionError("worker claim expired or superseded")

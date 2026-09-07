@@ -51,6 +51,8 @@ def propose(
         raise ValueError("positive integral bounded quantity required")
     with db.immediate() as connection:
         assert_current(connection, work)
+        if work.subject and work.subject != sku:
+            raise PermissionError("proposal differs from the work item's subject")
         product = connection.execute("SELECT record FROM products WHERE sku=?", (sku,)).fetchone()
         if product is None:
             raise ValueError("unknown product")
@@ -177,7 +179,7 @@ def _record(db: Database, work: Claim, identifier: str, receipt: dict[str, Any])
             raise ValueError("supplier receipt does not match the exact intent")
         if receipt.get("status") not in {"ACCEPTED", "REJECTED"}:
             raise ValueError("supplier outcome is not conclusive")
-        if row["status"] in {"CONFIRMED", "REJECTED"}:
+        if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
             return dict(json.loads(row["receipt"]))
         if row["status"] not in {"SENDING", "UNKNOWN"}:
             raise PermissionError("order was not admitted for transmission")
@@ -213,7 +215,7 @@ def execute(
     assert_current(db.connection, work)
     if row["target"] != supplier.identity:
         raise PermissionError("supplier destination differs from the approved proposal")
-    if row["status"] in {"CONFIRMED", "REJECTED"}:
+    if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
         return dict(json.loads(row["receipt"]))
     if row["status"] in {"SENDING", "UNKNOWN"}:
         try:
@@ -276,3 +278,59 @@ def execute(
                 (identifier,),
             )
         return {"status": "UNKNOWN", "operation": identifier}
+
+
+def receive(
+    db: Database, identifier: str, reference: str, *, actor: str, policy: SpendingPolicy
+) -> dict[str, Any]:
+    """Record one operator-observed full delivery; supplier acceptance is not stock."""
+    if actor not in policy.operators:
+        raise PermissionError("operator is not allowlisted")
+    if not reference.strip() or len(reference) > 200:
+        raise ValueError("a bounded delivery reference is required")
+    with db.immediate() as connection:
+        if connection.execute("SELECT paused FROM assistant_control WHERE id=1").fetchone()[0]:
+            raise PermissionError("restored inventory requires reconciliation before receiving")
+        previous = connection.execute(
+            "SELECT * FROM assistant_deliveries WHERE order_id=?", (identifier,)
+        ).fetchone()
+        if previous:
+            if previous["reference"] != reference:
+                raise ValueError("a different delivery is already recorded for this order")
+            return {"status": "DELIVERED", "order": identifier, "duplicate": True}
+        row = connection.execute(
+            "SELECT * FROM assistant_orders WHERE id=?", (identifier,)
+        ).fetchone()
+        if row is None or row["status"] != "CONFIRMED":
+            raise PermissionError("a confirmed order is required before receiving")
+        proposal = json.loads(row["proposal"])
+        updated = connection.execute(
+            "UPDATE inventory SET on_hand=on_hand+?,"
+            "record=json_set(record,'$.on_hand',on_hand+?) WHERE sku=?",
+            (proposal["quantity"], proposal["quantity"], proposal["sku"]),
+        )
+        if updated.rowcount != 1:
+            raise ValueError("delivery product has no inventory record")
+        connection.execute(
+            "INSERT INTO assistant_deliveries VALUES (?,?,?,?,?)",
+            (identifier, reference, actor, proposal["quantity"], time.time()),
+        )
+        connection.execute(
+            "UPDATE assistant_orders SET status='DELIVERED' WHERE id=?", (identifier,)
+        )
+        append_event(
+            db,
+            "assistant.order.received",
+            {
+                "order": identifier,
+                "reference": reference,
+                "actor": actor,
+                "quantity": proposal["quantity"],
+            },
+        )
+    return {
+        "status": "DELIVERED",
+        "order": identifier,
+        "quantity": proposal["quantity"],
+        "duplicate": False,
+    }

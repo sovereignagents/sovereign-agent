@@ -55,7 +55,7 @@ def seed_lucy(db: Database) -> None:
         )
 
 
-def shop_dispatcher(db: Database) -> Dispatcher:
+def shop_dispatcher(db: Database, *, subject: str = "") -> Dispatcher:
     def list_stock(_: NoArguments) -> list[dict[str, Any]]:
         rows = [
             dict(row)
@@ -64,7 +64,8 @@ def shop_dispatcher(db: Database) -> Dispatcher:
                 "sum(json_extract(o.proposal,'$.quantity')) FROM assistant_orders o WHERE "
                 "json_extract(o.proposal,'$.sku')=i.sku AND "
                 "o.status IN ('APPROVED','SENDING','UNKNOWN','CONFIRMED')),0) AS on_order "
-                "FROM inventory i ORDER BY i.sku"
+                "FROM inventory i WHERE (?='' OR i.sku=?) ORDER BY i.sku",
+                (subject, subject),
             )
         ]
         for row in rows:
@@ -74,6 +75,8 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         return rows
 
     def supplier(args: StockArguments) -> dict[str, Any]:
+        if subject and args.sku != subject:
+            raise PermissionError("product is outside this work item's subject")
         row = db.connection.execute(
             "SELECT record FROM products WHERE sku=?", (args.sku,)
         ).fetchone()

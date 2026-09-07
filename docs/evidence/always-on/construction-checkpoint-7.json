@@ -1,0 +1,25 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "306bc0c710074db24332ceab93dd480b9a2cb12f",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "17871074df766a6a38e1981e9649a7d1809ea5c216f808b300368330f93eeb36",
+  "tests": {
+    "passed": 566,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 561,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9550,
+    "installed_modules": 63,
+    "installed_nonblank_lines": 11796
+  },
+  "behavior": "Durable stock episodes, scoped replenishment evidence, unattended stock intake, exactly one observed full delivery credit",
+  "remaining": "Twelve chapters, bounded delegation, account-wide restore reconciliation, Linux operations and integrated acceptance, proposal, comparisons and exact-source site migration"
+}

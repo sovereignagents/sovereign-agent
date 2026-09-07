@@ -24,6 +24,7 @@ def handle(args: argparse.Namespace) -> int:
     from reference_organizations.store.agent import OfflineShopModel, seed_lucy
     from reference_organizations.store.assistant import reconcile_once, run_once
     from reference_organizations.store.extra_tools import Sandbox, optional_tools
+    from reference_organizations.store.stock_conditions import disable, scan, watch
     from reference_organizations.store.supplier import SupplierClient
 
     root = Path(args.root).resolve()
@@ -72,8 +73,22 @@ def handle(args: argparse.Namespace) -> int:
             )
     elif action == "work":
         assistant_work.tick(db)
+        scan(db)
         result = run_once(
             db, model, policy=policy, supplier=supplier, limits=limits, extra_tools=edges
+        )
+    elif action == "watch-stock":
+        identifier = args.id or "stock:" + args.value
+        watch(
+            db, identifier, args.session, args.value, channel=args.channel, recipient=args.recipient
+        )
+        result = {"status": "WATCHING", "condition": identifier, "subject": args.value}
+    elif action == "unwatch-stock":
+        disable(db, args.value)
+        result = {"status": "DISABLED", "condition": args.value, "existing_work": "retained"}
+    elif action == "receive":
+        result = assistant_orders.receive(
+            db, args.value, args.delivery_ref, actor=args.actor or "lucy", policy=policy
         )
     elif action == "schedule":
         assistant_work.schedule(
@@ -83,6 +98,8 @@ def handle(args: argparse.Namespace) -> int:
             args.value or "Prepare the morning replenishment brief.",
             first_due=args.first_due if args.first_due is not None else time.time(),
             interval_seconds=args.interval,
+            channel=args.channel,
+            recipient=args.recipient,
         )
         result = {
             "status": "SCHEDULED",
@@ -225,6 +242,7 @@ def handle(args: argparse.Namespace) -> int:
                     if stop.is_set():
                         break
                     assistant_work.tick(db)
+                    scan(db)
                     item = run_once(
                         db,
                         model,
@@ -258,6 +276,9 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "init",
             "ask",
             "work",
+            "watch-stock",
+            "unwatch-stock",
+            "receive",
             "schedule",
             "status",
             "approve",
@@ -278,12 +299,19 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("value", nargs="?", default="")
     parser.add_argument("--session", default="lucy")
+    parser.add_argument(
+        "--channel", default="local", help="output route for schedules and stock watches"
+    )
+    parser.add_argument(
+        "--recipient", default="", help="operator chat ID for a Telegram output route"
+    )
     parser.add_argument("--id", default="")
     parser.add_argument("--key", default="")
     parser.add_argument("--version", default="")
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--actor", default="")
     parser.add_argument("--digest", default="")
+    parser.add_argument("--delivery-ref", default="")
     parser.add_argument("--approval-seconds", type=int, default=3600)
     parser.add_argument("--total-pence", type=int, default=20_000)
     parser.add_argument("--automatic-pence", type=int, default=0)

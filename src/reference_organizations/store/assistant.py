@@ -154,7 +154,7 @@ def run_once(
         ).fetchone()
         if existing and supplier is not None:
             return _orders(db, work, supplier, policy, should_stop=should_stop)
-        tools = shop_dispatcher(db)
+        tools = shop_dispatcher(db, subject=work.subject)
         if supplier is not None:
             calculation = tools
 
@@ -226,6 +226,34 @@ def run_once(
                 db, work, limits.estimated_call_pence
             ),
         )
+        if work.subject and result.status == "COMPLETED":
+            requested = {
+                call["id"]
+                for message in result.messages
+                for call in message.get("tool_calls", [])
+                if call["function"]["name"] == "draft_order"
+            }
+            drafted = any(
+                json.loads(message["content"]).get("ok") is True
+                for message in result.messages
+                if message["role"] == "tool" and message["tool_call_id"] in requested
+            )
+            stock = shop_dispatcher(db, subject=work.subject).invoke(
+                ToolCall(id="outcome-check", name="list_stock", arguments={})
+            )
+            if (
+                not stock["ok"]
+                or not stock["value"]
+                or (stock["value"][0]["needed"] > 0 and not drafted)
+            ):
+                answer = "Scoped replenishment stopped without the required successful draft."
+                assistant_work.finish(db, work, "BLOCKED", answer)
+                return {
+                    "status": "BLOCKED",
+                    "work": work.id,
+                    "answer": answer,
+                    "loop": asdict(result),
+                }
         answer = result.answer or "The agent stopped: " + result.status
         state = "DONE" if result.status == "COMPLETED" else "BLOCKED"
         if supplier is not None and result.status == "COMPLETED":
