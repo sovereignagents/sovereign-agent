@@ -1,0 +1,9 @@
+{
+  "checked": "2026-09-07",
+  "project": "openclaw/openclaw",
+  "commit": "354538083db0a8728e16238cbd0b7a304416ff24",
+  "path": "src/auto-reply/reply/session-writer-delivery-authority.ts",
+  "url": "https://raw.githubusercontent.com/openclaw/openclaw/354538083db0a8728e16238cbd0b7a304416ff24/src/auto-reply/reply/session-writer-delivery-authority.ts",
+  "sha256": "fc6b4c2edc6349e0dd0fa9e296f63f90647b47f2fe17d39f10acd0176e655fe7",
+  "scope": "Inspected source, not a runtime test of OpenClaw. For payloads carrying writer authority, the functions compare current session ID and optional lifecycle/writer values and refuse changed ownership. Missing authority is a distinct permitted path. No uniqueness or universal-provider coverage claim."
+}
