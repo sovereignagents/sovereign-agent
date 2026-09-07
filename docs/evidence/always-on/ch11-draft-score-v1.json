@@ -1,0 +1,49 @@
+{
+  "scope": "draft shape only; source synchronization, link verification, rendered review and publication acceptance remain open",
+  "source_sha256": "364612766b4220243cb29b123eb59fd4fc7fa95005bd2f339356bb06717e6d72",
+  "site_instrument_commit": "15736177430e7c0449d237a55f8e50efaa00e709",
+  "score": 95,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 80,
+    "practice": 100,
+    "visuals": 100,
+    "seo": 100,
+    "craft": 97.6
+  },
+  "metrics": {
+    "words": 5990,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 10,
+    "exercises": 5,
+    "maxProseWall": 287,
+    "internalLinks": 1,
+    "descriptionChars": 193
+  },
+  "nextActions": [
+    {
+      "ruleId": "book/recall",
+      "action": "Add active-recall questions",
+      "tip": "Require the learner to predict behavior or explain a boundary without rereading the chapter.",
+      "estGain": 8,
+      "dimension": "pedagogy"
+    },
+    {
+      "ruleId": "ai-writing/low-ttr",
+      "action": "Type-token ratio 0.276 on 4033 words (below 0.40 threshold)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 4.1 sentences, CV 0.21 across 60 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}

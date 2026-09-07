@@ -62,7 +62,16 @@ class MCPClient:
             if listing.get("nextCursor"):
                 raise ValueError("teaching client requires a bounded unpaginated tool set")
             tools = listing.get("tools")
-            if not isinstance(tools, list) or len(tools) > 32:
+            if (
+                not isinstance(tools, list)
+                or len(tools) > 32
+                or any(
+                    not isinstance(item, dict)
+                    or not isinstance(item.get("name"), str)
+                    or not item["name"]
+                    for item in tools
+                )
+            ):
                 raise ValueError("invalid MCP tool list")
             self.discovered = {item["name"] for item in tools}
             if len(self.discovered) != len(tools):
@@ -113,7 +122,11 @@ class MCPClient:
             message = self._receive(deadline)
             if "method" in message and "id" not in message:
                 continue  # Bounded notifications; never execute server instructions.
-            if message.get("id") != self.sequence or "error" in message:
+            if (
+                type(message.get("id")) is not int
+                or message["id"] != self.sequence
+                or "error" in message
+            ):
                 raise ValueError("MCP request failed or response identity mismatched")
             result = message.get("result")
             if not isinstance(result, dict):

@@ -91,7 +91,7 @@
       "title": "Isolate tools and untrusted content",
       "path": "ch11_isolation/README.md",
       "checkpoint": "checkpoints/ch11.py",
-      "status": "PLANNED"
+      "status": "DRAFT"
     },
     {
       "number": 12,

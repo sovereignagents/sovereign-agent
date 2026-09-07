@@ -14,6 +14,24 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+# Trusted PID 1 reads no report output. A different UID prevents the report
+# from disabling its deadline; exiting PID 1 terminates the container's tasks.
+_CONTAINER_INIT = """import os, sys, time
+end = time.monotonic() + float(sys.argv[1])
+child = os.fork()
+if child == 0:
+    os.setgroups([])
+    os.setgid(65534)
+    os.setuid(65534)
+    os.execv(sys.executable, [sys.executable, "-I", "-B", "/input/program.py"])
+while time.monotonic() < end:
+    finished, status = os.waitpid(child, os.WNOHANG)
+    if finished:
+        os._exit(0 if os.waitstatus_to_exitcode(status) == 0 else 1)
+    time.sleep(0.01)
+os._exit(124)
+"""
+
 
 def run_python(
     source: str,
@@ -65,7 +83,11 @@ def run_python(
         if "," in str(inputs.absolute()):
             raise ValueError("sandbox scratch path cannot contain mount-option separators")
         inputs.mkdir(mode=0o755)
-        for filename, content in (("program.py", source.encode()), ("data.json", encoded)):
+        for filename, content in (
+            ("program.py", source.encode()),
+            ("data.json", encoded),
+            ("runner.py", _CONTAINER_INIT.encode()),
+        ):
             path = inputs / filename
             path.write_bytes(content)
             path.chmod(0o444)
@@ -79,13 +101,15 @@ def run_python(
             "--log-driver=none",
             "--read-only",
             "--cap-drop=ALL",
+            "--cap-add=SETUID",
+            "--cap-add=SETGID",
             "--security-opt=no-new-privileges",
             "--pids-limit=32",
             "--memory=64m",
             "--cpus=1",
             "--ulimit",
             "nofile=64:64",
-            "--user=65534:65534",
+            "--user=0:0",
             "--tmpfs",
             "/tmp:rw,noexec,nosuid,size=8m",
             "--mount",
@@ -94,7 +118,8 @@ def run_python(
             image,
             "-I",
             "-B",
-            "/input/program.py",
+            "/input/runner.py",
+            str(seconds),
         ]
         process = subprocess.Popen(
             command,
@@ -124,8 +149,9 @@ def run_python(
                         break
             if outcome == "COMPLETED":
                 try:
-                    if process.wait(timeout=max(0.01, deadline - time.monotonic())):
-                        outcome = "TOOL_FAILED"
+                    code = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+                    if code:
+                        outcome = "TIME_LIMIT" if code == 124 else "TOOL_FAILED"
                 except subprocess.TimeoutExpired:
                     outcome = "TIME_LIMIT"
         finally:

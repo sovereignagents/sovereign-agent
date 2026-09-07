@@ -6,6 +6,11 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Give isolated reports a container-owned deadline that survives host-runner
+  death. Drop report privileges before execution and verify hostile signal,
+  identity, filesystem and network attempts on Linux. Validate MCP response
+  identities and discovered tool names before use.
+
 - Persist the basis of order approvals and revalidate automatic grants against
   current policy before sending. Historical grants require explicit reapproval
   when their basis is unknown. Same-product revisions revoke obsolete unsent
