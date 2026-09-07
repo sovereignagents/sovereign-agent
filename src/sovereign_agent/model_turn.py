@@ -65,11 +65,19 @@ class HTTPModel:
     """
 
     def __init__(
-        self, base_url: str = "http://localhost:11434/v1", model: str = "qwen3", api_key: str = ""
+        self,
+        base_url: str = "http://localhost:11434/v1",
+        model: str = "qwen3",
+        api_key: str = "",
+        *,
+        reasoning_effort: str | None = None,
     ) -> None:
         from urllib.parse import urlsplit
 
         parsed = urlsplit(base_url)
+        if reasoning_effort not in {None, "none", "low", "medium", "high", "max"}:
+            raise ValueError("unsupported reasoning setting")
+        self.reasoning_effort = reasoning_effort
         if (
             parsed.scheme not in {"http", "https"}
             or not parsed.hostname
@@ -107,6 +115,8 @@ class HTTPModel:
         }
         if tools:
             payload["tools"] = tools
+        if self.reasoning_effort is not None:
+            payload["reasoning_effort"] = self.reasoning_effort
         headers = {"Content-Type": "application/json"}
         if self._key:
             headers["Authorization"] = f"Bearer {self._key}"

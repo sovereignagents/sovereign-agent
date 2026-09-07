@@ -23,6 +23,7 @@ from sovereign_agent.telegram_channel import Telegram, deliver_one, poll
 def handle(args: argparse.Namespace) -> int:
     from reference_organizations.store.agent import OfflineShopModel, seed_lucy
     from reference_organizations.store.assistant import reconcile_once, run_once
+    from reference_organizations.store.extra_tools import Sandbox, optional_tools
     from reference_organizations.store.supplier import SupplierClient
 
     root = Path(args.root).resolve()
@@ -41,12 +42,23 @@ def handle(args: argparse.Namespace) -> int:
             os.environ.get("SOVEREIGN_AGENT_LLM_BASE_URL", "http://localhost:11434/v1"),
             os.environ.get("SOVEREIGN_AGENT_LLM_MODEL", "qwen3"),
             os.environ.get("SOVEREIGN_AGENT_LLM_API_KEY", ""),
+            reasoning_effort=None
+            if args.reasoning_effort == "provider-default"
+            else args.reasoning_effort,
         )
     endpoint = args.supplier or os.environ.get("SOVEREIGN_AGENT_SUPPLIER", "")
     supplier = SupplierClient(endpoint) if endpoint else None
     limits = Limits(
         estimated_call_pence=args.estimated_call_pence, model_budget_pence=args.model_budget_pence
     )
+    sandbox = None
+    if args.sandbox_report:
+        sandbox = Sandbox(
+            os.environ.get("SOVEREIGN_AGENT_SANDBOX_IMAGE", ""),
+            Path(os.environ.get("SOVEREIGN_AGENT_SANDBOX_SCRATCH", str(root / "sandbox"))),
+            os.environ.get("SOVEREIGN_AGENT_DOCKER_HOST"),
+        )
+    edges = tuple(optional_tools(db, mcp_catalog=args.mcp_catalog, sandbox=sandbox))
     result: Any = {"status": "INITIALIZED", "root": str(root)}
     action = args.action
     if action == "ask":
@@ -55,10 +67,14 @@ def handle(args: argparse.Namespace) -> int:
         )
         result = {"work": identifier, "status": "QUEUED"}
         if not args.enqueue_only:
-            result = run_once(db, model, policy=policy, supplier=supplier, limits=limits)
+            result = run_once(
+                db, model, policy=policy, supplier=supplier, limits=limits, extra_tools=edges
+            )
     elif action == "work":
         assistant_work.tick(db)
-        result = run_once(db, model, policy=policy, supplier=supplier, limits=limits)
+        result = run_once(
+            db, model, policy=policy, supplier=supplier, limits=limits, extra_tools=edges
+        )
     elif action == "schedule":
         assistant_work.schedule(
             db,
@@ -138,6 +154,29 @@ def handle(args: argparse.Namespace) -> int:
             "status": "PAUSED",
             "reason": "Restored state requires external reconciliation and renewed authority.",
         }
+    elif action == "evaluate":
+        from reference_organizations.store.evaluation import evaluate
+        from reference_organizations.store.improvement import save_report
+
+        report = evaluate(lambda: model, repeats=args.repeats, limits=limits)
+        path, digest = save_report(root / "evaluations", report)
+        result = {"passed": report["passed"], "report": str(path), "sha256": digest}
+    elif action == "skill-stage":
+        skill = assistant_context.stage_skill(db, Path(args.value))
+        result = {"status": "STAGED", "name": skill.name, "version": skill.version}
+    elif action in {"skill-activate", "skill-rollback"}:
+        from reference_organizations.store.improvement import change_skill
+
+        result = change_skill(
+            db,
+            args.value,
+            args.version,
+            lambda: model,
+            root / "evaluations",
+            repeats=args.repeats,
+            rollback=action == "skill-rollback",
+            model_label="live HTTP model" if isinstance(model, HTTPModel) else "offline fixture",
+        )
     elif action == "service":
         result = assistant_service.service(
             args.value, root, Path(sys.executable).with_name("sovereign-agent")
@@ -175,6 +214,7 @@ def handle(args: argparse.Namespace) -> int:
                                 supplier=supplier,
                                 limits=limits,
                                 should_stop=stop.is_set,
+                                extra_tools=edges,
                                 control_only=True,
                             )
                 else:
@@ -190,6 +230,7 @@ def handle(args: argparse.Namespace) -> int:
                         supplier=supplier,
                         limits=limits,
                         should_stop=stop.is_set,
+                        extra_tools=edges,
                     )
                 if bot and not stop.is_set():
                     deliver_one(db, bot, numeric)
@@ -202,7 +243,7 @@ def handle(args: argparse.Namespace) -> int:
             stop.wait(min(60, 2**failures) if failures else 1)
         result = {"status": "STOPPED"}
     print(json.dumps(result, indent=2, default=str))
-    return 0
+    return 1 if isinstance(result, dict) and result.get("passed") is False else 0
 
 
 def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
@@ -227,12 +268,18 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "restore",
             "service",
             "serve",
+            "evaluate",
+            "skill-stage",
+            "skill-activate",
+            "skill-rollback",
         ],
     )
     parser.add_argument("value", nargs="?", default="")
     parser.add_argument("--session", default="lucy")
     parser.add_argument("--id", default="")
     parser.add_argument("--key", default="")
+    parser.add_argument("--version", default="")
+    parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--actor", default="")
     parser.add_argument("--digest", default="")
     parser.add_argument("--approval-seconds", type=int, default=3600)
@@ -243,6 +290,14 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
     parser.add_argument("--supplier", default="")
     parser.add_argument("--enqueue-only", action="store_true")
     parser.add_argument("--live", action="store_true")
+    parser.add_argument("--mcp-catalog", action="store_true")
+    parser.add_argument("--sandbox-report", action="store_true")
     parser.add_argument("--estimated-call-pence", type=int, default=0)
     parser.add_argument("--model-budget-pence", type=int, default=100)
+    parser.add_argument(
+        "--reasoning-effort",
+        default="none",
+        choices=["none", "low", "medium", "high", "max", "provider-default"],
+        help="explicit Ollama teaching setting; provider-default omits the field",
+    )
     parser.set_defaults(handler=handle)

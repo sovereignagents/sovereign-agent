@@ -43,6 +43,8 @@ jobs:
         run: python scripts/verify_book_snippets.py
       - name: Verify the book's depth-coverage manifest
         run: python scripts/verify_book_depth.py
+      - name: Verify the new edition construction checkpoints
+        run: python scripts/verify_always_on_v1.py
       - name: Verify all companion labs from fresh roots
         run: python scripts/verify_book_labs.py
       - name: Verify offline commands

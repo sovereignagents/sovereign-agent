@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "title": "Build Your Always-On AI Agent From Scratch",
+  "subtitle": "Tools, memory, permissions, and reliable operation in Python.",
+  "created": "2026-09-07",
+  "status": "construction",
+  "chapters": [
+    {
+      "number": 1,
+      "lessonId": "first-model-call",
+      "title": "Make the first model call for Lucy",
+      "path": "ch01_first_model_call/README.md",
+      "checkpoint": "checkpoints/ch01.py",
+      "status": "DRAFT"
+    },
+    {
+      "number": 2,
+      "lessonId": "shop-tools",
+      "title": "Give the agent reliable shop tools",
+      "path": "ch02_shop_tools/README.md",
+      "checkpoint": "checkpoints/ch02.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 3,
+      "lessonId": "agent-loop",
+      "title": "Build the model and tool loop",
+      "path": "ch03_agent_loop/README.md",
+      "checkpoint": "checkpoints/ch03.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 4,
+      "lessonId": "memory",
+      "title": "Remember across conversations",
+      "path": "ch04_memory/README.md",
+      "checkpoint": "checkpoints/ch04.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 5,
+      "lessonId": "skills",
+      "title": "Reuse a tested opening procedure",
+      "path": "ch05_skills/README.md",
+      "checkpoint": "checkpoints/ch05.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 6,
+      "lessonId": "messaging",
+      "title": "Talk to the agent from your phone",
+      "path": "ch06_messaging/README.md",
+      "checkpoint": "checkpoints/ch06.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 7,
+      "lessonId": "scheduling",
+      "title": "Wake up for schedules and stock events",
+      "path": "ch07_scheduling/README.md",
+      "checkpoint": "checkpoints/ch07.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 8,
+      "lessonId": "approval",
+      "title": "Ask permission before spending",
+      "path": "ch08_approval/README.md",
+      "checkpoint": "checkpoints/ch08.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 9,
+      "lessonId": "ambiguous-order",
+      "title": "Survive the ambiguous supplier order",
+      "path": "ch09_ambiguous_order/README.md",
+      "checkpoint": "checkpoints/ch09.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 10,
+      "lessonId": "worker-recovery",
+      "title": "Recover work after a process crash",
+      "path": "ch10_worker_recovery/README.md",
+      "checkpoint": "checkpoints/ch10.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 11,
+      "lessonId": "isolation",
+      "title": "Isolate tools and untrusted content",
+      "path": "ch11_isolation/README.md",
+      "checkpoint": "checkpoints/ch11.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 12,
+      "lessonId": "evaluation",
+      "title": "Measure whether the agent helps",
+      "path": "ch12_evaluation/README.md",
+      "checkpoint": "checkpoints/ch12.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 13,
+      "lessonId": "improvement",
+      "title": "Improve behavior with evaluated changes",
+      "path": "ch13_improvement/README.md",
+      "checkpoint": "checkpoints/ch13.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 14,
+      "lessonId": "delegation",
+      "title": "Delegate one bounded task",
+      "path": "ch14_delegation/README.md",
+      "checkpoint": "checkpoints/ch14.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 15,
+      "lessonId": "operation",
+      "title": "Deploy and maintain the agent",
+      "path": "ch15_operation/README.md",
+      "checkpoint": "checkpoints/ch15.py",
+      "status": "PLANNED"
+    },
+    {
+      "number": 16,
+      "lessonId": "acceptance",
+      "title": "Lucy leaves the shop for a day",
+      "path": "ch16_acceptance/README.md",
+      "checkpoint": "checkpoints/ch16.py",
+      "status": "PLANNED"
+    }
+  ]
+}

@@ -57,7 +57,7 @@ def seed_lucy(db: Database) -> None:
 
 def shop_dispatcher(db: Database) -> Dispatcher:
     def list_stock(_: NoArguments) -> list[dict[str, Any]]:
-        return [
+        rows = [
             dict(row)
             for row in db.connection.execute(
                 "SELECT i.sku,i.on_hand,i.reserved,i.reorder_point,coalesce((SELECT "
@@ -67,6 +67,11 @@ def shop_dispatcher(db: Database) -> Dispatcher:
                 "FROM inventory i ORDER BY i.sku"
             )
         ]
+        for row in rows:
+            row["needed"] = max(
+                0, row["reorder_point"] - row["on_hand"] + row["reserved"] - row["on_order"]
+            )
+        return rows
 
     def supplier(args: StockArguments) -> dict[str, Any]:
         row = db.connection.execute(
@@ -82,6 +87,9 @@ def shop_dispatcher(db: Database) -> Dispatcher:
         }
 
     def draft(args: DraftArguments) -> dict[str, Any]:
+        stock = next((row for row in list_stock(NoArguments()) if row["sku"] == args.sku), None)
+        if stock is None or args.quantity != stock["needed"]:
+            raise ValueError("draft quantity must equal the current positive replenishment need")
         quote = supplier(StockArguments(sku=args.sku))
         return {
             **quote,
@@ -92,7 +100,10 @@ def shop_dispatcher(db: Database) -> Dispatcher:
 
     tools = [
         ExecutableTool(
-            "list_stock", "Read current stock and product thresholds.", NoArguments, list_stock
+            "list_stock",
+            "Read stock, incoming orders and deterministic needed quantity for each product.",
+            NoArguments,
+            list_stock,
         ),
         ExecutableTool(
             "supplier",
@@ -101,7 +112,10 @@ def shop_dispatcher(db: Database) -> Dispatcher:
             supplier,
         ),
         ExecutableTool(
-            "draft_order", "Calculate a draft. Does not buy or change stock.", DraftArguments, draft
+            "draft_order",
+            "Create a draft with quantity equal to needed from list_stock. Never purchases.",
+            DraftArguments,
+            draft,
         ),
     ]
     return Dispatcher(tools, allowed=frozenset(tool.name for tool in tools))

@@ -15,7 +15,7 @@ from sovereign_agent import assistant_context, assistant_orders, assistant_work
 from sovereign_agent.agent_loop import Limits, run_loop
 from sovereign_agent.database import Database
 from sovereign_agent.events import append_event
-from sovereign_agent.model_turn import Model
+from sovereign_agent.model_turn import Model, ToolCall
 from sovereign_agent.tool_dispatch import Dispatcher, ExecutableTool
 
 
@@ -92,6 +92,7 @@ def run_once(
     limits: Limits | None = None,
     should_stop: Callable[[], bool] = lambda: False,
     control_only: bool = False,
+    extra_tools: tuple[ExecutableTool, ...] = (),
 ) -> dict[str, Any]:
     limits = limits or Limits()
     work = assistant_work.claim(
@@ -155,9 +156,16 @@ def run_once(
             return _orders(db, work, supplier, policy, should_stop=should_stop)
         tools = shop_dispatcher(db)
         if supplier is not None:
+            calculation = tools
+
             # Persisting a proposal has no remote effect and grants no permission.
             def proposal(args: DraftArguments) -> dict[str, Any]:
                 assert supplier is not None
+                checked = calculation.invoke(
+                    ToolCall(id="validate-draft", name="draft_order", arguments=args.model_dump())
+                )
+                if not checked["ok"]:
+                    raise ValueError("proposal must match the current deterministic stock need")
                 identifier = assistant_orders.propose(
                     db, work, args.sku, args.quantity, target=supplier.identity
                 )
@@ -185,6 +193,11 @@ def run_once(
                 )
             )
             tools = Dispatcher(replacements, allowed=tools.allowed)
+        if extra_tools:
+            tools = Dispatcher(
+                [*tools.tools.values(), *extra_tools],
+                allowed=tools.allowed | frozenset(tool.name for tool in extra_tools),
+            )
         messages = assistant_context.context(db, work.session, work.prompt, allowed=tools.allowed)
         with db.immediate():
             assistant_work.assert_current(db.connection, work)
