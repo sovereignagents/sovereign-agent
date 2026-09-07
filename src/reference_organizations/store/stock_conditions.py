@@ -6,7 +6,7 @@ import math
 import time
 
 from reference_organizations.store.agent import shop_dispatcher
-from sovereign_agent.assistant_work import IntakeLimitError, _enqueue
+from sovereign_agent.assistant_work import IntakeLimitError, _enqueue, validate_route
 from sovereign_agent.database import Database
 from sovereign_agent.events import append_event
 from sovereign_agent.model_turn import ToolCall
@@ -26,15 +26,7 @@ def watch(
         for value in (identifier, session, sku)
     ):
         raise ValueError("bounded condition identity, session and product required")
-    if (
-        len(channel) > 200
-        or len(recipient) > 200
-        or not (
-            (channel == "local" and not recipient)
-            or (channel.startswith("telegram:") and recipient.isdigit())
-        )
-    ):
-        raise ValueError("local output or an explicit Telegram recipient required")
+    validate_route(channel, recipient)
     with db.immediate() as connection:
         if not connection.execute(
             "SELECT 1 FROM inventory i JOIN products p ON p.sku=i.sku WHERE i.sku=?", (sku,)

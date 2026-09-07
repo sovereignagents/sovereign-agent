@@ -1,0 +1,36 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "12336827c11c3fab1b99ccf10f33de5fcb4f5b61",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "d42ec16375854fa0136a8716797124dd2111b13e044a5f9cc595619a030602bf",
+  "tests": {
+    "passed": 663,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 658,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9
+    ],
+    "planned": 8,
+    "python_examples": 89,
+    "matched_output_pairs": 83,
+    "publication_acceptance": false
+  },
+  "live": "Actual local HTTP model and unattended child exercised twice; wrong first narration retained, repaired tool-derived displayed report independently checked.",
+  "runtime": "Paused clocks retain due work; bounded schedule/route validation and explicit disabling; structured draft reporting reaches durable result and channel payload.",
+  "remaining": "Eight chapters, integrated acceptance, live phone proof, proposal and exact-source site integration"
+}

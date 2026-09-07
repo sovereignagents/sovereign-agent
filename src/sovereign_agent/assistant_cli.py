@@ -158,6 +158,9 @@ def handle(args: argparse.Namespace) -> int:
             "timezone": "UTC",
             "missed_runs": "coalesce",
         }
+    elif action == "unschedule":
+        assistant_work.unschedule(db, args.value)
+        result = {"status": "DISABLED", "job": args.value, "existing_work": "retained"}
     elif action == "status":
         result = assistant_service.health(db)
         result["items"] = [
@@ -355,6 +358,7 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "unwatch-stock",
             "receive",
             "schedule",
+            "unschedule",
             "status",
             "approve",
             "revoke",

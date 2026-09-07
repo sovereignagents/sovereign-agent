@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import sqlite3
 import time
 import uuid
@@ -154,6 +155,25 @@ def enqueue(
         )
 
 
+def validate_route(channel: str, recipient: str) -> None:
+    if (
+        not isinstance(channel, str)
+        or not isinstance(recipient, str)
+        or len(channel) > 200
+        or len(recipient) > 200
+        or not (
+            (channel == "local" and not recipient)
+            or (
+                re.fullmatch(r"telegram:[A-Za-z0-9_-]+", channel)
+                and recipient.isascii()
+                and recipient.isdigit()
+                and int(recipient) > 0
+            )
+        )
+    ):
+        raise ValueError("local output or an explicit positive Telegram recipient required")
+
+
 def schedule(
     db: Database,
     identifier: str,
@@ -168,9 +188,22 @@ def schedule(
     """Epoch UTC intervals; missed runs coalesce to one, rather than a backlog storm."""
     if type(interval_seconds) is not int or interval_seconds < 1 or not math.isfinite(first_due):
         raise ValueError("finite due time and positive integral interval required")
-    if not identifier or not session or not prompt.strip() or len(prompt.encode()) > 16_384:
-        raise ValueError("invalid job")
+    if (
+        any(
+            not isinstance(value, str) or not value.strip() or len(value) > 100
+            for value in (identifier, session)
+        )
+        or not isinstance(prompt, str)
+        or not prompt.strip()
+        or len(prompt.encode()) > 16_384
+    ):
+        raise ValueError("bounded job identity, session and prompt required")
+    validate_route(channel, recipient)
     with db.immediate() as connection:
+        if connection.execute("SELECT 1 FROM assistant_jobs WHERE id=?", (identifier,)).fetchone():
+            raise ValueError(
+                "schedule identity already exists; use a new identity for a replacement"
+            )
         connection.execute(
             "INSERT INTO assistant_jobs"
             "(id,session,prompt,interval_seconds,next_due,channel,recipient) "
@@ -179,12 +212,26 @@ def schedule(
         )
 
 
+def unschedule(db: Database, identifier: str) -> None:
+    """Stop future ticks without deleting work that a prior tick already admitted."""
+    with db.immediate() as connection:
+        if (
+            connection.execute(
+                "UPDATE assistant_jobs SET enabled=0 WHERE id=?", (identifier,)
+            ).rowcount
+            != 1
+        ):
+            raise ValueError("unknown schedule")
+
+
 def tick(db: Database, *, now: float | None = None, maximum: int = 100) -> list[str]:
     now = time.time() if now is None else now
-    if not math.isfinite(now) or not 1 <= maximum <= 1000:
+    if not math.isfinite(now) or type(maximum) is not int or not 1 <= maximum <= 1000:
         raise ValueError("invalid scheduler pass")
     created = []
     with db.immediate() as connection:
+        if connection.execute("SELECT paused FROM assistant_control WHERE id=1").fetchone()[0]:
+            return []
         rows = connection.execute(
             "SELECT * FROM assistant_jobs WHERE enabled=1 AND next_due<=? "
             "ORDER BY next_due,id LIMIT ?",

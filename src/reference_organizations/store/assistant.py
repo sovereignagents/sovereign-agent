@@ -10,7 +10,7 @@ from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
-from reference_organizations.store.agent import DraftArguments, shop_dispatcher
+from reference_organizations.store.agent import DraftArguments, draft_report, shop_dispatcher
 from sovereign_agent import assistant_context, assistant_orders, assistant_work
 from sovereign_agent.agent_loop import Limits, run_loop
 from sovereign_agent.database import Database
@@ -254,7 +254,8 @@ def run_once(
                     "answer": answer,
                     "loop": asdict(result),
                 }
-        answer = result.answer or "The agent stopped: " + result.status
+        rendered = draft_report(result.messages) if result.status == "COMPLETED" else None
+        answer = rendered or result.answer or "The agent stopped: " + result.status
         state = "DONE" if result.status == "COMPLETED" else "BLOCKED"
         if supplier is not None and result.status == "COMPLETED":
             has_orders = db.connection.execute(

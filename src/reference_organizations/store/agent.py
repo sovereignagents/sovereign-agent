@@ -124,6 +124,46 @@ def shop_dispatcher(db: Database, *, subject: str = "") -> Dispatcher:
     return Dispatcher(tools, allowed=frozenset(tool.name for tool in tools))
 
 
+def draft_report(messages: list[Message]) -> str | None:
+    """Render latest successful draft estimates; model narration is not arithmetic."""
+    names = {
+        call["id"]: call["function"]["name"]
+        for message in messages
+        for call in message.get("tool_calls", [])
+    }
+    latest: dict[str, tuple[int, int]] = {}
+    for message in messages:
+        if message["role"] != "tool" or names.get(message["tool_call_id"]) != "draft_order":
+            continue
+        observation = json.loads(message["content"])
+        if observation.get("ok") is not True:
+            continue
+        value = observation["value"]
+        sku, quantity, amount = value.get("sku"), value.get("quantity"), value.get("total_pence")
+        if (
+            not isinstance(sku, str)
+            or not 1 <= len(sku) <= 100
+            or type(quantity) is not int
+            or quantity <= 0
+            or type(amount) is not int
+            or amount < 0
+            or value.get("currency") != "GBP"
+        ):
+            raise ValueError("draft observation lacks validated quantity or GBP amount")
+        # Recalculating a draft is not creating another purchase. Display only
+        # the latest estimate for each SKU; supplier workflows render their ledger.
+        latest[sku] = (quantity, amount)
+    if not latest:
+        return None
+    lines = ["Draft estimates:"]
+    for sku, (quantity, amount) in sorted(latest.items()):
+        label = json.dumps(sku, ensure_ascii=False)
+        lines.append(f"- {label}: {quantity} tubs, £{amount // 100}.{amount % 100:02d} GBP.")
+    total = sum(amount for _, amount in latest.values())
+    lines.append(f"Total: £{total // 100}.{total % 100:02d} GBP.")
+    return "\n".join(lines)
+
+
 class OfflineShopModel:
     """A reproducible model replacement, not a claim of language understanding.
 
