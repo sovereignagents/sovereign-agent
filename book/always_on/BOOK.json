@@ -123,7 +123,7 @@
       "title": "Deploy and maintain the agent",
       "path": "ch15_operation/README.md",
       "checkpoint": "checkpoints/ch15.py",
-      "status": "PLANNED"
+      "status": "DRAFT"
     },
     {
       "number": 16,

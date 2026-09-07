@@ -1,0 +1,82 @@
+{
+  "created": "2026-09-07",
+  "source_commit": "6185673e93c46b9287fe95251a93247f4ca73feb",
+  "profile": "sovereign-teaching-sap3",
+  "scope": "Actual frozen release installation and guarded switch on isolated Linux host. Both user services changed release, new main-service work completed, retained business records unchanged. Existing historical receipts cover reboot and account recovery; this switch is not a new reboot test.",
+  "raw_sha256": "2652623ea0829309fbe3a90bc2a4ab9a6ba44c15a7b9966b7af2b7af9462dd4a",
+  "exit_code": 0,
+  "switch": {
+    "status": "ACTIVE",
+    "from": "a89ce6a",
+    "to": "6185673",
+    "schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "work_id": "dfc4260eadaa42179ef226ed7e55168b",
+    "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "order_inventory_spending_preserved": true,
+    "retained": {
+      "orders": [
+        [
+          "0d544377ed235e82888341a7b4870ae8",
+          "CONFIRMED",
+          1100,
+          1
+        ],
+        [
+          "74778dea2405583db7c23d1618a7927f",
+          "DELIVERED",
+          1500,
+          1
+        ]
+      ],
+      "inventory": [
+        [
+          "SKU-CHOCOLATE",
+          12,
+          0
+        ],
+        [
+          "SKU-STRAWBERRY",
+          1,
+          0
+        ],
+        [
+          "SKU-VANILLA",
+          8,
+          0
+        ]
+      ],
+      "spending": [
+        [
+          0,
+          2600
+        ]
+      ]
+    }
+  }
+}

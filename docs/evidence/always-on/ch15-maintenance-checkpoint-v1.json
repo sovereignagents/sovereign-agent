@@ -1,0 +1,8 @@
+{
+  "created": "2026-09-07",
+  "runtime_commit": "6185673e93c46b9287fe95251a93247f4ca73feb",
+  "checkpoint_sha256": "8a81cfe5fa30542cd8cdb2f19e734ffff58b131a9c9ae0c33c5b623d46ab21ab",
+  "exit_code": 0,
+  "output": "Snapshot retained; original database inode preserved: True\nOld open connection and supplier epoch refused: True\nLocal orders after restore / reconciled: 1 2\nRecovered expenditure: 2600 pence\nVanilla on hand / strawberry pending: 8 4\nFresh work: DONE ; historical model usage complete: False\nSystemd host operations: NOT RUN by this portable checkpoint\n",
+  "scope": "Actual separate loopback supplier, protected consistent backup, paused same-inode restore, stale connection and epoch refusal, exact recovery plan, retained receipts, authored physical counts, idempotent accounting and fresh work. Systemd not run by portable checkpoint."
+}
