@@ -124,3 +124,13 @@ CREATE TABLE assistant_recovery_runs (
     provider_epoch INTEGER NOT NULL, completed_at REAL NOT NULL
 );
 """
+
+
+SCHEMA_24 = """
+CREATE TABLE assistant_memory_revisions (
+    session TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0
+);
+ALTER TABLE assistant_work ADD COLUMN context_revision INTEGER NOT NULL DEFAULT 0;
+CREATE TRIGGER assistant_work_context_revision_immutable BEFORE UPDATE OF context_revision
+ON assistant_work BEGIN SELECT RAISE(ABORT, 'work context revision is immutable'); END;
+"""

@@ -97,10 +97,13 @@ def _enqueue(
     if rejected and require_admission:
         raise IntakeLimitError("intake capacity exhausted; condition remains pending")
     identifier = uuid.uuid4().hex
+    revision = connection.execute(
+        "SELECT revision FROM assistant_memory_revisions WHERE session=?", (session,)
+    ).fetchone()
     connection.execute(
         "INSERT INTO assistant_work"
         "(id,origin,session,prompt,created,channel,recipient,status,result,control,subject,role,"
-        "billing_session) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "billing_session,context_revision) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             identifier,
             origin,
@@ -115,6 +118,7 @@ def _enqueue(
             subject,
             role,
             billing_session,
+            revision[0] if revision else 0,
         ),
     )
     if not rejected:

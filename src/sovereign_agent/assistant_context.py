@@ -31,9 +31,15 @@ def remember(db: Database, session: str, name: str, value: str, source: str) -> 
         or len(value.encode()) > 4096
         or len(source) > 512
         or len(name) > 100
+        or len(session) > 200
     ):
         raise ValueError("bounded preference and provenance required")
     with db.immediate() as connection:
+        existing = connection.execute(
+            "SELECT name FROM assistant_preferences WHERE session=? AND active=1", (session,)
+        ).fetchall()
+        if len(existing) >= 100 and name not in {row[0] for row in existing}:
+            raise ValueError("session preference capacity reached; correct or forget an entry")
         connection.execute(
             "UPDATE assistant_preferences SET active=0 WHERE session=? AND name=?", (session, name)
         )
@@ -52,10 +58,19 @@ def remember(db: Database, session: str, name: str, value: str, source: str) -> 
 
 
 def forget(db: Database, session: str, name: str) -> None:
-    """Erase all preference revisions. Historical transcripts/backups are separate records."""
+    """Erase preference revisions and exclude old summaries from future context.
+
+    Operational transcripts/backups are separate records; this is not secure
+    erasure or cancellation of a model request that already received the value.
+    """
     with db.immediate() as connection:
         connection.execute(
             "DELETE FROM assistant_preferences WHERE session=? AND name=?", (session, name)
+        )
+        connection.execute(
+            "INSERT INTO assistant_memory_revisions(session,revision) VALUES (?,1) "
+            "ON CONFLICT(session) DO UPDATE SET revision=revision+1",
+            (session,),
         )
         append_event(db, "assistant.preference.forgotten", {"session": session, "name": name})
 
@@ -175,8 +190,10 @@ def context(
     items.extend({"kind": "preference", **row} for row in preferences(db, session, prompt))
     history = db.connection.execute(
         "SELECT id,prompt,result FROM assistant_work WHERE session=? AND status='DONE' "
+        "AND context_revision=coalesce((SELECT revision FROM assistant_memory_revisions "
+        "WHERE session=?),0) "
         "AND result IS NOT NULL ORDER BY created DESC,rowid DESC LIMIT 4",
-        (session,),
+        (session, session),
     ).fetchall()
     for row in reversed(history):
         items.append(
