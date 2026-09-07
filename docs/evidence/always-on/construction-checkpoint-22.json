@@ -1,0 +1,49 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full publication overhaul remains active",
+  "tested_tree": "5d7f58f85b021ac6ccf7f13a5dbfa3017d3dfc55",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "e95328503989e476b0b5ac31ad0ea901902394dfd59944cba05936d828736330",
+  "tests": {
+    "passed": 696,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 691,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "planned": 0,
+    "python_examples": 139,
+    "matched_output_pairs": 131,
+    "publication_acceptance": false
+  },
+  "source_budget": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9970,
+    "installed_modules": 66,
+    "installed_nonblank_lines": 13189
+  },
+  "post_gate_documentation_correction": "README Zeocore URL corrected from directory-inferred org to actual git remote profrodai/zeocore; literal assertion passed. Pre-push reruns full gate on committed final bytes.",
+  "remaining": "Source publication package and site migration, publisher proposal, latest report release on Linux, live phone and human manuscript/render acceptance"
+}

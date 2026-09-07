@@ -1,0 +1,96 @@
+{
+  "scope": "Accelerated deterministic business day; actual supplier and worker processes, fixture Telegram transport. No live phone, real purchases or uptime claim.",
+  "faults": [
+    "model outage",
+    "duplicate message",
+    "unauthorized message",
+    "stale preference corrected",
+    "supplier response loss",
+    "worker SIGKILL"
+  ],
+  "independent_supplier_orders": 2,
+  "independent_supplier_pence": 2600,
+  "killed_worker_exit": -9,
+  "report": {
+    "schema_version": 1,
+    "observed_at": "2026-09-07T21:26:31.942552+00:00",
+    "scope": "Current local snapshot; work, orders and spending cover all retained history. Model usage covers the current UTC day. No external account audit was performed.",
+    "paused": false,
+    "work": {
+      "DONE": 7
+    },
+    "orders": {
+      "CONFIRMED": 1,
+      "DELIVERED": 1
+    },
+    "spending": {
+      "accepted_pence": 2600,
+      "reserved_pence": 0,
+      "order_totals_match": true
+    },
+    "stock": [
+      {
+        "sku": "SKU-CHOCOLATE",
+        "on_hand": 12,
+        "reserved": 0,
+        "reorder_point": 6,
+        "on_order": 0,
+        "needed": 0
+      },
+      {
+        "sku": "SKU-STRAWBERRY",
+        "on_hand": 1,
+        "reserved": 0,
+        "reorder_point": 5,
+        "on_order": 4,
+        "needed": 0
+      },
+      {
+        "sku": "SKU-VANILLA",
+        "on_hand": 8,
+        "reserved": 0,
+        "reorder_point": 8,
+        "on_order": 0,
+        "needed": 0
+      }
+    ],
+    "recent_orders": [
+      {
+        "id": "4d15a43323935009829a0c3b5f0e7fe4",
+        "work_id": "b5fbf202991e4ff88d0e727324bb8566",
+        "status": "DELIVERED",
+        "amount": 1500,
+        "proposal": "{\"currency\":\"GBP\",\"quantity\":6,\"sku\":\"SKU-VANILLA\",\"supplier\":\"lucy-local\",\"unit_cost_pence\":250}",
+        "approval_basis": "OPERATOR",
+        "revoked": 0
+      },
+      {
+        "id": "090ad50a986758488702d1453d077d77",
+        "work_id": "f953bd9252a04339abaf5db7f8328700",
+        "status": "CONFIRMED",
+        "amount": 1100,
+        "proposal": "{\"currency\":\"GBP\",\"quantity\":4,\"sku\":\"SKU-STRAWBERRY\",\"supplier\":\"lucy-local\",\"unit_cost_pence\":275}",
+        "approval_basis": "OPERATOR",
+        "revoked": 0
+      }
+    ],
+    "orders_omitted": 0,
+    "pending_work": [],
+    "pending_work_omitted": 0,
+    "research_quotes_completed": 1,
+    "model_usage": {
+      "utc_day": "2026-09-07",
+      "reserved_calls": 15,
+      "estimated_pence": 30,
+      "history_complete": true
+    },
+    "exceptions": [],
+    "text": "Lucy's operating report\nObserved: 2026-09-07T21:26:31.942552+00:00\nCurrent local snapshot; work, orders and spending cover all retained history. Model usage covers the current UTC day. No external account audit was performed.\n\nSupplier purchases accepted: GBP 26.00\nAllowance reserved for pending orders: GBP 0.00\nOrders delivered: 1; accepted and awaiting delivery: 1\nOrder drafts awaiting approval: 0; uncertain supplier outcomes: 0\nWork completed: 7; blocked: 0; cancelled: 0\nRead-only research quotes completed: 1\n\nCurrent stock:\n- \"SKU-CHOCOLATE\": 12 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n- \"SKU-STRAWBERRY\": 1 on hand, 0 reserved, 4 pending replenishment, 0 still needed\n- \"SKU-VANILLA\": 8 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n\nModel calls reserved today: 15; configured estimate: 30 pence. This is not a provider invoice.\n\nExceptions requiring inspection:\n- No recorded exceptions in this local snapshot; external outcomes still require their own evidence.\nEvidence detail: 2 recent order records; 0 older orders omitted from detail, included in totals."
+  },
+  "manuscript_checkpoint_sha256": "2145f13550a2c9d6a662355ab95f816c94a91d4aa104f773d1461f89093fa0aa",
+  "created": "2026-09-07",
+  "runtime_base_commit": "4a9e8311795c42d3d288015a2bb5e1373e828513",
+  "runtime_source_sha256": "024f9b494a70f08f3bd586afbdc65449af7df2703be60246bbeb0404cc1e5a1a",
+  "exit_code": 0,
+  "rendered_output": "Lucy's operating report\nObserved: 2026-09-07T21:26:32.026227+00:00\nCurrent local snapshot; work, orders and spending cover all retained history. Model usage covers the current UTC day. No external account audit was performed.\n\nSupplier purchases accepted: GBP 26.00\nAllowance reserved for pending orders: GBP 0.00\nOrders delivered: 1; accepted and awaiting delivery: 1\nOrder drafts awaiting approval: 0; uncertain supplier outcomes: 0\nWork completed: 7; blocked: 0; cancelled: 0\nRead-only research quotes completed: 1\n\nCurrent stock:\n- \"SKU-CHOCOLATE\": 12 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n- \"SKU-STRAWBERRY\": 1 on hand, 0 reserved, 4 pending replenishment, 0 still needed\n- \"SKU-VANILLA\": 8 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n\nModel calls reserved today: 15; configured estimate: 30 pence. This is not a provider invoice.\n\nExceptions requiring inspection:\n- No recorded exceptions in this local snapshot; external outcomes still require their own evidence.\nEvidence detail: 2 recent order records; 0 older orders omitted from detail, included in totals.\n"
+}

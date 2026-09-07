@@ -1,15 +1,47 @@
 # Sovereign Agent
 
-**The executable textbook for Zero-Employee Organizations.**
+**Build Your Always-On AI Agent From Scratch — in Python.**
 
 [![CI](https://github.com/profrodai/sovereign-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/profrodai/sovereign-agent/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/sovereign-agent.svg)](https://pypi.org/project/sovereign-agent/)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Sovereign Agent 1.x is a small Python reference implementation for learning how
-an outcome becomes governed work performed by accountable actors. Production
-organizations graduate to [Zero Employee](https://github.com/zeroemployeeorg).
+Sovereign Agent is a self-contained teaching implementation for Lucy's ice cream
+shop. The reader builds the model/tool loop, memory, local skills, messaging,
+scheduling, permissions, recovery and operating report. Python 3.14, SQLite and
+one direct runtime dependency keep the implementation inspectable. Zeocore is an
+optional tool integration; the teaching agent does not require it.
+
+The new [sixteen-chapter manuscript](book/always_on/README.md) is an **unreleased
+construction draft** with executable checkpoints. It is not yet publication-ready
+or available through the published PyPI version. The retained 1.x curriculum and
+release commands below remain available while the new edition is reviewed.
+
+## Run the constructed agent from this checkout
+
+After the development install below, run the final accelerated day:
+
+```bash
+uv run --python 3.14 python book/always_on/checkpoints/ch16.py
+```
+
+It runs a separate simulated supplier, loses replies, kills a worker and verifies
+two purchases totaling GBP 26.00 without a duplicate order. The phone transport
+and model are deterministic fixtures in this checkpoint; no credentials or live
+purchases are needed. The command removes its temporary state after checking it.
+Use the checkpoint's `--output` option with a new directory to retain evidence.
+
+For an initialized shop directory, `sovereign-agent agent report --root PATH`
+prints the current ledger-derived report. Amounts come from structured records,
+with uncertain outcomes and accounting disagreements made explicit. Current
+retained totals are distinct from current-UTC-day model estimates and from a
+provider invoice. See [Chapter 16](book/always_on/ch16_acceptance/README.md).
+
+Always-on means unattended work and explicit restart/recovery behavior while the
+host and dependencies are available. The [Linux deployment chapter](book/always_on/ch15_operation/README.md)
+provides the one-host recipe. Maintained production organizations can graduate to
+[Zeocore](https://github.com/profrodai/zeocore).
 
 ## Install and run with uv
 

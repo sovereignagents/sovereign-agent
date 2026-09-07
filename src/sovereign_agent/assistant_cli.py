@@ -161,6 +161,11 @@ def handle(args: argparse.Namespace) -> int:
     elif action == "unschedule":
         assistant_work.unschedule(db, args.value)
         result = {"status": "DISABLED", "job": args.value, "existing_work": "retained"}
+    elif action == "report":
+        from reference_organizations.store.operating_report import operating_report
+
+        print(operating_report(db)["text"])
+        return 0
     elif action == "status":
         result = assistant_service.health(db)
         result["items"] = [
@@ -365,6 +370,7 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "schedule",
             "unschedule",
             "status",
+            "report",
             "approve",
             "revoke",
             "retry",

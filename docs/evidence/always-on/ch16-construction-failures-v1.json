@@ -1,0 +1,17 @@
+{
+  "created": "2026-09-07",
+  "scope": "Retained failed instruments before the passing final-path integrated day. No production records or authority checks were weakened.",
+  "lease_setup": {
+    "log_sha256": "ad9fbc22c78e0a732e2ebf9df5a790b2a5a5572cbbf3e803474dc98e489a7ef0",
+    "failure": "Two-second lease refused three-second supplier wait. Child now uses one-second timeout within the two-second lease."
+  },
+  "response_assumption": {
+    "log_sha256": "2ee95e66dbb29db71b1db40411fe379615d1dde20e0c8c08d51b769dabba2037",
+    "failure": "Fixture drops first response per new operation. Strawberry was legitimately UNKNOWN with1100pence reserved after vanilla confirmed; final scenario waits recorded backoff and reconciles strawberry."
+  },
+  "report_test_instrument": {
+    "log_sha256": "6db42f3567cbf6aed1fc4322c32c1a099edf879be62a6552e82b508b073a35f0",
+    "failure": "Four tests failed because fixture changes were uncommitted. Nested report snapshot refused; concurrent change rolled back on close. Tests now commit setup explicitly.",
+    "repaired_output": ".........                                                                [100%]\n9 passed in 0.32s\n"
+  }
+}

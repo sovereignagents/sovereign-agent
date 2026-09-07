@@ -6,6 +6,12 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Add a current operating report from one consistent SQLite snapshot, with
+  explicit uncertainty, accounting mismatches, retained-history scope and model
+  estimate limits. Complete sixteen construction drafts and an accelerated day
+  proving duplicate intake, exact approvals, lost replies, worker replacement,
+  receiving, bounded research and independent supplier reconciliation.
+
 - Make evaluation acceptance explicit: named-check passes require explanation
   review, failures are rejected, terminal causes remain in case reports, and
   baseline calculation time is measured with its acquisition limit stated.
