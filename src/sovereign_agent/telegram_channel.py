@@ -10,6 +10,7 @@ from typing import Any, Protocol
 
 from sovereign_agent.assistant_work import _enqueue
 from sovereign_agent.database import Database
+from sovereign_agent.events import append_event
 from sovereign_agent.http_transport import request
 
 
@@ -39,7 +40,7 @@ class Telegram:
             if response.status != 200:
                 raise OSError("Telegram declined operation")
             result = json.loads(response.body)
-            if result.get("ok") is not True:
+            if not isinstance(result, dict) or result.get("ok") is not True:
                 raise ValueError("Telegram declined operation")
             return result["result"]
         except OSError, ValueError, KeyError, TypeError:
@@ -47,9 +48,13 @@ class Telegram:
             raise OSError("Telegram request failed; inspect connectivity and credentials") from None
 
 
-def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
+def _check_operators(operators: frozenset[int]) -> None:
     if not operators or any(type(actor) is not int or actor <= 0 for actor in operators):
         raise ValueError("explicit numeric operator allowlist required")
+
+
+def poll(db: Database, bot: Bot, operators: frozenset[int]) -> list[str]:
+    _check_operators(operators)
     channel = "telegram:" + bot.account
     owner = uuid.uuid4().hex
     with db.immediate() as connection:
@@ -95,6 +100,8 @@ def _poll_owned(
             raise PermissionError("poller claim expired")
         highest = offset - 1
         for update in updates:
+            if not isinstance(update, dict):
+                raise ValueError("invalid Telegram update object")
             update_id = update.get("update_id")
             if type(update_id) is not int or update_id < 0:
                 raise ValueError("invalid update identity")
@@ -102,15 +109,21 @@ def _poll_owned(
             # is published only after every accepted payload is durable.
             highest = max(highest, update_id)
             message = update.get("message", {})
-            actor = message.get("from", {}).get("id")
+            if not isinstance(message, dict):
+                raise ValueError("invalid Telegram message object")
+            sender = message.get("from", {})
             chat = message.get("chat", {})
+            if not isinstance(sender, dict) or not isinstance(chat, dict):
+                raise ValueError("invalid Telegram sender or chat object")
+            actor = sender.get("id")
             text = message.get("text")
             if (
                 type(actor) is int
                 and actor in operators
                 and chat.get("type") == "private"
+                and type(chat.get("id")) is int
                 and chat.get("id") == actor
-                and not message.get("from", {}).get("is_bot")
+                and not sender.get("is_bot")
                 and isinstance(text, str)
                 and text.strip()
                 and len(text.encode()) <= 16_384
@@ -133,6 +146,7 @@ def _poll_owned(
 
 
 def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None:
+    _check_operators(operators)
     with db.immediate() as connection:
         row = connection.execute(
             "SELECT * FROM assistant_work WHERE channel=? AND "
@@ -154,14 +168,31 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
         if len(text) > 3900:
             text = text[:3800] + "\n[Report truncated; request a shorter report.]"
         result = bot.call("sendMessage", {"chat_id": int(row["recipient"]), "text": text})
-        if not isinstance(result, dict) or type(result.get("message_id")) is not int:
+        if (
+            not isinstance(result, dict)
+            or type(result.get("message_id")) is not int
+            or result["message_id"] <= 0
+        ):
             raise ValueError("missing delivery receipt")
         status = "SENT"
     except OSError, ValueError:
         status = "UNKNOWN"
     with db.immediate() as connection:
-        connection.execute(
+        updated = connection.execute(
             "UPDATE assistant_work SET delivery=? WHERE id=? AND delivery='SENDING'",
             (status, row["id"]),
         )
+        if not updated.rowcount:
+            return "UNKNOWN"
+        if status == "SENT":
+            append_event(
+                db,
+                "assistant.channel.sent",
+                {
+                    "work": row["id"],
+                    "channel": row["channel"],
+                    "recipient": row["recipient"],
+                    "message_id": result["message_id"],
+                },
+            )
     return status

@@ -1,0 +1,49 @@
+{
+  "scope": "draft shape only; live phone interaction, source synchronization, link verification, rendered review and publication acceptance remain open",
+  "source_sha256": "8fc60916ae80462a640009a42dfdf73fcaf2cf533f3aef950c8e9e9fddbe4975",
+  "site_instrument_commit": "53012bad64af7293da6ab140650b6fc32626472b",
+  "score": 98,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 100,
+    "practice": 100,
+    "visuals": 86.25,
+    "seo": 100,
+    "craft": 97.6
+  },
+  "metrics": {
+    "words": 6299,
+    "figures": 3,
+    "recommendedFigures": 4,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 22,
+    "exercises": 4,
+    "maxProseWall": 195,
+    "internalLinks": 1,
+    "descriptionChars": 191
+  },
+  "nextActions": [
+    {
+      "ruleId": "book/figures",
+      "action": "Add 1 explanatory figure(s)",
+      "tip": "This 6299-word chapter has 3; its deterministic target is 4. Prefer a state, sequence, boundary, or data-flow diagram that replaces difficult prose.",
+      "estGain": 12,
+      "dimension": "visuals"
+    },
+    {
+      "ruleId": "ai-writing/low-ttr",
+      "action": "Type-token ratio 0.271 on 4006 words (below 0.40 threshold)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 4 sentences, CV 0.21 across 58 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}
