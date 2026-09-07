@@ -1,0 +1,34 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "119d864a1e2bc0b50c81d5f4adcbff12344a079a",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "b785a235f0cc2449e13021a3112b72298199b7ed62aa64efd508c93558568a42",
+  "tests": {
+    "passed": 612,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 607,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      9
+    ],
+    "planned": 10,
+    "python_examples": 70,
+    "matched_output_pairs": 64,
+    "publication_acceptance": false
+  },
+  "skills": "Bounded descriptor read and four regressions; local staging, evaluation, activation and context constructed in Chapter 5.",
+  "live_construction": "ch05-live-construction-v1.json retains the actual local-model candidate evaluation and final cumulative loop.",
+  "remaining": "Ten chapters, Linux rollback guard and maintenance evidence, integrated day, live Telegram credentials, proposal and exact-source site integration"
+}

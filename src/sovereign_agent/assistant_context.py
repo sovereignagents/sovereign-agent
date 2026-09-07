@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import stat
 import time
 import tomllib
 from collections.abc import Callable
@@ -94,12 +96,27 @@ def preferences(
     return sorted(rows, key=lambda row: (-row["score"], -row["id"]))[:maximum]
 
 
-def stage_skill(db: Database, path: Path) -> Skill:
-    if path.is_symlink() or not path.is_file() or path.stat().st_size > 16_384:
+def read_skill(path: Path) -> bytes:
+    """Read one bounded regular file; POSIX flags refuse symlinks and FIFO waits."""
+    if path.is_symlink():
         raise ValueError("bounded regular local skill file required")
-    raw = path.read_bytes()
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        descriptor = os.open(path, flags)
+        with os.fdopen(descriptor, "rb") as stream:
+            observed = os.fstat(stream.fileno())
+            if not stat.S_ISREG(observed.st_mode) or observed.st_size > 16_384:
+                raise ValueError("bounded regular local skill file required")
+            raw = stream.read(16_385)
+    except OSError as error:
+        raise ValueError("readable regular local skill file required") from error
     if len(raw) > 16_384:
         raise ValueError("skill changed beyond byte limit")
+    return raw
+
+
+def stage_skill(db: Database, path: Path) -> Skill:
+    raw = read_skill(path)
     skill = Skill.model_validate(tomllib.loads(raw.decode()))
     content = skill.model_dump_json()
     with db.immediate() as connection:
