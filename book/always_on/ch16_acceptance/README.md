@@ -188,7 +188,10 @@ def operating_report(db: Database) -> dict[str, Any]:
             )
         ]
         deliveries = dict(
-            connection.execute("SELECT delivery,count(*) FROM assistant_work GROUP BY delivery")
+            connection.execute(
+                "SELECT delivery,count(*) FROM assistant_work "
+                "WHERE channel LIKE 'telegram:%' GROUP BY delivery"
+            )
         )
         research = connection.execute(
             "SELECT count(*) FROM assistant_work WHERE role='research' AND status='DONE'"
@@ -314,6 +317,8 @@ Read transaction released: True
 ```
 
 The pending-replenishment field includes approved, sending, unknown and confirmed orders. It must not be labeled physical stock or guaranteed delivery. Approval can reserve future purchasing exposure before the supplier has accepted anything, and an unknown request may require reconciliation. Only a received delivery changes the physical count through the receiving operation.
+
+Outbound-delivery uncertainty counts only records routed through the Telegram adapter. Account restore can mark a local result's delivery field unknown too, even when no external message was sent. The first Linux report incorrectly counted five such local records as uncertain outbound messages. A regression test now distinguishes the route before counting delivery uncertainty; the historical local markers remain intact.
 
 The report compares the spending ledger with sums over retained order statuses. A mismatch becomes an explicit exception. Agreement is a useful local invariant, but both sets of records are local. It does not prove that the supplier has no additional order missing from this database. The integrated checkpoint performs that independent comparison separately.
 

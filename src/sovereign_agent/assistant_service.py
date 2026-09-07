@@ -36,7 +36,8 @@ def health(db: Database) -> dict[str, Any]:
             "SELECT count(*) FROM assistant_orders WHERE status IN ('UNKNOWN','SENDING')"
         ).fetchone()[0],
         "uncertain_deliveries": db.connection.execute(
-            "SELECT count(*) FROM assistant_work WHERE delivery IN ('UNKNOWN','SENDING')"
+            "SELECT count(*) FROM assistant_work WHERE channel LIKE 'telegram:%' "
+            "AND delivery IN ('UNKNOWN','SENDING')"
         ).fetchone()[0],
     }
 

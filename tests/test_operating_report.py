@@ -20,8 +20,8 @@ def db(tmp_path):
     database.close()
 
 
-def approval(db):
-    work.enqueue(db, "request", "lucy", "Buy vanilla")
+def approval(db, *, channel="local", recipient=""):
+    work.enqueue(db, "request", "lucy", "Buy vanilla", channel=channel, recipient=recipient)
     holder = work.claim(db, "worker")
     operation = orders.propose(db, holder, "SKU-VANILLA", 6)
     digest = db.connection.execute("SELECT digest FROM assistant_orders").fetchone()[0]
@@ -66,7 +66,7 @@ def test_approved_order_is_reserved_exposure_not_delivered_stock(db):
 
 
 def test_unknown_effect_and_delivery_cannot_disappear_in_fluent_result(db):
-    _, operation = approval(db)
+    _, operation = approval(db, channel="telegram:report-fixture", recipient="123")
     db.connection.execute("UPDATE assistant_orders SET status='UNKNOWN' WHERE id=?", (operation,))
     db.connection.execute(
         "UPDATE assistant_work SET status='BLOCKED',delivery='UNKNOWN',"
@@ -75,6 +75,9 @@ def test_unknown_effect_and_delivery_cannot_disappear_in_fluent_result(db):
     db.connection.commit()
     result = operating_report(db)
     assert len(result["exceptions"]) == 3
+    from sovereign_agent.assistant_service import health
+
+    assert health(db)["uncertain_deliveries"] == 1
     assert "GBP 15.00" in result["text"] and "All complete" not in result["text"]
     assert result["spending"]["order_totals_match"] is True
 
@@ -154,3 +157,14 @@ def test_detail_limit_does_not_hide_total_work_or_omissions(db):
     result = operating_report(db)
     assert result["work"] == {"READY": 23}
     assert len(result["pending_work"]) == 20 and result["pending_work_omitted"] == 3
+
+
+def test_restored_local_results_are_not_uncertain_outbound_messages(db):
+    from sovereign_agent.assistant_service import health
+
+    approval(db)
+    with db.immediate() as connection:
+        connection.execute("UPDATE assistant_work SET delivery='UNKNOWN'")
+    assert not any("outbound" in item for item in operating_report(db)["exceptions"])
+    assert health(db)["uncertain_deliveries"] == 0
+    assert db.connection.execute("SELECT delivery FROM assistant_work").fetchone()[0] == "UNKNOWN"

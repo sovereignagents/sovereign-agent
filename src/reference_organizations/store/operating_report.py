@@ -69,7 +69,10 @@ def operating_report(db: Database) -> dict[str, Any]:
             )
         ]
         deliveries = dict(
-            connection.execute("SELECT delivery,count(*) FROM assistant_work GROUP BY delivery")
+            connection.execute(
+                "SELECT delivery,count(*) FROM assistant_work "
+                "WHERE channel LIKE 'telegram:%' GROUP BY delivery"
+            )
         )
         research = connection.execute(
             "SELECT count(*) FROM assistant_work WHERE role='research' AND status='DONE'"
