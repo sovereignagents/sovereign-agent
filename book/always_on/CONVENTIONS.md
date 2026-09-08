@@ -9,15 +9,15 @@ Read in order. The chapters form one cumulative implementation, with one executa
 Use the exact source commit linked by the edition you are reading. A moving branch can contain later behavior than a printed listing. From the repository root, install the committed environment and run the first checkpoint:
 
 ```bash
-uv sync --frozen --python 3.14
+uv sync --frozen --python 3.14 --group dev
 uv run --python 3.14 python book/always_on/checkpoints/ch01.py
 ```
 
-Run another checkpoint by replacing the chapter number. The [checkpoint index](CHECKPOINTS.md) links all sixteen files. Chapter 1 explains the setup before asking for the first live model call. Do not use the published PyPI version as a substitute for an unreleased edition checkout.
+Use Python 3.14 throughout, including the inline examples. Some later listings use Python 3.14's unparenthesized multiple-exception syntax; on older interpreters those statements are syntax errors. Run inline examples and checkpoints from the repository root, because relative fixture paths start there. Chapters 2 and 3 give exact instructions for saving the reader-built definitions in `book/always_on/learner/`. Run another checkpoint by replacing the chapter number. The [checkpoint index](CHECKPOINTS.md) links all sixteen files. Chapter 1 explains the setup before asking for the first live model call. Do not use the published PyPI version as a substitute for an unreleased edition checkout.
 
 ## Read the evidence labels literally
 
-A Python listing introduces code you can inspect. A selected listing title identifies a passage discussed in the surrounding prose; it does not imply that every code fence is a standalone program. Adjacent text output records the shown experiment. The construction instrument executes marked Python examples and compares paired output. Bash commands may require the stated host, model or credentials; their presence in a fence is not a claim that a portable test executed them.
+A Python listing introduces code you can inspect. The website numbers figures and listings within each chapter from source order; the source captions intentionally keep their stable descriptive text. A selected listing title identifies a passage discussed in the surrounding prose; it does not imply that every code fence is a standalone program. Adjacent text output records the shown experiment. The construction instrument executes marked Python examples and compares paired output. Bash commands may require the stated host, model or credentials; their presence in a fence is not a claim that a portable test executed them.
 
 | Evidence | What it establishes | What still needs inspection |
 | --- | --- | --- |

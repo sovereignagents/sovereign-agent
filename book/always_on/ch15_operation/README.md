@@ -343,6 +343,8 @@ sequenceDiagram
 
 **Figure:** A restored snapshot remains paused until external receipts and current observations establish a new operating state.
 
+If the final SQLite copy fails after the authority marker changes, the active database remains paused and its marker may disagree with its stored epoch. Stop the service, repair the underlying disk or lock problem, then rerun `agent restore` with the same checked snapshot. Restore does not require an active matching epoch and can safely prepare a fresh paused image on retry. Never delete the marker or manually unpause to bypass the mismatch; old holders must remain fenced. Complete the account reconciliation described below after the retry succeeds.
+
 The restore function constructs a prepared image before disturbing active state. It requires the same migration set as the current database. An older snapshot must be migrated as a copy with reviewed current code; preserve the original as evidence. Removing migration stamps to force compatibility would conceal the very fact the precondition is checking.
 
 ```python

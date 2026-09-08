@@ -140,3 +140,44 @@ SCHEMA_25 = """
 ALTER TABLE assistant_orders ADD COLUMN approval_basis TEXT NOT NULL DEFAULT 'UNKNOWN'
 CHECK(approval_basis IN ('UNKNOWN','OPERATOR','AUTOMATIC'));
 """
+
+
+SCHEMA_26 = """
+CREATE TABLE assistant_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id TEXT NOT NULL REFERENCES assistant_work(id),
+    status TEXT NOT NULL, body TEXT NOT NULL,
+    channel TEXT NOT NULL, recipient TEXT NOT NULL,
+    delivery TEXT NOT NULL DEFAULT 'PENDING', receipt TEXT
+);
+CREATE INDEX assistant_reports_pending ON assistant_reports(channel, delivery, id);
+INSERT INTO assistant_reports(work_id,status,body,channel,recipient,delivery)
+SELECT id,status,coalesce(result,'Work ended without a report.'),channel,recipient,delivery
+FROM assistant_work WHERE status IN ('DONE','BLOCKED','CANCELLED','REJECTED');
+CREATE TRIGGER assistant_report_immutable
+BEFORE UPDATE OF id,work_id,status,body,channel,recipient ON assistant_reports
+BEGIN SELECT RAISE(ABORT, 'report identity and content are immutable'); END;
+CREATE TRIGGER assistant_report_insert AFTER INSERT ON assistant_work
+WHEN NEW.status IN ('DONE','BLOCKED','CANCELLED','REJECTED')
+BEGIN
+    INSERT INTO assistant_reports(work_id,status,body,channel,recipient,delivery)
+    VALUES (NEW.id,NEW.status,coalesce(NEW.result,'Work ended without a report.'),
+            NEW.channel,NEW.recipient,NEW.delivery);
+END;
+CREATE TRIGGER assistant_report_finish AFTER UPDATE OF status,result ON assistant_work
+WHEN NEW.status IN ('DONE','BLOCKED','CANCELLED','REJECTED') AND NOT EXISTS (
+    SELECT 1 FROM assistant_reports WHERE id=(
+        SELECT max(id) FROM assistant_reports WHERE work_id=NEW.id
+    ) AND status=NEW.status AND body=coalesce(NEW.result,'Work ended without a report.')
+)
+BEGIN
+    INSERT INTO assistant_reports(work_id,status,body,channel,recipient)
+    VALUES (NEW.id,NEW.status,coalesce(NEW.result,'Work ended without a report.'),
+            NEW.channel,NEW.recipient);
+    UPDATE assistant_work SET delivery='PENDING' WHERE id=NEW.id;
+END;
+CREATE TRIGGER assistant_report_delivery AFTER UPDATE OF delivery ON assistant_reports
+WHEN NEW.id=(SELECT max(id) FROM assistant_reports WHERE work_id=NEW.work_id)
+BEGIN UPDATE assistant_work SET delivery=NEW.delivery WHERE id=NEW.work_id; END;
+ALTER TABLE assistant_jobs ADD COLUMN deferred INTEGER NOT NULL DEFAULT 0;
+"""

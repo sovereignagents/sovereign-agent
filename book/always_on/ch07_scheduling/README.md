@@ -221,20 +221,29 @@ def tick(db: Database, *, now: float | None = None, maximum: int = 100) -> list[
             (now, maximum),
         ).fetchall()
         for row in rows:
-            identifier = _enqueue(
-                connection,
-                f"job:{row['id']}:{row['next_due']!r}",
-                row["session"],
-                row["prompt"],
-                now,
-                row["channel"],
-                row["recipient"],
-            )
+            try:
+                identifier = _enqueue(
+                    connection,
+                    f"job:{row['id']}:{row['next_due']!r}",
+                    row["session"],
+                    row["prompt"],
+                    now,
+                    row["channel"],
+                    row["recipient"],
+                    require_admission=True,
+                )
+            except IntakeLimitError:
+                if not row["deferred"]:
+                    append_event(db, "assistant.job.deferred", {"job": row["id"]})
+                    connection.execute(
+                        "UPDATE assistant_jobs SET deferred=1 WHERE id=?", (row["id"],)
+                    )
+                continue
             created.append(identifier)
             skipped = math.floor((now - row["next_due"]) / row["interval_seconds"])
             next_due = row["next_due"] + (skipped + 1) * row["interval_seconds"]
             connection.execute(
-                "UPDATE assistant_jobs SET next_due=? WHERE id=?", (next_due, row["id"])
+                "UPDATE assistant_jobs SET next_due=?,deferred=0 WHERE id=?", (next_due, row["id"])
             )
             append_event(
                 db,
@@ -298,9 +307,9 @@ Disabled pass: []
 Earlier work retained: 2
 ```
 
-The current intake policy allows twenty pending ordinary items and fifty ordinary admissions per session per UTC day. A periodic tick that exceeds admission capacity records a `REJECTED` work item and still advances its schedule. This avoids retrying the same morning report indefinitely; the next scheduled occurrence is another opportunity. Therefore a returned identifier means a work record exists, not necessarily that it is eligible to run.
+The current intake policy allows twenty pending ordinary items and fifty ordinary admissions per session per UTC day. A saturated periodic tick requests strict admission, leaves its due time unchanged and records one `assistant.job.deferred` event. Repeated passes create neither rejected work nor repeated phone notices. When capacity returns, the scheduler admits one current report, coalesces missed occurrences and advances from the original due time.
 
-Stock conditions use a different choice shortly: a capacity refusal leaves the condition armed so it can be admitted later. The distinction is deliberate. “Give me this morning's brief” can be overtaken by the next brief. “This SKU still needs attention” remains relevant until its observed condition changes. In both cases the operator can inspect stored state instead of inferring success from a quiet terminal.
+Stock conditions use strict admission too: a capacity refusal leaves the condition armed for a later pass. Clock jobs retain their earliest due time, while stock conditions retain their observed need. Both preserve pending work without manufacturing a queue of rejection reports.
 
 ## Turn a stock shortage into one episode
 
@@ -688,7 +697,7 @@ Create a job due at 100 with interval ten and observe it at 140. Predict the coa
 
 ### Exercise 2 — Fill the intake queue
 
-Fill a session to the pending-work limit and run both a due clock job and an armed vanilla condition. Inspect the rejected clock record, its advanced due time and the still-armed condition. Free capacity through a legitimate terminal transition, then rescan. Explain why only one new condition episode should be admitted. Repeat the observation without freeing capacity and confirm that the scanner does not generate rejected rows on every pass.
+Fill a session to the pending-work limit and run both a due clock job and an armed vanilla condition. Inspect the absence of a rejected clock record, its unchanged due time and the still-armed condition. Free capacity through a legitimate terminal transition, then rescan. Explain why one coalesced clock occurrence and one new condition episode should be admitted when enough capacity is available. Repeat the observation without freeing capacity and confirm that the scanner does not generate rejected rows on every pass.
 
 ### Exercise 3 — Hide an intermediate stock recovery
 

@@ -6,6 +6,18 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Address current elder review counterexamples: migration 26 records immutable
+  report revisions with independent delivery receipts; late acknowledgements
+  cannot suppress a newer result. Interrupted immediate transactions roll back
+  on BaseException and retain the original error when lock acquisition fails.
+  Saturated clock jobs defer without creating rejected report floods.
+
+- Add explicit renewal of an uncertain exact order for a matching idempotent
+  supplier and operator-attested conclusive receipt resolution. Retain uncertain
+  reservations when proof is absent; reject cancelled or revoked retry authority.
+  Chapter 2 and 3 learner files now contain the constructed dispatcher, loop and
+  HTTP response adapter, and the live checkpoint loads that reader-owned code.
+
 - Add a current operating report from one consistent SQLite snapshot, with
   explicit uncertainty, accounting mismatches, retained-history scope and model
   estimate limits. Complete sixteen construction drafts and an accelerated day

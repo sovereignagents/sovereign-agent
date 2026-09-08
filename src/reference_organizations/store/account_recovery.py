@@ -337,7 +337,8 @@ def recover(
             "owner=NULL,expires=NULL WHERE status IN ('READY','RUNNING','BLOCKED')"
         )
         connection.execute(
-            "UPDATE assistant_work SET delivery='UNKNOWN' WHERE delivery IN ('PENDING','SENDING')"
+            "UPDATE assistant_reports SET delivery='UNKNOWN' "
+            "WHERE delivery IN ('PENDING','SENDING')"
         )
         connection.execute("UPDATE assistant_orders SET revoked=1,approved_until=0")
         connection.execute("UPDATE assistant_stock_conditions SET armed=1")

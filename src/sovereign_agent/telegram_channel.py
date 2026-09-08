@@ -149,22 +149,23 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
     _check_operators(operators)
     with db.immediate() as connection:
         row = connection.execute(
-            "SELECT * FROM assistant_work WHERE channel=? AND "
-            "status IN ('DONE','BLOCKED','CANCELLED','REJECTED') AND delivery='PENDING' "
-            "ORDER BY created LIMIT 1",
+            "SELECT * FROM assistant_reports WHERE channel=? AND delivery='PENDING' "
+            "ORDER BY id LIMIT 1",
             ("telegram:" + bot.account,),
         ).fetchone()
         if row is None:
             return None
         if not row["recipient"].isdigit() or int(row["recipient"]) not in operators:
             connection.execute(
-                "UPDATE assistant_work SET delivery='DENIED' WHERE id=?", (row["id"],)
+                "UPDATE assistant_reports SET delivery='DENIED' WHERE id=?", (row["id"],)
             )
             return "DENIED"
         # A crash after this commit is ambiguous, even if no HTTP call happened.
-        connection.execute("UPDATE assistant_work SET delivery='SENDING' WHERE id=?", (row["id"],))
+        connection.execute(
+            "UPDATE assistant_reports SET delivery='SENDING' WHERE id=?", (row["id"],)
+        )
     try:
-        text = row["result"] or "Work ended without a report."
+        text = row["body"]
         if len(text) > 3900:
             text = text[:3800] + "\n[Report truncated; request a shorter report.]"
         result = bot.call("sendMessage", {"chat_id": int(row["recipient"]), "text": text})
@@ -179,8 +180,12 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
         status = "UNKNOWN"
     with db.immediate() as connection:
         updated = connection.execute(
-            "UPDATE assistant_work SET delivery=? WHERE id=? AND delivery='SENDING'",
-            (status, row["id"]),
+            "UPDATE assistant_reports SET delivery=?,receipt=? WHERE id=? AND delivery='SENDING'",
+            (
+                status,
+                json.dumps({"message_id": result["message_id"]}) if status == "SENT" else None,
+                row["id"],
+            ),
         )
         if not updated.rowcount:
             return "UNKNOWN"
@@ -189,7 +194,8 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
                 db,
                 "assistant.channel.sent",
                 {
-                    "work": row["id"],
+                    "work": row["work_id"],
+                    "report": row["id"],
                     "channel": row["channel"],
                     "recipient": row["recipient"],
                     "message_id": result["message_id"],

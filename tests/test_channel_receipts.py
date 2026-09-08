@@ -102,6 +102,7 @@ def test_successful_receipt_is_durable_once_and_contains_no_raw_response(tmp_pat
         "channel": "telegram:shape-test",
         "recipient": "123",
         "message_id": 901,
+        "report": 1,
     }
     assert len(bot.sent) == 1
     db.close()
@@ -133,7 +134,7 @@ def test_changed_delivery_state_cannot_gain_a_stale_success_event(tmp_path):
     def accepted_after_state_changed(*args):
         with other.immediate() as connection:
             connection.execute(
-                "UPDATE assistant_work SET delivery='UNKNOWN' WHERE id=?", (identifier,)
+                "UPDATE assistant_reports SET delivery='UNKNOWN' WHERE work_id=?", (identifier,)
             )
         return {"message_id": 901}
 

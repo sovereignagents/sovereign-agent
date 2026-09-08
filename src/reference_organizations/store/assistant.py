@@ -77,6 +77,13 @@ def _orders(
         lines.append(f"Order {row['id']}: {row['status']}, {row['amount']} pence.")
         if row["status"] == "DRAFT":
             lines.append(f"Approval required: /approve {row['id']} {row['digest']}")
+        elif row["status"] in {"SENDING", "UNKNOWN"}:
+            lines.append(
+                "Supplier outcome unresolved; spending remains reserved. "
+                "Obtain a conclusive supplier receipt and use agent resolve-order."
+            )
+            if supplier.idempotent and not row["revoked"] and not cancelled:
+                lines.append(f"Renew the same operation only: /approve {row['id']} {row['digest']}")
     answer = "\n".join(lines)
     assistant_work.finish(db, work, state, answer)
     return {"status": state, "work": work.id, "answer": answer}
@@ -118,6 +125,7 @@ def run_once(
                     actor=row["recipient"],
                     policy=policy,
                     expires=row["created"] + 3600,
+                    supplier=supplier,
                 )
                 with db.immediate() as connection:
                     connection.execute(

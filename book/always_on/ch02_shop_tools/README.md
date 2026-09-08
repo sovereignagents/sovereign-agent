@@ -43,7 +43,7 @@ flowchart LR
 
 ## Reuse the shop fixture
 
-We continue with the same three products from Chapter 1. The standalone checkpoint keeps its stock in memory so that the dispatch mechanism can be inspected without first teaching database transactions. Chapter 4 will replace this storage boundary with persistent records. The cumulative installed agent already has that SQLite adapter; it applies the same contract to current records.
+We continue with the same three products from Chapter 1. The standalone checkpoint keeps its stock in memory so that the dispatch mechanism can be inspected without first teaching database transactions. Chapter 4 will replace this storage boundary with persistent records. For now, the complete tool layer uses only Python and Pydantic.
 
 For the examples below, load only the preceding checkpoint's fixture. `run_path` executes the module definitions without running its `main` function. No model request occurs.
 
@@ -316,7 +316,7 @@ The `schemas` method returns only allowed tools. Hiding unavailable operations m
 
 Expected failures become small error codes. We do not copy exception messages into the model's context: validation errors may include raw arguments, and network exceptions can include sensitive addresses or credentials. During development, you can reproduce a failure with the deterministic request and inspect its handler locally. A public observation need not expose every internal detail to be useful.
 
-The exception list is deliberate. It covers expected input, permission, timeout, and operating-system failures. It does not catch every possible programming defect or interrupt. A misspelled variable should fail visibly during development instead of being disguised as a routine tool refusal. Later, the work runner will record failed turns so that an unexpected exception does not erase the assignment.
+The exception list is deliberate. It covers expected input, permission, timeout, and operating-system failures. It does not catch every possible programming defect or interrupt. A misspelled variable should fail visibly during development instead of being disguised as a routine tool refusal. In Chapter 10 we will save unfinished tasks so another process can recover them after a failure.
 
 The result limit counts encoded bytes, not Python characters. A character may require several UTF-8 bytes. `allow_nan=False` also rejects values such as floating-point infinity that do not belong in a strict JSON observation. These checks keep a completed tool result from flooding the next model request or violating its data format.
 
@@ -367,7 +367,7 @@ print(read_only.invoke(request))
 {'ok': False, 'error': 'tool_not_allowed'}
 ```
 
-The name `read_only` describes this particular selection. Our draft tool also has no external effect, so excluding it here is an example of narrowing an interface rather than a claim that drafting is purchasing. In later chapters, separate roles will receive the operations needed for their assignments.
+The name `read_only` describes this particular selection. Our draft tool also has no external effect, so excluding it here is an example of narrowing an interface rather than a claim that drafting is purchasing. In later chapters, we will choose an allowlist for each kind of task.
 
 ```mermaid
 sequenceDiagram
@@ -406,6 +406,71 @@ tool_failed
 ```
 
 This experiment explains why a saved recommendation is not a permanent authorization. The world can change between recommendation and execution. The handler checks the fixture at invocation time. When multiple processes can update persistent stock, checking and reserving quantities will require a transaction or equivalent coordination; this in-memory example makes no concurrency guarantee.
+
+## Save the tool layer for Chapter 3
+
+Run all examples from the repository root. Create `book/always_on/learner/ch02.py`. Save the imports, class and function definitions shown in this chapter, together with the assignments to `SHOP`, `PRICES`, `products` and `tools`. Keep the print statements and failure experiments in your interactive session. The checked-in file is the completed version of exactly those definitions; it imports no agent runtime.
+
+The functions above share one module-level product dictionary. Chapter 3 needs a fresh fixture for each experiment. The following factory moves the same calculations inside a function, where each handler closes over its own copied rows. It returns the dispatcher we already built; no hidden factory is supplied by the runtime.
+
+**Listing:** Assemble an independent shop dispatcher from the functions you have built.
+
+```python
+def build_tools(shop):
+    rows = {row["sku"]: copy.deepcopy(row) for row in shop["products"]}
+    if len(rows) != len(shop["products"]):
+        raise ValueError("duplicate product identity")
+
+    def stock(_):
+        return [
+            {**row, "needed": max(0, row["reorder_point"] - row["on_hand"])}
+            for _, row in sorted(rows.items())
+        ]
+
+    def quote(args):
+        if args.sku not in rows:
+            raise KeyError("unknown product")
+        return {
+            "sku": args.sku,
+            "supplier": "lucy-local",
+            "currency": "GBP",
+            "unit_cost_pence": PRICES[args.sku],
+        }
+
+    def draft(args):
+        row = rows[args.sku]
+        needed = max(0, row["reorder_point"] - row["on_hand"])
+        if args.quantity != needed:
+            raise ValueError("quantity differs from the replenishment need")
+        price = quote(ProductArguments(sku=args.sku))
+        return {
+            **price,
+            "quantity": args.quantity,
+            "total_pence": args.quantity * price["unit_cost_pence"],
+            "status": "DRAFT",
+        }
+
+    registered = [
+        ExecutableTool("list_stock", "Read stock and calculated need.", NoArguments, stock),
+        ExecutableTool("supplier", "Read supplier price in GBP pence.", ProductArguments, quote),
+        ExecutableTool("draft_order", "Calculate a draft; never purchases.", DraftArguments, draft),
+    ]
+    return Dispatcher(registered, allowed=frozenset(tool.name for tool in registered))
+
+
+fresh = build_tools(SHOP)
+print(
+    fresh.invoke(
+        ToolCall(id="check", name="draft_order", arguments={"sku": "SKU-VANILLA", "quantity": 6})
+    )["value"]["total_pence"]
+)
+```
+
+```text
+1500
+```
+
+Copy `build_tools` into the same learner file. Importing that file defines code and loads the synthetic fixture; it does not run the failure experiments or contact a model. Try two dispatchers with different stock dictionaries to verify that one experiment cannot change the other's fixture.
 
 ## Prove that a write check runs first
 
@@ -479,6 +544,14 @@ From the repository root, run the checkpoint using the environment established i
 ```bash
 uv run python book/always_on/checkpoints/ch02.py
 uv run python scripts/verify_always_on_v1.py
+```
+
+The first command prints the following output:
+
+```text
+[('SKU-CHOCOLATE', 0), ('SKU-STRAWBERRY', 4), ('SKU-VANILLA', 6)]
+{"ok": true, "value": {"currency": "GBP", "quantity": 6, "sku": "SKU-VANILLA", "status": "DRAFT", "supplier": "lucy-local", "total_pence": 1500, "unit_cost_pence": 250}}
+{"error": "invalid_arguments", "ok": false}
 ```
 
 The first command prints the three calculated needs, a successful vanilla draft, and an invalid-argument refusal. The second executes the drafted chapters' Python examples and compares their printed output with the adjacent expected-output blocks. It also runs each standalone checkpoint. Its construction report identifies chapters that remain planned; it does not certify unwritten chapters.

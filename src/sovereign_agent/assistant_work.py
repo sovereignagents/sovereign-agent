@@ -238,20 +238,29 @@ def tick(db: Database, *, now: float | None = None, maximum: int = 100) -> list[
             (now, maximum),
         ).fetchall()
         for row in rows:
-            identifier = _enqueue(
-                connection,
-                f"job:{row['id']}:{row['next_due']!r}",
-                row["session"],
-                row["prompt"],
-                now,
-                row["channel"],
-                row["recipient"],
-            )
+            try:
+                identifier = _enqueue(
+                    connection,
+                    f"job:{row['id']}:{row['next_due']!r}",
+                    row["session"],
+                    row["prompt"],
+                    now,
+                    row["channel"],
+                    row["recipient"],
+                    require_admission=True,
+                )
+            except IntakeLimitError:
+                if not row["deferred"]:
+                    append_event(db, "assistant.job.deferred", {"job": row["id"]})
+                    connection.execute(
+                        "UPDATE assistant_jobs SET deferred=1 WHERE id=?", (row["id"],)
+                    )
+                continue
             created.append(identifier)
             skipped = math.floor((now - row["next_due"]) / row["interval_seconds"])
             next_due = row["next_due"] + (skipped + 1) * row["interval_seconds"]
             connection.execute(
-                "UPDATE assistant_jobs SET next_due=? WHERE id=?", (next_due, row["id"])
+                "UPDATE assistant_jobs SET next_due=?,deferred=0 WHERE id=?", (next_due, row["id"])
             )
             append_event(
                 db,
@@ -416,7 +425,8 @@ def cancel(db: Database, identifier: str) -> None:
             (identifier,),
         )
         changed = connection.execute(
-            "UPDATE assistant_work SET status='CANCELLED',cancelled=1,generation=generation+1 "
+            "UPDATE assistant_work SET status='CANCELLED',cancelled=1,generation=generation+1,"
+            "result='Cancellation recorded; transmitted orders still require reconciliation.' "
             "WHERE id=? AND status IN ('READY','RUNNING','BLOCKED')",
             (identifier,),
         ).rowcount

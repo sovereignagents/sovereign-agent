@@ -609,6 +609,14 @@ phone results: 2
 
 The offline model does not interpret the formatting preference; it supplies authored responses to test the data flow. We checked that the selected context contained the preference, while the transcript checker verifies the draft operations. Only a live model run and a reading of its answer can assess how well it follows the requested format. Avoid collapsing those observations into a single claim that the agent “understands Lucy.”
 
+## Give each report its own identity
+
+A single request may produce an approval report and, later, a confirmed-order report. They need separate delivery records. If we keep one `delivery` flag on the work row, sending the first report sets it to `SENT`; replacing the text with the final result can then suppress that result forever. Resetting the flag is also unsafe: an acknowledgement still in flight for the old text could mark the new text sent.
+
+The installed schema therefore has an `assistant_reports` outbox. Each row stores an increasing `id`, its `work_id`, the work status at publication, an immutable `body`, channel and recipient, and its own delivery state and receipt. The `assistant_report_finish` trigger appends a row in the same transaction that records a changed terminal result. Identical consecutive blocked reports reuse the last report instead of generating a message on every reconciliation pass. A database trigger refuses edits to the report identity, body or destination.
+
+Inspect migration 26 in `src/sovereign_agent/assistant_schema.py` alongside `finish`: the outbox insert and finished work commit together. New rejected intake and cancellation also create reports. The old `assistant_work.delivery` column is now only a projection of the newest report; delivery code and health accounting read the outbox. Historical uncertain reports remain visible even after a later report succeeds. Migration preserves existing delivery states; it cannot reconstruct reports that an older version already overwrote.
+
 ## Treat report delivery as an external effect
 
 There are two state machines in this chapter: execution of the work and delivery of its result. A work record can be `DONE` while its report is still `PENDING`. A report can become `UNKNOWN` even though the stock calculation completed correctly. Keeping those states separate helps the operator distinguish “the agent did not finish” from “the agent finished, but I may not have received its answer.”
@@ -630,22 +638,23 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
     _check_operators(operators)
     with db.immediate() as connection:
         row = connection.execute(
-            "SELECT * FROM assistant_work WHERE channel=? AND "
-            "status IN ('DONE','BLOCKED','CANCELLED','REJECTED') AND delivery='PENDING' "
-            "ORDER BY created LIMIT 1",
+            "SELECT * FROM assistant_reports WHERE channel=? AND delivery='PENDING' "
+            "ORDER BY id LIMIT 1",
             ("telegram:" + bot.account,),
         ).fetchone()
         if row is None:
             return None
         if not row["recipient"].isdigit() or int(row["recipient"]) not in operators:
             connection.execute(
-                "UPDATE assistant_work SET delivery='DENIED' WHERE id=?", (row["id"],)
+                "UPDATE assistant_reports SET delivery='DENIED' WHERE id=?", (row["id"],)
             )
             return "DENIED"
         # A crash after this commit is ambiguous, even if no HTTP call happened.
-        connection.execute("UPDATE assistant_work SET delivery='SENDING' WHERE id=?", (row["id"],))
+        connection.execute(
+            "UPDATE assistant_reports SET delivery='SENDING' WHERE id=?", (row["id"],)
+        )
     try:
-        text = row["result"] or "Work ended without a report."
+        text = row["body"]
         if len(text) > 3900:
             text = text[:3800] + "\n[Report truncated; request a shorter report.]"
         result = bot.call("sendMessage", {"chat_id": int(row["recipient"]), "text": text})
@@ -660,8 +669,12 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
         status = "UNKNOWN"
     with db.immediate() as connection:
         updated = connection.execute(
-            "UPDATE assistant_work SET delivery=? WHERE id=? AND delivery='SENDING'",
-            (status, row["id"]),
+            "UPDATE assistant_reports SET delivery=?,receipt=? WHERE id=? AND delivery='SENDING'",
+            (
+                status,
+                json.dumps({"message_id": result["message_id"]}) if status == "SENT" else None,
+                row["id"],
+            ),
         )
         if not updated.rowcount:
             return "UNKNOWN"
@@ -670,7 +683,8 @@ def deliver_one(db: Database, bot: Bot, operators: frozenset[int]) -> str | None
                 db,
                 "assistant.channel.sent",
                 {
-                    "work": row["id"],
+                    "work": row["work_id"],
+                    "report": row["id"],
                     "channel": row["channel"],
                     "recipient": row["recipient"],
                     "message_id": result["message_id"],
@@ -698,11 +712,11 @@ further automatic delivery: None
 recorded successful message: 902
 ```
 
-The fixture accepted the first report before losing the reply. We know that because we control the local bot's list. The runtime only sees the timeout, so it correctly records `UNKNOWN`. The second report belongs to the second request and receives a valid receipt. It is not a retry of the first report. This distinction is why a global count of sent messages cannot substitute for per-work delivery state.
+The fixture accepted the first report before losing the reply. We know that because we control the local bot's list. The runtime only sees the timeout, so it correctly records `UNKNOWN`. The second report belongs to the second request and receives a valid receipt. It is not a retry of the first report. This distinction is why a global count of sent messages cannot substitute for per-report delivery state.
 
 The update to `SENT` and the receipt event share a transaction. If recording the event fails, the earlier `SENDING` admission remains, leaving the attempt visibly uncertain. If restore or another recovery action changed the delivery state before this completion arrived, the conditional update affects no row and no stale success event is appended. An old network response does not get to overwrite a new local decision.
 
-Our event retains only the work identifier, channel, requested recipient and message identifier. It does not copy the raw server response or bot credential. The message identifier is a delivery receipt from the service; it is not proof that Lucy read the report. A handset observation remains necessary for the user-facing result, and natural-language correctness still needs its own evaluation.
+Our event retains the work and report identifiers, channel, requested recipient and message identifier. It does not copy the raw server response or bot credential. The message identifier is a delivery receipt from the service; it is not proof that Lucy read the report. A handset observation remains necessary for the user-facing result, and natural-language correctness still needs its own evaluation.
 
 ```mermaid
 stateDiagram-v2
@@ -842,6 +856,14 @@ Hold the first work claim while a second request arrives in the same private ses
 ### Exercise 4: Delivery after local state changes
 
 Change an admitted report's delivery state to `UNKNOWN` before a late successful API response returns. Confirm that the old completion does not append a new success event or overwrite the changed state. Explain what the fixture knows about remote acceptance, what the runtime can record safely, and why the operator may still need to inspect the actual conversation.
+
+## Operating limits of the teaching channel
+
+Use one bot account with one active installation database. The poller lease coordinates processes sharing that database; it cannot coordinate two independent installations using the same token. Stop the other installation if Telegram reports a competing poller or webhook conflict. Never try to solve that conflict by deleting the local cursor.
+
+A malformed batch is refused atomically and retried with bounded backoff. If the same malformed payload persists, intake stays blocked until the provider or adapter is repaired. This teaching implementation deliberately does not skip a whole batch after a retry count: that would silently discard valid messages alongside the malformed member. Stop polling, preserve the cursor and diagnostic context without the token, correct the parser against a retained synthetic reproduction, and resume at the same cursor. Local status, approval and receipt commands remain available during this channel outage.
+
+An outbound `UNKNOWN` or interrupted `SENDING` report is not automatically replayed, and this version has no operator resend command. Inspect the actual conversation and use `agent report` locally for the current account state. A later changed business result gets a new report identity; it does not erase the earlier uncertainty or pretend that Lucy read it. This conservative policy favors avoiding duplicate unsolicited messages over guaranteed delivery.
 
 ## Active recall
 

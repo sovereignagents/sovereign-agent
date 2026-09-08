@@ -72,6 +72,7 @@ def test_unknown_effect_and_delivery_cannot_disappear_in_fluent_result(db):
         "UPDATE assistant_work SET status='BLOCKED',delivery='UNKNOWN',"
         "result='All complete. We spent nothing.'"
     )
+    db.connection.execute("UPDATE assistant_reports SET delivery='UNKNOWN'")
     db.connection.commit()
     result = operating_report(db)
     assert len(result["exceptions"]) == 3

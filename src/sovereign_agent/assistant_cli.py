@@ -53,7 +53,15 @@ def handle(args: argparse.Namespace) -> int:
         if endpoint
         and not args.research_worker
         and args.action
-        in {"ask", "work", "serve", "bind-supplier", "inspect-account", "recover-account"}
+        in {
+            "ask",
+            "work",
+            "serve",
+            "approve",
+            "bind-supplier",
+            "inspect-account",
+            "recover-account",
+        }
         else None
     )
     limits = Limits(
@@ -191,6 +199,7 @@ def handle(args: argparse.Namespace) -> int:
                 actor=actor,
                 policy=policy,
                 expires=time.time() + args.approval_seconds,
+                supplier=supplier,
             )
             with db.immediate() as connection:
                 connection.execute(
@@ -202,6 +211,21 @@ def handle(args: argparse.Namespace) -> int:
         else:
             assistant_orders.revoke(db, args.value, actor=actor, policy=policy)
         result = {"status": action.upper(), "order": args.value}
+    elif action == "resolve-order":
+        with Path(args.receipt).open("rb") as stream:
+            raw = stream.read(65_537)
+        if len(raw) > 65_536:
+            raise ValueError("receipt exceeds 64 KiB")
+        result = assistant_orders.resolve(
+            db,
+            args.value,
+            args.digest,
+            json.loads(raw),
+            target=args.supplier,
+            evidence=args.evidence,
+            actor=args.actor or "lucy",
+            policy=policy,
+        )
     elif action == "retry":
         with db.immediate() as connection:
             changed = connection.execute(
@@ -373,6 +397,7 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
             "report",
             "approve",
             "revoke",
+            "resolve-order",
             "retry",
             "cancel",
             "remember",
@@ -413,6 +438,8 @@ def register(subparsers: Any, shared: argparse.ArgumentParser) -> None:
     parser.add_argument("--actor", default="")
     parser.add_argument("--digest", default="")
     parser.add_argument("--delivery-ref", default="")
+    parser.add_argument("--receipt", default="")
+    parser.add_argument("--evidence", default="")
     parser.add_argument("--approval-seconds", type=int, default=3600)
     parser.add_argument("--total-pence", type=int, default=20_000)
     parser.add_argument("--automatic-pence", type=int, default=0)
