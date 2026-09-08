@@ -1,0 +1,3 @@
+extend = "../../../pyproject.toml"
+# Standalone classroom notebooks must run without the Python 3.14 runtime.
+target-version = "py311"

@@ -6,6 +6,12 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Add a standalone Chapter 1 classroom notebook and instructor guide with
+  explicit live opt-in, labelled offline fallback, repeatable fixtures,
+  adversarial envelope checks and a rubric. Fold warning-check counterexamples
+  and snapshot-bound review into the manuscript and checkpoint without claiming
+  that a passing heuristic proves model prose true.
+
 - Address current elder review counterexamples: migration 26 records immutable
   report revisions with independent delivery receipts; late acknowledgements
   cannot suppress a newer result. Interrupted immediate transactions roll back

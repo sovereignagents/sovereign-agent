@@ -1,6 +1,8 @@
 """Chapter 1: one explicit model request, with an offline response fixture."""
 
 import argparse
+import copy
+import hashlib
 import json
 from urllib.request import Request, urlopen
 
@@ -56,6 +58,47 @@ def read_brief(document):
     return text
 
 
+def stock_facts(shop):
+    return [
+        (p["sku"], p["on_hand"], max(0, p["reorder_point"] - p["on_hand"]))
+        for p in sorted(shop["products"], key=lambda p: p["sku"])
+    ]
+
+
+def check_brief(text, shop):
+    lower = text.lower()
+    problems = [
+        "omits low product " + p["name"]
+        for p in shop["products"]
+        if p["on_hand"] < p["reorder_point"] and p["name"].lower() not in lower
+    ]
+    for phrase in ("placed the supplier order", "placed an order", "purchased"):
+        if phrase in lower:
+            problems.append("possible unsupported action: " + phrase)
+    return problems
+
+
+def snapshot_id(shop):
+    return hashlib.sha256(json.dumps(shop, sort_keys=True).encode()).hexdigest()
+
+
+def build(shop):
+    snapshot = copy.deepcopy(shop)
+    return {"snapshot": snapshot_id(snapshot), "body": payload(snapshot)}
+
+
+def review_brief(built, document, current_shop):
+    if built["snapshot"] != snapshot_id(current_shop):
+        raise ValueError("shop changed since the request was built; request a fresh brief")
+    text = read_brief(document)
+    return {
+        "status": "NEEDS_FACTUAL_REVIEW",
+        "draft": text,
+        "flags": check_brief(text, current_shop),
+        "stock_facts": stock_facts(current_shop),
+    }
+
+
 def live_call(body):
     # A socket-operation timeout, not a total wall-clock guarantee. Chapter 3
     # introduces the killable transport used by the cumulative agent.
@@ -91,9 +134,12 @@ def main():
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--model", default="qwen3")
     args = parser.parse_args()
-    body = payload(SHOP, args.model)
+    built = build(SHOP)
+    body = built["body"]
+    body["model"] = args.model
     try:
         document = live_call(body) if args.live else OFFLINE_RESPONSE
+        review = review_brief(built, document, SHOP)
     except OSError, ValueError:
         parser.exit(
             1,
@@ -101,7 +147,9 @@ def main():
             "check the Chapter 1 setup, then retry. No order was sent.\n",
         )
     print("LIVE MODEL RESPONSE" if args.live else "OFFLINE RESPONSE FIXTURE")
-    print(read_brief(document))
+    print(review["draft"])
+    if review["flags"]:
+        print("Warning flags; factual review required:", review["flags"])
 
 
 if __name__ == "__main__":
