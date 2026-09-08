@@ -4,7 +4,7 @@
 
 Use these corrected versions for new classes. The two Chapter 1 notebooks remain standalone Python 3.11 or newer with the standard library. Chapters 2–16 use the cumulative Python 3.14 checkout and locked book dependencies. The full book continues to publish on Prof Rod’s existing `/book` pages.
 
-The runtime sources used by the copied-code experiments are pinned to commit `92db3d436dc69b5694eecb3adaebd82770f59250`, with individual SHA-256 checks. That historical commit alone does not contain the v2 educator files. The complete cohort checkout, including these corrections, is identified below once committed; use all files from that cohort together rather than mixing old helpers with new notebooks.
+The runtime sources used by the copied-code experiments are pinned to commit `92db3d436dc69b5694eecb3adaebd82770f59250`, with individual SHA-256 checks. That historical commit alone does not contain the v2 educator files. The complete executable cohort is commit `43c3624d656f129ca5d01bbc4f722ea3530da73c`. Use all files from that commit together; the publication index is maintained separately. [Download the cohort source](https://github.com/profrodai/sovereign-agent/archive/43c3624d656f129ca5d01bbc4f722ea3530da73c.zip), or clone the repository and check out that exact commit before running `uv sync --python 3.14 --group dev`. The file `book/always_on/educator/cohort-release-v1.json` in the current publication records hashes for the released artifacts.
 
 ## Run a saved lesson
 
