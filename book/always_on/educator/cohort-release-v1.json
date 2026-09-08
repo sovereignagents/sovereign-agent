@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "created": "2026-09-08",
+  "status": "DRAFT",
+  "executableCohortCommit": "43c3624d656f129ca5d01bbc4f722ea3530da73c",
+  "files": [
+    {
+      "path": "book/always_on/educator/ch01-first-model-call-class-v2.ipynb",
+      "sha256": "7360f0770124af7cdc68bfa2dfc7af6132d79fe34bc181ce7f66919eec5ea9ba"
+    },
+    {
+      "path": "book/always_on/educator/ch01-prompts-and-harness-class-v2.ipynb",
+      "sha256": "9a86bb8edd36c3d16238494cc42f42221438e583429abf2ca50413a66037b8e3"
+    },
+    {
+      "path": "book/always_on/educator/ch02-shop-tools-class-v2.ipynb",
+      "sha256": "d0d237a4152cea7c7c09543ac5d8e2d3cb0a639ee6b77cb3012700b5a882c081"
+    },
+    {
+      "path": "book/always_on/educator/ch03-agent-loop-class-v2.ipynb",
+      "sha256": "22d090c2141f116f0c45317479e49d0ddc262136836d4f5b19192b240aff5426"
+    },
+    {
+      "path": "book/always_on/educator/ch04-memory-class-v2.ipynb",
+      "sha256": "72fca93df28202d985374bb1901f87bf264e42bb600e27d35f687c317db97490"
+    },
+    {
+      "path": "book/always_on/educator/ch05-skills-class-v2.ipynb",
+      "sha256": "0c848dc0ed86951d31812181d254e9822c02e8d3ceb7897f7703e3a36ce70c09"
+    },
+    {
+      "path": "book/always_on/educator/ch06-messaging-class-v2.ipynb",
+      "sha256": "79ccbeceda4e153277a8d0dd55254db171f1010784ece20185ae1a392445d189"
+    },
+    {
+      "path": "book/always_on/educator/ch07-scheduling-class-v2.ipynb",
+      "sha256": "662da390bae8935e419a1e3e3c67ca0d2fc4d4d83a6f5eb21e4e29dbb7233613"
+    },
+    {
+      "path": "book/always_on/educator/ch08-approval-class-v2.ipynb",
+      "sha256": "8d92fa94742e24fc2c43aa05c54eeb3c10a7517dae50406e869f97f04e85ed0f"
+    },
+    {
+      "path": "book/always_on/educator/ch09-ambiguous-order-class-v2.ipynb",
+      "sha256": "ea5329e9f7734c66e83693f2dc7e4247ff442941999aa4166521da2774840631"
+    },
+    {
+      "path": "book/always_on/educator/ch10-worker-recovery-class-v2.ipynb",
+      "sha256": "94eb27a96bd19406b2e6b1dfdfa7601ec22e4ea9a84ba7f496c1d58f3e6d9b24"
+    },
+    {
+      "path": "book/always_on/educator/ch11-isolation-class-v2.ipynb",
+      "sha256": "337cdfb2fb120d238eeb05f9a1021efc6df437c1399615e5e73f7bd30dc07f4e"
+    },
+    {
+      "path": "book/always_on/educator/ch12-evaluation-class-v2.ipynb",
+      "sha256": "856a882c4d9bea01163d8155d32f9fcf93f7d6822081195ffe0941a92c8a97be"
+    },
+    {
+      "path": "book/always_on/educator/ch13-improvement-class-v2.ipynb",
+      "sha256": "bd70b2626e7c1537726289df5f59aeeee7562f43b53adb4126a0788e2ea83c5d"
+    },
+    {
+      "path": "book/always_on/educator/ch14-delegation-class-v2.ipynb",
+      "sha256": "05c7db0639ef2fa96f81745b4c4d01ee9a4c537b7a3b4effe5b5d38a320b04df"
+    },
+    {
+      "path": "book/always_on/educator/ch15-operation-class-v2.ipynb",
+      "sha256": "5ccb729a6f4f3683b98fb63dbe94fa97a981e83da04e57c8883c4472e2afc881"
+    },
+    {
+      "path": "book/always_on/educator/ch16-acceptance-class-v2.ipynb",
+      "sha256": "ca00c56025ad355c8deff43b2ca8519b9df2aacc0cabe3d62c0a69d386fe027e"
+    },
+    {
+      "path": "book/always_on/educator/ch01-instructor-guide-v2.md",
+      "sha256": "c28562e134bce209c29b434ede564c944ae2fc2c14f281e2f54a1fa527c073e4"
+    },
+    {
+      "path": "book/always_on/educator/ch01-prompts-and-harness-instructor-guide-v2.md",
+      "sha256": "0a3d47fd5a5911f7a668ed72149f4adc7960b1ffd8540a7b6b599e4f7d54ce1f"
+    },
+    {
+      "path": "book/always_on/educator/ch02-instructor-guide-v2.md",
+      "sha256": "b4caba0aa6cf7d5597302f5b7ada983f13561b20d6dda2873c2e2deffe1f2922"
+    },
+    {
+      "path": "book/always_on/educator/ch03-instructor-guide-v2.md",
+      "sha256": "4cf38f5c553637dcaf9908cb5207d1129e3c26b32b8e65dffaaadbce91f0fad0"
+    },
+    {
+      "path": "book/always_on/educator/ch04-instructor-guide-v2.md",
+      "sha256": "e56f66ba7b98c455b5a4bfcd4e58660d067007a127433d410f1b786e27856c8f"
+    },
+    {
+      "path": "book/always_on/educator/ch05-instructor-guide-v2.md",
+      "sha256": "7760d4ff33744cb3003d940b7941948ffaeb9bdffbacb9b99fa7763e79d9ca6d"
+    },
+    {
+      "path": "book/always_on/educator/ch06-instructor-guide-v2.md",
+      "sha256": "dad58ccccd2832c63fe54ce725459acd7f1b384d57ea919a8643181b438e014a"
+    },
+    {
+      "path": "book/always_on/educator/ch07-instructor-guide-v2.md",
+      "sha256": "5b15111509035e2f0084e0c6bb405d14194f67de3648a898982aacbc79dc90cd"
+    },
+    {
+      "path": "book/always_on/educator/ch08-instructor-guide-v2.md",
+      "sha256": "a7f62528790b4d5a3b434baaf7938e2316ba0e8995ce9a697e609fe9cb08aae7"
+    },
+    {
+      "path": "book/always_on/educator/ch09-instructor-guide-v2.md",
+      "sha256": "fe200df8f0942e55997fdcd82d874415d4f27acb0edaec95b43665205e1a9144"
+    },
+    {
+      "path": "book/always_on/educator/ch10-instructor-guide-v2.md",
+      "sha256": "43e0f1fa1a6ec5873d180f2ea06d4740153b75b4219c847f241328559bb34e5d"
+    },
+    {
+      "path": "book/always_on/educator/ch11-instructor-guide-v2.md",
+      "sha256": "4b33c00a77d02f7ad421ce67d147d42398f66df7b53341e09766f5cc1eeeec48"
+    },
+    {
+      "path": "book/always_on/educator/ch12-instructor-guide-v2.md",
+      "sha256": "97ceabdc86d880e169688a5aec910f3487b823b3d69c5fb0c0c6fbce3b0759e5"
+    },
+    {
+      "path": "book/always_on/educator/ch13-instructor-guide-v2.md",
+      "sha256": "c37985bccda4f4c53fb5691579aea97c4906013f83d0f4ac1409544c77eb664a"
+    },
+    {
+      "path": "book/always_on/educator/ch14-instructor-guide-v2.md",
+      "sha256": "857731d6f31078e8a8b67ad2ca52b75e1493656ebf03871b04a865435aac9c74"
+    },
+    {
+      "path": "book/always_on/educator/ch15-instructor-guide-v2.md",
+      "sha256": "9ce6cbcc1c9474a1c39694d1eef7d12dccb2910e88b5bad5261c9691cbc61129"
+    },
+    {
+      "path": "book/always_on/educator/ch16-instructor-guide-v2.md",
+      "sha256": "77004bbe349cf4307090a5fcb7d145c4c8712e4d2950c453237914e0f4a1db23"
+    },
+    {
+      "path": "book/always_on/educator/curriculum-v2.json",
+      "sha256": "6e7d556a8e42d1ebeeb517e0513a8a12333349418b0f3bddd8b3c6d9498bba8b"
+    },
+    {
+      "path": "book/always_on/educator/runtime-experiments-v1.json",
+      "sha256": "2c2729f4c321101b0e93720397474a2b477caaab33e50b7a6dff22892025bb19"
+    },
+    {
+      "path": "book/always_on/educator/runtime_labs_v1.py",
+      "sha256": "6ac20bc68e9e9e0576648a3625890df8c4087bd51970673ae3087b4748645de9"
+    },
+    {
+      "path": "book/always_on/educator/run_lesson_v2.py",
+      "sha256": "0ad946b5fedf5cb025b6d47952b2a22a16066b11948965cc3213fce50d1ece55"
+    },
+    {
+      "path": "book/always_on/educator/classroom-pilot-record-v1.md",
+      "sha256": "7e32751281ba7b07c6bbf8479d39e4ef49a99f261e6b02b0578467090e4d7658"
+    }
+  ]
+}

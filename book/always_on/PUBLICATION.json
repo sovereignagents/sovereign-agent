@@ -26,7 +26,7 @@
     {
       "number": 1,
       "slug": "first-useful-agent",
-      "title": "Build Lucy’s first useful agent",
+      "title": "Build Lucy\u2019s first useful agent",
       "path": "parts/part-1-first-useful-agent.md",
       "chapters": [
         1,
@@ -99,6 +99,16 @@
       "slug": "always-on-checkpoints",
       "title": "Chapter checkpoints",
       "path": "CHECKPOINTS.md"
+    },
+    {
+      "slug": "ch01-classroom",
+      "title": "Chapter 1 classroom materials",
+      "path": "educator/ch01-classroom-v3.md"
+    },
+    {
+      "slug": "always-on-educator",
+      "title": "Educator companion for every chapter",
+      "path": "educator/educator-companion-v2.md"
     }
   ],
   "expectedFigures": 52,
