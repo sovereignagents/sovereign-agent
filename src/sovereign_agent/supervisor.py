@@ -48,6 +48,7 @@ from sovereign_agent.ids import new_id, utc_now
 from sovereign_agent.models import Assignment, AssignmentState, Receipt, SowState
 from sovereign_agent.organization import Organization
 from sovereign_agent.policy import advance_sow
+from sovereign_agent.relay import sweep_claims
 from sovereign_agent.workspace import reclaim_workspace
 
 # The one failure category this module ever writes. Named once, used
@@ -83,24 +84,7 @@ def sweep_expired_mailbox_claims(db: Database, clock: fencing.Clock = utc_now) -
     something that only happens to run as a side effect of an actor
     checking its own inbox.
     """
-    now = clock()
-    rows = db.connection.execute(
-        "SELECT id FROM messages WHERE state = 'CLAIMED' AND claim_expires_at <= ?",
-        (now.isoformat(),),
-    ).fetchall()
-    ids = [str(row["id"]) for row in rows]
-    if not ids:
-        return []
-    with db.transaction():
-        for message_id in ids:
-            db.connection.execute(
-                "UPDATE messages SET state = 'NEW', claim_owner = NULL, "
-                "record = json_set(json_set(record, '$.state', 'NEW'), "
-                "'$.claim_owner', NULL) WHERE id = ?",
-                (message_id,),
-            )
-            append_event(db, "message.claim_swept", {"id": message_id})
-    return ids
+    return sweep_claims(db, clock())
 
 
 def _read_assignment(db: Database, assignment_id: str) -> Assignment:

@@ -1,0 +1,42 @@
+{
+  "scope": "draft shape only; not source synchronization, link verification, rendered review or publication acceptance",
+  "source_sha256": "25ef295e3c8b51057c3c413c7216b02aeb6f7d405391c6ce919149d2cbf001af",
+  "site_instrument_commit": "53012bad64af7293da6ab140650b6fc32626472b",
+  "score": 99,
+  "dimensions": {
+    "depth": 96.25,
+    "pedagogy": 100,
+    "practice": 100,
+    "visuals": 100,
+    "seo": 100,
+    "craft": 94
+  },
+  "metrics": {
+    "words": 5483,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 28,
+    "exercises": 4,
+    "maxProseWall": 213,
+    "internalLinks": 1,
+    "descriptionChars": 193
+  },
+  "nextActions": [
+    {
+      "ruleId": "ai-writing/tier1a",
+      "action": "Tier 1A AI frequency markers: genuinely×1, genuine×1",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 6,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 3.9 sentences, CV 0.26 across 61 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}

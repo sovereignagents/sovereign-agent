@@ -9,6 +9,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from sovereign_agent.assistant_schema import SCHEMA as MIGRATION_19
+from sovereign_agent.assistant_schema import SCHEMA_20 as MIGRATION_20
+from sovereign_agent.assistant_schema import SCHEMA_21 as MIGRATION_21
+from sovereign_agent.assistant_schema import SCHEMA_22 as MIGRATION_22
+from sovereign_agent.assistant_schema import SCHEMA_23 as MIGRATION_23
+from sovereign_agent.assistant_schema import SCHEMA_24 as MIGRATION_24
+from sovereign_agent.assistant_schema import SCHEMA_25 as MIGRATION_25
+
 MIGRATION_1 = """
 PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -815,6 +823,13 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
     (16, MIGRATION_16),
     (17, MIGRATION_17),
     (18, MIGRATION_18),
+    (19, MIGRATION_19),
+    (20, MIGRATION_20),
+    (21, MIGRATION_21),
+    (22, MIGRATION_22),
+    (23, MIGRATION_23),
+    (24, MIGRATION_24),
+    (25, MIGRATION_25),
 )
 
 
@@ -845,12 +860,29 @@ class Database:
         self.path = path
         self.connection = sqlite3.connect(path)
         self.connection.row_factory = sqlite3.Row
+        try:
+            self.supported_versions()
+        except Exception:
+            self.connection.close()
+            raise
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.execute("PRAGMA journal_mode = WAL")
         # Without recursive triggers, `INSERT OR REPLACE` deletes the old row
         # WITHOUT firing the BEFORE DELETE guard, silently defeating append-only.
         self.connection.execute("PRAGMA recursive_triggers = ON")
+        first_assistant_migration = 19 not in self.applied_versions()
         self.migrate()
+        if first_assistant_migration:
+            epoch = self.connection.execute(
+                "SELECT epoch FROM assistant_control WHERE id=1"
+            ).fetchone()[0]
+            marker = self.path.with_suffix(".authority")
+            try:
+                with marker.open("x") as authority:
+                    authority.write(epoch)
+            except FileExistsError:
+                if marker.read_text() != epoch:
+                    raise ValueError("authority marker disagrees with database") from None
 
     def __del__(self) -> None:
         # sqlite3.Connection participates in an internal reference cycle. On a
@@ -865,11 +897,23 @@ class Database:
 
     def applied_versions(self) -> set[int]:
         """Versions already recorded. Empty when the ledger table does not exist yet."""
-        try:
-            rows = self.connection.execute("SELECT version FROM schema_migrations").fetchall()
-        except sqlite3.OperationalError:
+        if (
+            self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='schema_migrations' AND type='table'"
+            ).fetchone()
+            is None
+        ):
             return set()
+        rows = self.connection.execute("SELECT version FROM schema_migrations").fetchall()
         return {int(row["version"]) for row in rows}
+
+    def supported_versions(self) -> set[int]:
+        """Refuse unknown schema before writes; this does not fence running old code."""
+        applied = self.applied_versions()
+        unknown = applied - {version for version, _ in MIGRATIONS}
+        if unknown:
+            raise ValueError(f"database requires unknown migrations: {sorted(unknown)}")
+        return applied
 
     def migrate(self) -> None:
         """Apply pending migrations in order. Forward-only; never downgrades.
@@ -884,7 +928,7 @@ class Database:
         then hit invalid SQL left the table behind, unstamped, so reopening
         re-ran it and failed forever.
         """
-        applied = self.applied_versions()
+        applied = self.supported_versions()
         for version, script in MIGRATIONS:
             if version in applied:
                 continue
@@ -914,6 +958,10 @@ class Database:
         so two connections cannot both read a row, both decide to act, and both
         write. Deferred transactions -- SQLite's default -- allow exactly that.
         """
+        if self.connection.in_transaction:
+            raise RuntimeError(
+                "immediate requires no pending transaction; commit or rollback explicitly"
+            )
         previous = self.connection.isolation_level
         self.connection.isolation_level = None
         try:

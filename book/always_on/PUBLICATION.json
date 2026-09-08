@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "edition": "always-on-2026",
+  "status": "DRAFT",
+  "publishedAt": "2026-09-07",
+  "title": "Build Your Always-On AI Agent From Scratch",
+  "subtitle": "Tools, memory, permissions, and reliable operation in Python.",
+  "author": {
+    "name": "Rod Rivera",
+    "url": "https://www.profrod.ai/about"
+  },
+  "language": "en",
+  "frontMatter": [
+    {
+      "slug": "always-on-preface",
+      "title": "Preface",
+      "path": "PREFACE.md"
+    },
+    {
+      "slug": "always-on-conventions",
+      "title": "How to use this book",
+      "path": "CONVENTIONS.md"
+    }
+  ],
+  "parts": [
+    {
+      "number": 1,
+      "slug": "first-useful-agent",
+      "title": "Build Lucy’s first useful agent",
+      "path": "parts/part-1-first-useful-agent.md",
+      "chapters": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "number": 2,
+      "slug": "continuity-and-initiative",
+      "title": "Give it continuity and initiative",
+      "path": "parts/part-2-continuity-and-initiative.md",
+      "chapters": [
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "number": 3,
+      "slug": "boundaries-and-recovery",
+      "title": "Let it act with boundaries and recovery",
+      "path": "parts/part-3-boundaries-and-recovery.md",
+      "chapters": [
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "number": 4,
+      "slug": "improve-and-operate",
+      "title": "Improve it and operate it",
+      "path": "parts/part-4-improve-and-operate.md",
+      "chapters": [
+        12,
+        13,
+        14,
+        15,
+        16
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "linux-maintenance",
+      "title": "Linux maintenance",
+      "path": "appendices/linux-maintenance-v1.md"
+    },
+    {
+      "slug": "project-comparisons",
+      "title": "A dated decision map",
+      "path": "appendices/project-comparisons-v1.md"
+    },
+    {
+      "slug": "zeocore-bridge",
+      "title": "Optional Zeocore integration",
+      "path": "appendices/zeocore-interop-v2.md"
+    },
+    {
+      "slug": "always-on-reproducibility",
+      "title": "Reproducibility and troubleshooting",
+      "path": "appendices/reproducibility-v1.md"
+    }
+  ],
+  "resources": [
+    {
+      "slug": "always-on-checkpoints",
+      "title": "Chapter checkpoints",
+      "path": "CHECKPOINTS.md"
+    }
+  ],
+  "expectedFigures": 52,
+  "expectedListings": 97
+}

@@ -1,0 +1,42 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "b80ca1c89f97936453209384f6fc3b7820019581",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "763a746828b7e4ae46ad23b6b60f49505522c322822e910efc76fdc9246b8d02",
+  "tests": {
+    "passed": 687,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 682,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "planned": 2,
+    "python_examples": 128,
+    "matched_output_pairs": 120,
+    "publication_acceptance": false
+  },
+  "runtime_changes": "None in this chapter increment.",
+  "remaining": "Two chapters, integrated day, latest Linux release, live phone, proposal and exact-source site integration",
+  "delegation_checkpoint": "Five authored quote boundaries, two actual child processes, concurrent stock completion, cancellation after parent completion, elapsed deadline and lease expiry, durable allowance, shared billing, unchanged inventory and zero orders."
+}

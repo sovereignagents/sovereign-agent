@@ -1,0 +1,43 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "5084dfc8d8c7a78ea12f0c9f12ad469b32763e1a",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "a71d380b7ff672e30309ad62c111cc42071afc93ca14476e5f71f8f855fb0760",
+  "tests": {
+    "passed": 535,
+    "live_deselected": 14
+  },
+  "clean_install_tests": {
+    "passed": 530,
+    "git_only_skipped": 5,
+    "live_deselected": 14
+  },
+  "preserved_book": {
+    "chapters": 13,
+    "python_snippets": 102,
+    "matched_output_pairs": 92,
+    "labs_run_twice": 13
+  },
+  "new_book": {
+    "drafts": 3,
+    "planned": 13,
+    "python_examples": 34,
+    "matched_output_pairs": 31,
+    "draft_shape_scores": {
+      "1": 100,
+      "2": 100,
+      "3": 100
+    },
+    "publication_acceptance": false
+  },
+  "live_opening_checkpoint": {
+    "samples": 4,
+    "missing_draft_failures": 2,
+    "subsequent_draft_evidence_passes": 2,
+    "evidence": "ch03-live-construction-v1.json",
+    "limitation": "Construction samples with prompt changes, not a statistical reliability claim"
+  },
+  "remaining": "Chapters 4-16, stock events, receiving/account reconciliation, bounded delegation, deployment and integrated acceptance, proposal and pinned comparisons, exact-source site migration and rendered review"
+}

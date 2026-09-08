@@ -1,0 +1,9 @@
+{
+  "created": "2026-09-07",
+  "checkpoint_sha256": "221667c46b529cbd7b887e748bfece648c44a50499c06981e6746663b5906619",
+  "runtime_sha256": "243bf6678baf4b8ed419f293030dac1fc5c3f579e92a3a6d636143413fd9a177",
+  "environment": "isolated Linux sovereign-teaching-sap3; pinned Python image and local Docker engine",
+  "exit_code": 0,
+  "output": "Hostile purchase attempt: tool_not_allowed\nCatalog through real MCP process: 3\nPurchases: 0\nCurrent stock through model, dispatcher and container: 123\nInfinite report: TIME_LIMIT confirmed\n",
+  "scope": "actual stock mutation flows through model request, dispatcher, container and persisted reply; zero orders; ordinary timeout cleanup; separate host-death proof in sandbox-deadline-v1.json"
+}

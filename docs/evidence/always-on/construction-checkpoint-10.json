@@ -1,0 +1,33 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "5e77d5d603ee526bf8c173cbb5c104f3ea0bf2d2",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "40af75556d370dc4e6ef5d57c4028485b5dffd0d1679132cd9c565dc6bce9d3c",
+  "tests": {
+    "passed": 608,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 603,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      9
+    ],
+    "planned": 11,
+    "python_examples": 57,
+    "matched_output_pairs": 51,
+    "publication_acceptance": false
+  },
+  "memory": "Context revisions stop forgotten preferences returning through old or late work summaries; five focused regressions.",
+  "live_construction": "ch04-live-construction-v1.json retains two failures and the passing construction run with inherited Chapter 3 procedure plus selected memory.",
+  "remaining": "Eleven chapters, final Linux maintenance and account recovery, integrated day, live Telegram credentials, proposal and exact-source site integration"
+}

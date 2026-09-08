@@ -1,0 +1,169 @@
+{
+  "created": "2026-09-07",
+  "status": "live construction evidence; not a reliability rate",
+  "model_digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+  "source_sha256": "ef99acc885bdc4a640c37c44b82f3f90baa59e9d886ac39343c7242c0d8a6174",
+  "change": "Replace no-argument quote schema with explicit Inquiry arguments and enforce exact equality to the immutable assignment. Both runs retained. Same model and prompts.",
+  "runs": [
+    {
+      "model": "qwen3",
+      "reasoning_effort": "none",
+      "result": {
+        "status": "BLOCKED",
+        "work": "7625792f0eeb475ea3053dd4107ca1f6",
+        "report": {
+          "passed": false,
+          "quote": null,
+          "model_answer": "It seems there was an issue with the request. Please ensure that the provided details are correct and try again. If you need further assistance, feel free to ask!",
+          "loop": {
+            "status": "COMPLETED",
+            "answer": "It seems there was an issue with the request. Please ensure that the provided details are correct and try again. If you need further assistance, feel free to ask!",
+            "messages": [
+              {
+                "role": "system",
+                "content": "Prepare a catering draft using catering_quote. You cannot reserve stock, buy supplies, or delegate."
+              },
+              {
+                "role": "user",
+                "content": "{\"sku\":\"SKU-VANILLA\",\"guests\":41}"
+              },
+              {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                  {
+                    "id": "call_xhrlbm89",
+                    "type": "function",
+                    "function": {
+                      "name": "catering_quote",
+                      "arguments": "{\"sku\": \"SKU-VANILLA\", \"guests\": 41}"
+                    }
+                  }
+                ]
+              },
+              {
+                "role": "tool",
+                "tool_call_id": "call_xhrlbm89",
+                "content": "{\"ok\": false, \"error\": \"invalid_arguments\"}"
+              },
+              {
+                "role": "assistant",
+                "content": "It seems there was an issue with the request. Please ensure that the provided details are correct and try again. If you need further assistance, feel free to ask!"
+              }
+            ],
+            "model_calls": 2,
+            "tool_calls": 1,
+            "output_tokens": 67,
+            "estimated_cost_pence": 0
+          },
+          "baseline": {
+            "quote": {
+              "sku": "SKU-VANILLA",
+              "guests": 41,
+              "portions_per_tub": 10,
+              "tubs": 5,
+              "total_pence": 2500,
+              "currency": "GBP",
+              "status": "DRAFT_QUOTE",
+              "stock_reserved": false
+            },
+            "model_calls": 0,
+            "seconds": 1.5375000657513738e-05
+          },
+          "seconds": 3.8019625000015367,
+          "decision": "Retain the function for this fixed calculation; model prose is ungraded.",
+          "assignment_usage": {
+            "model_calls": 2,
+            "estimated_cost_pence": 0
+          }
+        }
+      },
+      "construction_variant": 1
+    },
+    {
+      "model": "qwen3",
+      "reasoning_effort": "none",
+      "result": {
+        "status": "DONE",
+        "work": "afc35e6d7e1245f68e398e239a501070",
+        "report": {
+          "passed": true,
+          "quote": {
+            "sku": "SKU-VANILLA",
+            "guests": 41,
+            "portions_per_tub": 10,
+            "tubs": 5,
+            "total_pence": 2500,
+            "currency": "GBP",
+            "status": "DRAFT_QUOTE",
+            "stock_reserved": false
+          },
+          "model_answer": "The catering draft quote for 41 guests using SKU-VANILLA is as follows:\n\n- **SKU:** SKU-VANILLA  \n- **Guests:** 41  \n- **Portions per tub:** 10  \n- **Tubs required:** 5  \n- **Total cost:** \u00a325.00 (GBP)  \n\nStatus: **DRAFT_QUOTE**  \nStock reserved: **False**  \n\nLet me know if you need further assistance!",
+          "loop": {
+            "status": "COMPLETED",
+            "answer": "The catering draft quote for 41 guests using SKU-VANILLA is as follows:\n\n- **SKU:** SKU-VANILLA  \n- **Guests:** 41  \n- **Portions per tub:** 10  \n- **Tubs required:** 5  \n- **Total cost:** \u00a325.00 (GBP)  \n\nStatus: **DRAFT_QUOTE**  \nStock reserved: **False**  \n\nLet me know if you need further assistance!",
+            "messages": [
+              {
+                "role": "system",
+                "content": "Prepare a catering draft using catering_quote. You cannot reserve stock, buy supplies, or delegate."
+              },
+              {
+                "role": "user",
+                "content": "{\"sku\":\"SKU-VANILLA\",\"guests\":41}"
+              },
+              {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                  {
+                    "id": "call_4ouk03mn",
+                    "type": "function",
+                    "function": {
+                      "name": "catering_quote",
+                      "arguments": "{\"guests\": 41, \"sku\": \"SKU-VANILLA\"}"
+                    }
+                  }
+                ]
+              },
+              {
+                "role": "tool",
+                "tool_call_id": "call_4ouk03mn",
+                "content": "{\"ok\": true, \"value\": {\"sku\": \"SKU-VANILLA\", \"guests\": 41, \"portions_per_tub\": 10, \"tubs\": 5, \"total_pence\": 2500, \"currency\": \"GBP\", \"status\": \"DRAFT_QUOTE\", \"stock_reserved\": false}}"
+              },
+              {
+                "role": "assistant",
+                "content": "The catering draft quote for 41 guests using SKU-VANILLA is as follows:\n\n- **SKU:** SKU-VANILLA  \n- **Guests:** 41  \n- **Portions per tub:** 10  \n- **Tubs required:** 5  \n- **Total cost:** \u00a325.00 (GBP)  \n\nStatus: **DRAFT_QUOTE**  \nStock reserved: **False**  \n\nLet me know if you need further assistance!"
+              }
+            ],
+            "model_calls": 2,
+            "tool_calls": 1,
+            "output_tokens": 130,
+            "estimated_cost_pence": 0
+          },
+          "baseline": {
+            "quote": {
+              "sku": "SKU-VANILLA",
+              "guests": 41,
+              "portions_per_tub": 10,
+              "tubs": 5,
+              "total_pence": 2500,
+              "currency": "GBP",
+              "status": "DRAFT_QUOTE",
+              "stock_reserved": false
+            },
+            "model_calls": 0,
+            "seconds": 1.0541996743995696e-05
+          },
+          "seconds": 4.3001867909988505,
+          "decision": "Retain the function for this fixed calculation; model prose is ungraded.",
+          "assignment_usage": {
+            "model_calls": 2,
+            "estimated_cost_pence": 0
+          }
+        }
+      },
+      "construction_variant": 2
+    }
+  ],
+  "limits": "Authored fixture; local inference estimated monetary cost is zero and excludes hardware or energy. Function and agent share the calculation; independently authored tests grade arithmetic. Model prose is not the automatic acceptance criterion."
+}

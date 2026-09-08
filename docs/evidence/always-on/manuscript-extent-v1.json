@@ -1,0 +1,154 @@
+{
+  "created": "2026-09-07",
+  "status": "planning measurement, not typeset pages",
+  "method": "Regex words outside triple-backtick fences; code/output lines exclude Mermaid; source-authored Figure and Listing labels counted. Words include tables, headings and captions. Layout assumptions can overlap caption space.",
+  "chapters": [
+    {
+      "chapter": 1,
+      "source_sha256": "c117eeb82d3c41d62f81d28a8693e6e0b157c8d4c5d58a9f8576792120031d2d",
+      "prose_words": 4074,
+      "code_and_output_lines": 129,
+      "figures": 3,
+      "selected_listings": 2
+    },
+    {
+      "chapter": 2,
+      "source_sha256": "91fe50b1a1a67236ba3459d0ddae50f4f9d3024c97c1633bf37c703f3b8599e7",
+      "prose_words": 3473,
+      "code_and_output_lines": 227,
+      "figures": 3,
+      "selected_listings": 2
+    },
+    {
+      "chapter": 3,
+      "source_sha256": "93a3240766f08a891281e14f486a3e9ccc73e6da1e7bc2cb62f6aff8cc9bb655",
+      "prose_words": 4062,
+      "code_and_output_lines": 297,
+      "figures": 3,
+      "selected_listings": 3
+    },
+    {
+      "chapter": 4,
+      "source_sha256": "49eb3f095c1c8b4af4a0c373b1961d8f8aaf412dbff0405163956c3833a656ae",
+      "prose_words": 3765,
+      "code_and_output_lines": 274,
+      "figures": 3,
+      "selected_listings": 12
+    },
+    {
+      "chapter": 5,
+      "source_sha256": "9acb05e1eabd72e7aa54a18084048a1dc83eab330ea39aa60a5832ed1ed3fbda",
+      "prose_words": 3954,
+      "code_and_output_lines": 284,
+      "figures": 3,
+      "selected_listings": 14
+    },
+    {
+      "chapter": 6,
+      "source_sha256": "cbd0a2cd5c431a5b4d102b733a49f3c2a64c552aa4c77a85709256b97f94c925",
+      "prose_words": 4028,
+      "code_and_output_lines": 532,
+      "figures": 4,
+      "selected_listings": 10
+    },
+    {
+      "chapter": 7,
+      "source_sha256": "192444af48d2a15f05d5734f24bef2e77408629e21ccfcbc2b6e0881f46a0af8",
+      "prose_words": 4284,
+      "code_and_output_lines": 406,
+      "figures": 4,
+      "selected_listings": 9
+    },
+    {
+      "chapter": 8,
+      "source_sha256": "b65d281dda6a6d9d06485edeee6cc471454c37e1fff97f42d5e1a7b609e87775",
+      "prose_words": 3369,
+      "code_and_output_lines": 432,
+      "figures": 3,
+      "selected_listings": 8
+    },
+    {
+      "chapter": 9,
+      "source_sha256": "2ac2143a32805cc71643f126c53197a8a0df34de256258fdd645747b5760b705",
+      "prose_words": 3518,
+      "code_and_output_lines": 293,
+      "figures": 3,
+      "selected_listings": 4
+    },
+    {
+      "chapter": 10,
+      "source_sha256": "e93bb8dd55cd077ae619233ab2509a06d2f55beb978f9db9afa41d02c434ced0",
+      "prose_words": 3606,
+      "code_and_output_lines": 263,
+      "figures": 3,
+      "selected_listings": 7
+    },
+    {
+      "chapter": 11,
+      "source_sha256": "e95a423f7a34a02264a6da9694a4b7a80388af67be858bf5b5e5e2cc11a920b8",
+      "prose_words": 4109,
+      "code_and_output_lines": 447,
+      "figures": 4,
+      "selected_listings": 5
+    },
+    {
+      "chapter": 12,
+      "source_sha256": "a5e7bd295492e256c5a40979de441810a27c78b278a1742cb5e8050e79c44655",
+      "prose_words": 3732,
+      "code_and_output_lines": 315,
+      "figures": 4,
+      "selected_listings": 6
+    },
+    {
+      "chapter": 13,
+      "source_sha256": "974a688ce1a7d87095780921b2ed3f9bf72030d319bf398c2096f5ada44e5edc",
+      "prose_words": 3473,
+      "code_and_output_lines": 302,
+      "figures": 3,
+      "selected_listings": 7
+    },
+    {
+      "chapter": 14,
+      "source_sha256": "eaf3e64948c071269696ce7e78608c9acbdaf4215e47eb924df835b2a71adcb7",
+      "prose_words": 3282,
+      "code_and_output_lines": 421,
+      "figures": 3,
+      "selected_listings": 6
+    },
+    {
+      "chapter": 15,
+      "source_sha256": "8d5a4ffd9d848d46db0f54fe72067b4ed7fe7ad7bbb4fb0e2499c88f90060770",
+      "prose_words": 3323,
+      "code_and_output_lines": 266,
+      "figures": 3,
+      "selected_listings": 1
+    },
+    {
+      "chapter": 16,
+      "source_sha256": "b54c2eed12fb3aa00bfa555fd343b13c75e50e6beaae8e0b84366a7b86f883df",
+      "prose_words": 3491,
+      "code_and_output_lines": 335,
+      "figures": 3,
+      "selected_listings": 1
+    }
+  ],
+  "totals": {
+    "prose_words": 59543,
+    "code_and_output_lines": 5223,
+    "figures": 52,
+    "selected_listings": 97
+  },
+  "page_range_assumptions": {
+    "dense": {
+      "prose_words_per_page": 400,
+      "code_lines_per_page": 50,
+      "additional_figure_pages": 13
+    },
+    "open": {
+      "prose_words_per_page": 300,
+      "code_lines_per_page": 40,
+      "additional_figure_pages": 26
+    }
+  },
+  "limitations": "No publisher typesetting, appendices/front matter and exercises layout unmeasured separately; code wrapping can add pages. Range guides sample measurement, not a promised extent."
+}

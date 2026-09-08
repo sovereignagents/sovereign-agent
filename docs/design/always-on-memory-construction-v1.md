@@ -1,0 +1,15 @@
+**Created:** 2026-09-07 · **Last-updated:** 2026-09-07 · **Status:** ACTIVE
+
+# Memory construction and future context after forgetting
+
+The full overhaul remains active. Chapter 4 is now a constructed draft, following Chapters 1–3 and 9; eleven chapters remain planned. The chapter builds preference storage, transactional correction, lexical retrieval, bounded context selection and the returning-preference failure. It includes a runnable checkpoint, failure experiments, three figures, two tables, four exercises and a pinned Hermes comparison distinguishing documented snapshot/caching rationale from our trade-off interpretation.
+
+The reproduced runtime defect deleted all preference rows but still selected an old work summary containing the forgotten value. Migration 24 introduces a per-session context revision and stamps work at intake. Forgetting advances the revision in the same transaction as preference deletion; future history selection requires the current revision. Work started before forgetting but completed later retains its old revision. Other active preferences and other sessions remain available. Operational records, backups and already sent requests have separate retention scopes; no secure-erasure claim is made.
+
+Active preferences are bounded at one hundred per session. Corrections remain possible at capacity, and forgetting a name frees a slot. Five new tests cover reopened context, late completion and duplicate intake, session separation, atomic rollback, and capacity boundaries. The chapter's own SQL functions are shown rather than hidden in a memory framework.
+
+The first live checkpoint lost Chapter 3's opening procedure when it used the higher-level generic-context entrypoint. Offline responses did not detect that omission. A live trace showed guessed product IDs before stock observations, tool refusals and missing draft evidence. The finished checkpoint preserves Chapter 3's system and user instructions while adding memory at the owned-loop boundary. Its next live run passed the existing two-product draft check, while retaining the format preference and excluding the forgotten value. All three construction runs are retained in ch04-live-construction-v1.json; the first has observations only, the following two have full transcripts. This is not a reliability estimate or a one-variable benchmark.
+
+Current Prof Rod main advanced to 53012bad64af7293da6ab140650b6fc32626472b. Its book-score instrument is unchanged at SHA256 82caf4e9dfabf7f343cc3ecb76128b706f59961b230bef18aa09a17e75a4265c. Draft-shape scoring uses its actual derive/parse/score functions. Shape scores do not certify exact-source synchronization, rendered review or publication acceptance.
+
+Continue with the eleven remaining chapters, final Linux upgrade/rollback and restored-account acceptance, the integrated business day, publisher proposal, pinned comparison references and exact-source site migration with rendered review. Preserve the existing thirteen-chapter curriculum and all other principals' site work.

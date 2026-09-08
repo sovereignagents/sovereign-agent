@@ -1,0 +1,51 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "90255483e14a36c8fbb97e631c4b43e1c405aabe",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "cd81508baa646d4004408a00f9d85468331ff4ff59b831c68737e597ce67861c",
+  "tests": {
+    "passed": 552,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 547,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9422,
+    "installed_modules": 62,
+    "installed_nonblank_lines": 11502
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "planned": 12,
+    "python_examples": 44,
+    "matched_output_pairs": 39,
+    "publication_acceptance": false
+  },
+  "active_skill_evaluation": {
+    "cases_with_repeats": 16,
+    "passed": true,
+    "model_calls": 52,
+    "tool_calls": 36,
+    "output_tokens": 1496,
+    "seconds": 66.5991,
+    "report_sha256": "479356b4095c193328d2afad3379baf521909df4ee03e7423362ae75fe24ba39"
+  },
+  "optional_zeocore_interop": {
+    "live_tests_passed": 1,
+    "evidence": "zeocore-interop-v1.json",
+    "separate_interpreter": true,
+    "required_dependency_added": false
+  },
+  "remaining": "Twelve chapters, stock conditions, receiving/account reconciliation, bounded delegation, Linux deployment and integrated acceptance, proposal and pinned comparisons, exact-source site migration and rendered review"
+}

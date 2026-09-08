@@ -1,0 +1,52 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "eae1fe11b38567a6f3e3ca5e97ac156df41c4e52",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "3e0cc17792181c80212bf0ee94a965816af7dbdf89e6ed1e4bed33653d154786",
+  "tests": {
+    "passed": 534,
+    "live_deselected": 14
+  },
+  "clean_install_tests": {
+    "passed": 529,
+    "git_only_skipped": 5,
+    "live_deselected": 14
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9386,
+    "installed_modules": 62,
+    "installed_nonblank_lines": 11433
+  },
+  "preserved_book": {
+    "chapters": 13,
+    "python_snippets": 102,
+    "matched_output_pairs": 92,
+    "labs_run_twice": 13
+  },
+  "new_book": {
+    "drafts": 1,
+    "planned": 15,
+    "python_examples": 10,
+    "matched_output_pairs": 8,
+    "chapter_1_draft_shape_score": 100,
+    "publication_acceptance": false
+  },
+  "live_evaluation": {
+    "cases_with_repeats": 16,
+    "passed": true,
+    "totals": {
+      "seconds": 64.253,
+      "model_calls": 52,
+      "tool_calls": 36,
+      "output_tokens": 1496,
+      "estimated_cost_pence": 0
+    },
+    "report_sha256": "42f63014f80b9ee58280c920c58832024df25323adaaae52959db13152a74b5d",
+    "limits": "named scenario checks only; no general natural-language quality guarantee"
+  },
+  "live_optional_tool": "model request to real container read changed SQLite stock value 123 and confirmed container removal",
+  "remaining": "complete chapters 2-16, delegation, stock events, receiving/accounting, restored-account reconciliation, deployment/acceptance and exact-source site publication gates"
+}

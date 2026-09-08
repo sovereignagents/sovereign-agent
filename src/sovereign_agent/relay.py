@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sovereign_agent.database import Database
 from sovereign_agent.errors import Refusal
@@ -51,25 +51,29 @@ def send(db: Database, sender: str, recipient: str, subject: str, body: str) -> 
     return message
 
 
+def sweep_claims(db: Database, now: datetime, recipient: str | None = None) -> list[str]:
+    """Expiry is rechecked in the mutation itself; never overwrite a fresh owner."""
+    with db.immediate() as connection:
+        rows = connection.execute(
+            "UPDATE messages SET state = 'NEW', claim_owner = NULL, "
+            "record = json_set(record, '$.state', 'NEW', '$.claim_owner', NULL) "
+            "WHERE state = 'CLAIMED' AND claim_expires_at <= ? "
+            "AND (? IS NULL OR recipient = ?) RETURNING id",
+            (now.isoformat(), recipient, recipient),
+        ).fetchall()
+        identifiers = sorted(str(row["id"]) for row in rows)
+        for identifier in identifiers:
+            append_event(db, "message.claim_swept", {"id": identifier})
+    return identifiers
+
+
 def inbox(db: Database, actor_id: str) -> list[Message]:
+    sweep_claims(db, utc_now(), actor_id)
     rows = db.connection.execute(
-        "SELECT record FROM messages WHERE recipient = ?", (actor_id,)
+        "SELECT record FROM messages WHERE recipient = ? AND state IN ('NEW', 'CLAIMED')",
+        (actor_id,),
     ).fetchall()
-    messages = [Message.model_validate_json(row["record"]) for row in rows]
-    now = utc_now()
-    visible: list[Message] = []
-    for message in messages:
-        if (
-            message.state == MessageState.CLAIMED
-            and message.claim_expires_at is not None
-            and message.claim_expires_at <= now
-        ):
-            message.state = MessageState.NEW
-            message.claim_owner = None
-            db.put("messages", message.id, message.model_dump(mode="json"))
-        if message.state in {MessageState.NEW, MessageState.CLAIMED}:
-            visible.append(message)
-    return visible
+    return [Message.model_validate_json(row["record"]) for row in rows]
 
 
 def claim(db: Database, message_id: str, actor_id: str) -> Message:

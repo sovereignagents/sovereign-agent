@@ -1,0 +1,42 @@
+{
+  "created": "2026-09-07",
+  "scope": "Actual POSIX worker and HTTP supplier processes. First case SIGKILL before initial transmission; second case old worker remains alive after actual lease expiry. Separate service kill-after-remote-commit tests are complementary.",
+  "checkpoint_sha256": "f4fd29c6acba491b3348e71c9b95e9dc3c26d7f890dc9181c7bce74a840585ed",
+  "command": "uv run python book/always_on/checkpoints/ch10.py --evidence",
+  "exit_code": 0,
+  "log_sha256": "fae61df0f43c8f8cb7b74ea093d0d669da0a0b1e9126343e916330cf7e0ffe47",
+  "observations": [
+    "Killed worker replaced: DONE",
+    "Live stale worker refused: 3",
+    "Supplier orders in each isolated case: 1 1",
+    "New model calls during recovery: 0"
+  ],
+  "cases": [
+    {
+      "case": "killed",
+      "initial_pid": 73913,
+      "observed_exit": -9,
+      "generation": 2,
+      "work_state": "DONE",
+      "supplier_orders": 1,
+      "spent_pence": 1500,
+      "stale_boundaries_refused": [],
+      "new_model_calls": 0
+    },
+    {
+      "case": "still_alive",
+      "initial_pid": 73916,
+      "observed_exit": 0,
+      "generation": 2,
+      "work_state": "DONE",
+      "supplier_orders": 1,
+      "spent_pence": 1500,
+      "stale_boundaries_refused": [
+        "transcript",
+        "completion",
+        "supplier"
+      ],
+      "new_model_calls": 0
+    }
+  ]
+}

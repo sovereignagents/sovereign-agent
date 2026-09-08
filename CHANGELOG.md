@@ -6,6 +6,36 @@ Repository: [`profrodai/sovereign-agent`](https://github.com/profrodai/sovereign
 
 ## Unreleased
 
+- Add a current operating report from one consistent SQLite snapshot, with
+  explicit uncertainty, accounting mismatches, retained-history scope and model
+  estimate limits. Complete sixteen construction drafts and an accelerated day
+  proving duplicate intake, exact approvals, lost replies, worker replacement,
+  receiving, bounded research and independent supplier reconciliation.
+
+- Make evaluation acceptance explicit: named-check passes require explanation
+  review, failures are rejected, terminal causes remain in case reports, and
+  baseline calculation time is measured with its acquisition limit stated.
+
+- Give isolated reports a container-owned deadline that survives host-runner
+  death. Drop report privileges before execution and verify hostile signal,
+  identity, filesystem and network attempts on Linux. Validate MCP response
+  identities and discovered tool names before use.
+
+- Persist the basis of order approvals and revalidate automatic grants against
+  current policy before sending. Historical grants require explicit reapproval
+  when their basis is unknown. Same-product revisions revoke obsolete unsent
+  proposals and release their reservations atomically; transmitted effects
+  remain subject to reconciliation.
+
+- Replace the core-only source gate with a versioned gate counting all installed
+  teaching code: 55 core modules / 11,000 lines and 80 installed modules / 14,000
+  lines, under the measured 2026-09-07 budget ruling. Historical gates are retained.
+
+- Authorize the self-contained always-on teaching scope: a reader-owned model
+  loop, Telegram, bounded MCP, local skills, explicit service hosting and one
+  isolated tool. ZeoCore remains optional. The 1.x non-goals are amended by the
+  dated ruling; published 0.x contracts remain unchanged.
+
 ## [1.4.0] — 2026-09-05
 
 Sovereign Agent 1.4.0 is a correctness release for two boundaries the

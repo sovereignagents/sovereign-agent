@@ -1,0 +1,8 @@
+{
+  "checked": "2026-09-07",
+  "project": "nanocoai/nanoclaw",
+  "commit": "acc69a70962af6707aa8a6abba699bdaa7da95f8",
+  "path": "src/container-runner.ts",
+  "sha256": "1c2b55b6513116458271a022a0286d9ba563929b5b6edb9cd09ae08f18610752",
+  "scope": "Inspected composeSessionSpec and adoptRunningSessions code and documented adoption rationale. No NanoClaw runtime test or universal driver guarantee; comparison distinguishes persistent agent session from bounded report."
+}

@@ -1,0 +1,40 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "2bb2cdef17ba6274f740a33b57424d64d15737a6",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "dce93a7460b12fce444d00d324d1c40c0535282df5cd63edd5fa12fe0112a3cd",
+  "tests": {
+    "passed": 687,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 682,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "planned": 4,
+    "python_examples": 115,
+    "matched_output_pairs": 109,
+    "publication_acceptance": false
+  },
+  "runtime_changes": "Schema2 evaluation separates named-check passes from ungraded acceptance, retains terminal cause, measures scoped baseline calculation time; CLI exposes review requirement.",
+  "live_evaluation": "Both raw schema1 reports from the preceding commit retained:6/16 without guidance,16/16 with frozen procedure; not new blind cases or universal quality proof.",
+  "remaining": "Four chapters, integrated day, live phone, proposal and exact-source site integration"
+}

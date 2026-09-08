@@ -1,0 +1,49 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full publication overhaul remains active",
+  "tested_tree": "15f965cd680f7ff1d8f2bb0584975cbe39b7d33b",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "6b77e5abc0f6cd15245bbed4f023000c96eb11128a2552fa7e390497eda02699",
+  "tests": {
+    "passed": 702,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 697,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "planned": 0,
+    "python_examples": 139,
+    "matched_output_pairs": 131,
+    "publication_acceptance": false
+  },
+  "source_budget": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9971,
+    "installed_modules": 66,
+    "installed_nonblank_lines": 13193
+  },
+  "remaining": "Exact-source site migration and gates, installed Linux report repair, external manuscript/render review, live phone acceptance and final proposal review",
+  "change": "Source-owned publication manifest, front matter, four parts, reference/reproducibility appendices, checkpoint index, measured extent and internal publisher proposal; publication contract refuses false READY."
+}

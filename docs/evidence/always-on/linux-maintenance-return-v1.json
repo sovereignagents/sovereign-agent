@@ -1,0 +1,87 @@
+{
+  "created": "2026-09-07",
+  "return_to_latest": {
+    "status": "ACTIVE",
+    "from": "cec045235adb8de943692069b6a5db7e5d51b4c3",
+    "to": "313ac0687a4a4254b17699466a81c1d1f3aae914",
+    "schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "work_id": "36c49f9746c0445f9d8ba6527d438389",
+    "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "order_inventory_spending_preserved": true,
+    "retained": {
+      "orders": [
+        [
+          "0d544377ed235e82888341a7b4870ae8",
+          "CONFIRMED",
+          1100,
+          1
+        ],
+        [
+          "74778dea2405583db7c23d1618a7927f",
+          "DELIVERED",
+          1500,
+          1
+        ]
+      ],
+      "inventory": [
+        [
+          "SKU-CHOCOLATE",
+          12,
+          0
+        ],
+        [
+          "SKU-STRAWBERRY",
+          1,
+          0
+        ],
+        [
+          "SKU-VANILLA",
+          8,
+          0
+        ]
+      ],
+      "spending": [
+        [
+          0,
+          2600
+        ]
+      ]
+    }
+  },
+  "historical_rollback_refusal": {
+    "status": "REFUSED",
+    "target": "f5b1870597c61f7962029a7ea18d152df6d558ec",
+    "unknown_migrations": [
+      23,
+      24
+    ]
+  },
+  "refusal_guest_exit_code": 42,
+  "refusal_colima_exit_code": 1,
+  "scope": "Actual same-schema code switch and old-schema read-only refusal on the isolated Linux VM"
+}

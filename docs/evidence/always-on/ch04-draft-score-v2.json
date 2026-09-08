@@ -1,0 +1,42 @@
+{
+  "scope": "draft shape only; not source synchronization, link verification, rendered review or publication acceptance",
+  "source_sha256": "bbc47a41a40fa66086f91cf4ecb27ffd17626d6f01774d41c3017f437c376636",
+  "site_instrument_commit": "53012bad64af7293da6ab140650b6fc32626472b",
+  "score": 99,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 100,
+    "practice": 100,
+    "visuals": 100,
+    "seo": 98.5,
+    "craft": 94
+  },
+  "metrics": {
+    "words": 4985,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 23,
+    "exercises": 4,
+    "maxProseWall": 198,
+    "internalLinks": 1,
+    "descriptionChars": 197
+  },
+  "nextActions": [
+    {
+      "ruleId": "ai-writing/em-dash-rate",
+      "action": "Em dash rate 1.20/1000 words (6 total) exceeds the hard max of 1/1000",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 6,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/paragraph-uniformity",
+      "action": "Paragraph length uniform (mean 3.9 sentences, CV 0.24 across 54 paragraphs)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}

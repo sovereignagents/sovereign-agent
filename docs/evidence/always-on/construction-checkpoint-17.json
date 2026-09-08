@@ -1,0 +1,43 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "25c3875d4644c6a22cd94c87aaf1d1c345ff0fa9",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "b61d86e91e5dbd36d1cb6445846b3cdc0a1b691897b6cf994fe35472767702a2",
+  "tests": {
+    "passed": 683,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 678,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "planned": 5,
+    "python_examples": 109,
+    "matched_output_pairs": 103,
+    "publication_acceptance": false
+  },
+  "live_isolation": {
+    "passed": 7,
+    "receipt": "sandbox-deadline-v1.json",
+    "checkpoint": "ch11-container-checkpoint-v1.json"
+  },
+  "runtime_changes": "Container-owned deadline after host death with unprivileged report child; MCP response identity and discovered-name validation.",
+  "remaining": "Five chapters, integrated day, live phone, proposal and exact-source site integration"
+}

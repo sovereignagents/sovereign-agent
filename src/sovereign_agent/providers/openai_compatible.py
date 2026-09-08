@@ -20,11 +20,10 @@ from __future__ import annotations
 import json
 import os
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
+from sovereign_agent.http_transport import request as bounded_request
 from sovereign_agent.models import ActorReport
 from sovereign_agent.providers.base import (
     InvocationRequest,
@@ -108,11 +107,12 @@ def _chat(
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    request = urllib.request.Request(
-        f"{base}/chat/completions", data=json.dumps(body).encode(), headers=headers
+    response = bounded_request(
+        f"{base}/chat/completions", data=json.dumps(body).encode(), headers=headers, timeout=timeout
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
-        return str(json.load(response)["choices"][0]["message"]["content"])
+    if response.status != 200:
+        raise OSError("model HTTP request failed")
+    return str(json.loads(response.body)["choices"][0]["message"]["content"])
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
@@ -169,8 +169,8 @@ def run_llm_report(output: Path, prompt: str, *, timeout: float = 120.0) -> Acto
             questions=[],
             notes=(str(parsed.get("notes") or f"proposed by {model}"))[:500],
         )
-    except (urllib.error.URLError, OSError, ValueError, KeyError) as error:
-        notes = f"OpenAI-compatible endpoint {base} (model {model}) failed: {error}"
+    except OSError, ValueError, KeyError:
+        notes = "OpenAI-compatible endpoint failed: transport or response validation failed"
         report = ActorReport(status="failed", proposed_restock_units=None, notes=notes[:500])
     (output / "report.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
     (output / "artifacts.json").write_text(

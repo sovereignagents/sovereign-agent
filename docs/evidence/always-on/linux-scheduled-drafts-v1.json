@@ -1,0 +1,153 @@
+{
+  "created": "2026-09-07",
+  "source_commit": "40bef8749bd08050ab5d1fba3e8a5ef0c1136f32",
+  "profile": "sovereign-teaching-sap3",
+  "scope": "Actual isolated Linux systemd services; offline model fixture. Production host and real purchasing not used.",
+  "experiments": {
+    "release_switch": {
+      "raw_sha256": "ed7e92a233c8f1b3941f518acdbd5ee63f45cedf98d03241a2d857b53378b588",
+      "evidence": {
+        "status": "ACTIVE",
+        "from": "8838338",
+        "to": "40bef87",
+        "schema": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ],
+        "work_id": "e8e75496ba804660bb70b3df3357910e",
+        "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+        "order_inventory_spending_preserved": true,
+        "retained": {
+          "orders": [
+            [
+              "0d544377ed235e82888341a7b4870ae8",
+              "CONFIRMED",
+              1100,
+              1
+            ],
+            [
+              "74778dea2405583db7c23d1618a7927f",
+              "DELIVERED",
+              1500,
+              1
+            ]
+          ],
+          "inventory": [
+            [
+              "SKU-CHOCOLATE",
+              12,
+              0
+            ],
+            [
+              "SKU-STRAWBERRY",
+              1,
+              0
+            ],
+            [
+              "SKU-VANILLA",
+              8,
+              0
+            ]
+          ],
+          "spending": [
+            [
+              0,
+              2600
+            ]
+          ]
+        }
+      }
+    },
+    "unattended_drafts": {
+      "raw_sha256": "f23ce5d709feb4768b15ec62eccaeca1740f4969bc99e47f0017247ed27584ea",
+      "evidence": {
+        "status": "PASSED",
+        "setup": {
+          "before": {
+            "inventory": [
+              [
+                "SKU-CHOCOLATE",
+                12,
+                0
+              ],
+              [
+                "SKU-STRAWBERRY",
+                1,
+                0
+              ],
+              [
+                "SKU-VANILLA",
+                8,
+                0
+              ]
+            ],
+            "orders": [
+              [
+                "0d544377ed235e82888341a7b4870ae8",
+                "CONFIRMED",
+                1100
+              ],
+              [
+                "74778dea2405583db7c23d1618a7927f",
+                "DELIVERED",
+                1500
+              ]
+            ],
+            "spending": [
+              [
+                0,
+                2600
+              ]
+            ]
+          },
+          "created": 1788807292.5187235,
+          "due": 1788807322.5187223,
+          "executable": "/home/rodbot.guest/sovereign-teaching/releases/40bef87/.venv/bin/python",
+          "unit": "[Unit]\nDescription=Lucy's always-on teaching agent\nAfter=network-online.target\n\n[Service]\nType=simple\nWorkingDirectory=/home/rodbot.guest/sovereign-teaching/state\nExecStart=/home/rodbot.guest/sovereign-teaching/releases/40bef87/.venv/bin/sovereign-agent agent serve --root /home/rodbot.guest/sovereign-teaching/state\nEnvironmentFile=/home/rodbot.guest/sovereign-teaching/state/agent.env\nRestart=on-failure\nRestartSec=10\nTimeoutStopSec=90\nUMask=0077\nNoNewPrivileges=true\nPrivateTmp=true\nProtectSystem=strict\nReadWritePaths=/home/rodbot.guest/sovereign-teaching/state\n\n[Install]\nWantedBy=default.target\n"
+        },
+        "observed": 1788807350.7826793,
+        "work": [
+          {
+            "id": "d5d4d0a703554946906856c3f1f19c1e",
+            "origin": "stock-condition:ch07-service-vanilla:1",
+            "status": "DONE",
+            "result": "Draft estimates:\n- \"SKU-VANILLA\": 7 tubs, \u00a317.50 GBP.\nTotal: \u00a317.50 GBP.",
+            "subject": "SKU-VANILLA"
+          },
+          {
+            "id": "9305bb29cb004893b5aa7afb1b4982c5",
+            "origin": "job:ch07-service-clock:1788807322.5187223",
+            "status": "DONE",
+            "result": "Draft estimates:\n- \"SKU-VANILLA\": 7 tubs, \u00a317.50 GBP.\nTotal: \u00a317.50 GBP.",
+            "subject": ""
+          }
+        ],
+        "proof": "A separate setup process exited. The installed systemd user service discovered clock and stock work, completed both and retained reports.",
+        "fixture_mutation": "Temporarily changed isolated vanilla stock from eight to one; restored below. No supplier request or purchase was made.",
+        "fixture_restored": true
+      }
+    }
+  }
+}

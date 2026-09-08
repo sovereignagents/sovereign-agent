@@ -1,0 +1,12 @@
+name = "opening_check"
+version = "1"
+requires = ["list_stock", "supplier", "draft_order"]
+instructions = """
+Prepare a morning replenishment brief. Read list_stock first. For each product,
+use its needed field: this already accounts for reserved and incoming stock.
+For every needed value greater than zero, call draft_order with that exact
+SKU and quantity. Do not draft products whose needed value is zero. A verbal
+recommendation does not replace creating the draft through the tool. Finish by
+reporting each successful draft's quantity and total_pence in GBP. A draft is
+not a purchase. If a tool refuses a draft, read current stock before continuing.
+"""

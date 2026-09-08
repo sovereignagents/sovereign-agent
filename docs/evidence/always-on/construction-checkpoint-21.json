@@ -1,0 +1,43 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "9960ca709c11baf3558b427c27854b3f2f10008d",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "7b9bec70406b11f907f444e383030f195533a4740d085bc8f2d6ab70f1bf3001",
+  "tests": {
+    "passed": 687,
+    "live_deselected": 18
+  },
+  "clean_install_tests": {
+    "passed": 682,
+    "git_only_skipped": 5,
+    "live_deselected": 18
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "planned": 1,
+    "python_examples": 133,
+    "matched_output_pairs": 125,
+    "publication_acceptance": false
+  },
+  "runtime_changes": "None in this chapter increment.",
+  "remaining": "Final integrated-day chapter and report, live phone, proposal and exact-source site integration",
+  "maintenance_checkpoint": "Actual independent supplier, same-inode paused restore, exact recovery plan, retained two receipts and2600pence, fresh work, stale connection and supplier refusal. Separate actual Linux release switch retains business records."
+}

@@ -1,0 +1,38 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "d99cf3eda7b846f26a0783ae433c190673743230",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "de424632610f90f0a86dc09c025df47e1ebb1c4d32601066b86ebece4c98ba30",
+  "tests": {
+    "passed": 673,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 668,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "planned": 6,
+    "python_examples": 104,
+    "matched_output_pairs": 98,
+    "publication_acceptance": false
+  },
+  "worker_checkpoint": "Actual SIGKILL and live-stale-owner processes, actual lease expiry, three stale write refusals, one original supplier order per case and no new model call during recovery.",
+  "runtime_changes": "None in this chapter increment.",
+  "remaining": "Six chapters, isolation kill boundary, integrated day, live phone, proposal and exact-source site integration"
+}

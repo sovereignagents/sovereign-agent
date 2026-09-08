@@ -1,0 +1,30 @@
+{
+  "created": "2026-09-07",
+  "scope": "Optional real Zeocore stdio MCP interoperability; no external service integration or consequential writes",
+  "zeocore_commit": "0a65423154c0d25384c19f534e88ee3598fef89e",
+  "mcp_sdk_version": "2.1.1",
+  "protocol": "2025-06-18",
+  "server_example_sha256": "7cacd2bc214d53a2428a993f1d6badc424f9df1d7d75e098f1227a22fd387719",
+  "client_sha256": "f27d107efddc33547ba6fab6ad40e2485953a0741045ad966531419bd73471e3",
+  "test": "tests/test_zeocore_interop.py",
+  "exit_code": 0,
+  "log_sha256": "b6533422d1630740f5655134f45127452989eca69913155ff0cdf6331ecfe21d",
+  "data_path": [
+    "authored model request",
+    "Sovereign Agent dispatcher",
+    "Sovereign Agent MCP client",
+    "separate Zeocore process",
+    "typed tool result",
+    "model observation"
+  ],
+  "expected": {
+    "word_count": 5,
+    "char_count": 25
+  },
+  "server_environment": {},
+  "permitted_remote_tools": [
+    "word_count"
+  ],
+  "server_stopped": true,
+  "required_sovereign_agent_dependencies_added": []
+}

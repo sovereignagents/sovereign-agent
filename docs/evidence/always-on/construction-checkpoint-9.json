@@ -1,0 +1,26 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "3ffa5d9b898242ea8291306f9e96d415aaa74e49",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "53eea4bcb33ee3df57bcc5042fb5eae0eea6710878c734a884083e6bee478822",
+  "tests": {
+    "passed": 603,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 598,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "source": {
+    "core_modules": 48,
+    "core_nonblank_lines": 9743,
+    "installed_modules": 65,
+    "installed_nonblank_lines": 12742
+  },
+  "account_recovery_tests": 22,
+  "linux_evidence": "linux-operation-v1.json verifies forced process restart, guest reboot, scheduled work and separate research service on the prior tested migration-22 tree.",
+  "remaining": "Final Linux upgrade and account restore acceptance, integrated day, memory forgetting regression, twelve manuscript chapters, publisher material and exact-source site integration"
+}

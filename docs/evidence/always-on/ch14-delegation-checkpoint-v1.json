@@ -1,0 +1,10 @@
+{
+  "created": "2026-09-07",
+  "checkpoint_sha256": "3e81e29727180f1c13a71058a457642759fc59afeb4426164c3d3d9be51f054f",
+  "runtime_commit": "8328f37c63e242054821032776af09a2b7842e9e",
+  "delegation_source_sha256": "ef99acc885bdc4a640c37c44b82f3f90baa59e9d886ac39343c7242c0d8a6174",
+  "exit_code": 0,
+  "output": "Authored quote boundary cases: 5\ncomplete: stock done while research process waits True\nChild quote: 5 tubs 2500 pence; repeat research work IDLE\ncancel: stock done while research process waits True\nCancellation preserves completed stock result: True\nExpired unclaimed work: CANCELLED\nReplacement cannot reset assignment allowance: True\nOne shared billing account: 10 calls and 26 estimated pence\nPurchases and stock reservations: 0\nArchitecture decision: retain the function for this fixed calculation\n",
+  "scope": "Actual research subprocess and parent shop worker, immutable duplicate handoff, cancellation, real expiry, replacement allowance, shared billing and independently authored quote checks. Paused deterministic fixture is not a performance or language-quality claim.",
+  "prior_live_receipt": "delegation-live-construction-v1.json"
+}

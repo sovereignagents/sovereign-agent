@@ -1,0 +1,42 @@
+{
+  "scope": "draft shape only; not source synchronization, link verification, rendered review or publication acceptance",
+  "source_sha256": "824a143dd33b599cb7a8c5f2ca9b289603b46603368db490927f3c570247c594",
+  "site_instrument_commit": "53012bad64af7293da6ab140650b6fc32626472b",
+  "score": 91,
+  "dimensions": {
+    "depth": 100,
+    "pedagogy": 90,
+    "practice": 75,
+    "visuals": 100,
+    "seo": 89.5,
+    "craft": 95.19999999999999
+  },
+  "metrics": {
+    "words": 4811,
+    "figures": 3,
+    "recommendedFigures": 3,
+    "captionedFigures": 3,
+    "tables": 2,
+    "codeExamples": 23,
+    "exercises": 1,
+    "maxProseWall": 198,
+    "internalLinks": 0,
+    "descriptionChars": 197
+  },
+  "nextActions": [
+    {
+      "ruleId": "ai-writing/tier1a",
+      "action": "Tier 1A AI frequency markers: genuinely×1, genuine×1",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 6,
+      "dimension": "craft"
+    },
+    {
+      "ruleId": "ai-writing/low-ttr",
+      "action": "Type-token ratio 0.277 on 3452 words (below 0.40 threshold)",
+      "tip": "See .claude/skills/avoid-ai-writing/SKILL.md for the fix pattern this rule cites.",
+      "estGain": 3,
+      "dimension": "craft"
+    }
+  ]
+}

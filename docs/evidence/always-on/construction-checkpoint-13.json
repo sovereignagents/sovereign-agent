@@ -1,0 +1,36 @@
+{
+  "created": "2026-09-07",
+  "status": "construction checkpoint; full overhaul remains active",
+  "tested_tree": "8c4f91d189b0ef3ebe65d69b18a6daa3222fb0ef",
+  "gate": "make verify",
+  "exit_code": 0,
+  "log_sha256": "5f5d1defd86fdaee9fbee1dfbf3e192fccaa9f7d0559c705190ad28cd9041b2c",
+  "tests": {
+    "passed": 642,
+    "live_deselected": 15
+  },
+  "clean_install_tests": {
+    "passed": 637,
+    "git_only_skipped": 5,
+    "live_deselected": 15
+  },
+  "new_book": {
+    "drafts": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9
+    ],
+    "planned": 9,
+    "python_examples": 80,
+    "matched_output_pairs": 74,
+    "publication_acceptance": false
+  },
+  "channel": "Controlled shape validation, exact integer identity, durable successful send receipts, stale completion refusal and restart-aware checkpoint. Local challenge helper discovers an operator ID without enrollment.",
+  "live_channel": "Not run; operator-owned Telegram credentials and explicit ready response remain pending.",
+  "linux": "Guarded release 8838338 installed on the isolated host and actual future-schema refusal recorded.",
+  "remaining": "Nine chapters, integrated acceptance, live phone proof, proposal and exact-source site integration"
+}

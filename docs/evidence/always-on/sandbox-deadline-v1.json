@@ -1,0 +1,33 @@
+{
+  "created": "2026-09-07",
+  "status": "behaviorally verified repair; full overhaul active",
+  "base_commit": "b6351baba744521dae569ca4a64a92420d3c1cd2",
+  "image": "python@sha256:c6ead215bfd31f1e433d968853b7a769989117115b728874824e6c0a27cb96fc",
+  "environment": "isolated sovereign-teaching-sap3 Linux guest; Docker29.5.2 local Unix socket",
+  "runtime_sha256": "243bf6678baf4b8ed419f293030dac1fc5c3f579e92a3a6d636143413fd9a177",
+  "before": {
+    "status": "REPRODUCED_GAP",
+    "runner_exit": -9,
+    "requested_seconds": 5,
+    "observed_seconds_after_kill": 6.06,
+    "container_running_after_deadline": true,
+    "container": "sovereign-teaching-4afd22918e9a4d4b94f66d65ca5a0680",
+    "profile": "sovereign-teaching-sap3"
+  },
+  "after": {
+    "status": "DEADLINE_SURVIVED_RUNNER_DEATH",
+    "runner_exit": -9,
+    "requested_seconds": 5,
+    "observed_seconds_after_kill": 6.03,
+    "container_running_after_deadline": false,
+    "container": "sovereign-teaching-457bd99963844db08a1893aba38f8fc5",
+    "profile": "sovereign-teaching-sap3"
+  },
+  "live_tests": {
+    "passed": 7,
+    "deselected": 3,
+    "log_sha256": "1e572a955237ac04303222b58d9db7203e83df777ae3c2e91a8d3d28bd5bb4d0",
+    "log": ".......                                                                  [100%]\n=============================== warnings summary ===============================\ntests/test_assistant_extra_tools.py:62\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_assistant_extra_tools.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\ntests/test_sandbox_tool.py:33\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_sandbox_tool.py:33: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\ntests/test_sandbox_tool.py:64\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_sandbox_tool.py:64: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\ntests/test_sandbox_deadline.py:17\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_sandbox_deadline.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\ntests/test_sandbox_deadline.py:45\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_sandbox_deadline.py:45: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\ntests/test_sandbox_deadline.py:51\n  /tmp/sovereign-agent-sandbox-sap3/stage17-live-v2/tests/test_sandbox_deadline.py:51: PytestUnknownMarkWarning: Unknown pytest.mark.live - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html\n    @pytest.mark.live\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n7 passed, 3 deselected, 6 warnings in 6.81s\n"
+  },
+  "limits": "Untrusted child UID65534; trusted PID1 container root with SETUID/SETGID. Host-death scratch residue possible; kernel and engine availability assumed. No kernel-exploit or universal prompt-injection guarantee."
+}

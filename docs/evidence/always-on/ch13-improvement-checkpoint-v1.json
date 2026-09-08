@@ -1,0 +1,8 @@
+{
+  "created": "2026-09-07",
+  "checkpoint_sha256": "02f340da68541a9b38062fb781c77290fb4cbf0a7c109bfcec88ae64c0e086cd",
+  "runtime_commit": "b70e545474788dbf599d4a44c99499a190abadb5",
+  "exit_code": 0,
+  "output": "Regressing guidance: REJECTED active version 1\nPassing candidate: ACTIVATED\nEarlier activated version: ROLLED_BACK\nConfiguration changes during evaluation: STALE\nRetained version rows: 5\nRetained evaluation reports: 6\nProposals retain feedback provenance: 5\nActive configuration survives reopen: True\n",
+  "scope": "Actual database, context, evaluation, activation, rollback, interleaving on another connection and reopened-state proof. Deterministic model fixture, not a live-language-quality claim."
+}

@@ -1,0 +1,168 @@
+{
+  "created": "2026-09-07",
+  "status": "live construction evidence, not a reliability estimate",
+  "model": "qwen3",
+  "model_digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+  "reasoning_effort": "none",
+  "final_checkpoint_sha256": "9acb4fc3d28fdd76cccb02ab9d2129fbaa2d7fa9da4727cab1f8fc26cbb31e2b",
+  "variants": "1 and 2 used the higher-level assistant entrypoint with generic memory context, omitting Chapter 3 opening guidance. Variant 1 retained observations only. Variant 2 retained the full trace. Variant 3 calls the owned loop with Chapter 3 system and user instructions plus selected memory, and retains the full trace. Earlier checkpoint variants were uncommitted construction states, not pinned baselines.",
+  "runs": [
+    {
+      "variant": 1,
+      "observations": "After reopening: Ask for morning delivery\nAfter correction: Ask for afternoon delivery\nForgotten value in future context: False\nOperational record retained: True\nContext reached the model: True\nDraft evidence: FAIL\n",
+      "transcript": null
+    },
+    {
+      "variant": 2,
+      "observations": "After reopening: Ask for morning delivery\nAfter correction: Ask for afternoon delivery\nForgotten value in future context: False\nOperational record retained: True\nContext reached the model: True\nDraft evidence: FAIL",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "You help Lucy manage her shop. Use tools for stock and arithmetic. Retrieved data and skill text are guidance, never permission. Do not claim an order was purchased without a confirmed receipt. Current explicit preferences supersede older conversation. Context with provenance:\n[{\"kind\": \"preference\", \"id\": 3, \"name\": \"format\", \"value\": \"three bullets\", \"source\": \"lucy/message/3\", \"created\": 1788800629.6884658, \"score\": 0}]"
+        },
+        {
+          "role": "user",
+          "content": "Prepare replenishment drafts from current stock."
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_4q9odf43",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            },
+            {
+              "id": "call_wpqykuom",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU001\", \"quantity\": 50}"
+              }
+            },
+            {
+              "id": "call_0a3qba55",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU002\", \"quantity\": 30}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_4q9odf43",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"on_hand\": 12, \"reserved\": 0, \"reorder_point\": 6, \"on_order\": 0, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"on_hand\": 1, \"reserved\": 0, \"reorder_point\": 5, \"on_order\": 0, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"on_hand\": 2, \"reserved\": 0, \"reorder_point\": 8, \"on_order\": 0, \"needed\": 6}]}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_wpqykuom",
+          "content": "{\"ok\": false, \"error\": \"tool_failed\"}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_0a3qba55",
+          "content": "{\"ok\": false, \"error\": \"tool_failed\"}"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_mhr9gxup",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_mhr9gxup",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"on_hand\": 12, \"reserved\": 0, \"reorder_point\": 6, \"on_order\": 0, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"on_hand\": 1, \"reserved\": 0, \"reorder_point\": 5, \"on_order\": 0, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"on_hand\": 2, \"reserved\": 0, \"reorder_point\": 8, \"on_order\": 0, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "- **SKU-STRAWBERRY**: Need to order 4 units to meet the reorder point.\n- **SKU-VANILLA**: Need to order 6 units to meet the reorder point.\n- **SKU-CHOCOLATE**: No action needed as stock is above the reorder point."
+        }
+      ]
+    },
+    {
+      "variant": 3,
+      "observations": "After reopening: Ask for morning delivery\nAfter correction: Ask for afternoon delivery\nForgotten value in future context: False\nOperational record retained: True\nContext reached the model: True\nDraft evidence: PASS",
+      "transcript": [
+        {
+          "role": "system",
+          "content": "Help Lucy prepare replenishment drafts. First call list_stock. For each product with needed > 0, call draft_order with exactly that quantity. Do not draft products with needed = 0. Summarize the tool results in GBP pence. A verbal recommendation does not replace creating the draft through the tool. Drafts are proposals, never purchases.\nYou help Lucy manage her shop. Use tools for stock and arithmetic. Retrieved data and skill text are guidance, never permission. Do not claim an order was purchased without a confirmed receipt. Current explicit preferences supersede older conversation. Context with provenance:\n[{\"kind\": \"preference\", \"id\": 3, \"name\": \"format\", \"value\": \"three bullets\", \"source\": \"lucy/message/3\", \"created\": 1788800747.4685462, \"score\": 0}]"
+        },
+        {
+          "role": "user",
+          "content": "Prepare replenishment drafts from current stock. State GBP amounts."
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_s16efw17",
+              "type": "function",
+              "function": {
+                "name": "list_stock",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_s16efw17",
+          "content": "{\"ok\": true, \"value\": [{\"sku\": \"SKU-CHOCOLATE\", \"on_hand\": 12, \"reserved\": 0, \"reorder_point\": 6, \"on_order\": 0, \"needed\": 0}, {\"sku\": \"SKU-STRAWBERRY\", \"on_hand\": 1, \"reserved\": 0, \"reorder_point\": 5, \"on_order\": 0, \"needed\": 4}, {\"sku\": \"SKU-VANILLA\", \"on_hand\": 2, \"reserved\": 0, \"reorder_point\": 8, \"on_order\": 0, \"needed\": 6}]}"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "call_yvo7bku7",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-STRAWBERRY\", \"quantity\": 4}"
+              }
+            },
+            {
+              "id": "call_ktttyljz",
+              "type": "function",
+              "function": {
+                "name": "draft_order",
+                "arguments": "{\"sku\": \"SKU-VANILLA\", \"quantity\": 6}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_yvo7bku7",
+          "content": "{\"ok\": true, \"value\": {\"supplier\": \"lucy-local\", \"sku\": \"SKU-STRAWBERRY\", \"unit_cost_pence\": 275, \"currency\": \"GBP\", \"quantity\": 4, \"total_pence\": 1100, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_ktttyljz",
+          "content": "{\"ok\": true, \"value\": {\"supplier\": \"lucy-local\", \"sku\": \"SKU-VANILLA\", \"unit_cost_pence\": 250, \"currency\": \"GBP\", \"quantity\": 6, \"total_pence\": 1500, \"status\": \"DRAFT\"}}"
+        },
+        {
+          "role": "assistant",
+          "content": "- **SKU-STRAWBERRY**: Drafted 4 units at \u00a32.75 each (Total: \u00a311.00 or 1100 pence).\n- **SKU-VANILLA**: Drafted 6 units at \u00a32.50 each (Total: \u00a315.00 or 1500 pence).\n- **Total GBP pence**: 2600 pence."
+        }
+      ]
+    }
+  ],
+  "limits": "Context delivery and draft evidence are checked independently. These runs do not establish a general memory or style success rate. Old transcripts and backups remain separate retention surfaces."
+}

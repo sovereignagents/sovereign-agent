@@ -1,0 +1,81 @@
+{
+  "created": "2026-09-07",
+  "source_commit": "5dc4ed16e2e50893c60abee122a100e62e7c7983",
+  "isolated_profile": "sovereign-teaching-sap3",
+  "switch": {
+    "status": "ACTIVE",
+    "from": "f05a3a6",
+    "to": "5dc4ed1",
+    "schema": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "work_id": "20cd25a940be42bab1c3da815f407b71",
+    "result": "Stock plus pending replenishment covers each threshold; no additional draft is needed.",
+    "order_inventory_spending_preserved": true,
+    "retained": {
+      "orders": [
+        [
+          "0d544377ed235e82888341a7b4870ae8",
+          "CONFIRMED",
+          1100,
+          1
+        ],
+        [
+          "74778dea2405583db7c23d1618a7927f",
+          "DELIVERED",
+          1500,
+          1
+        ]
+      ],
+      "inventory": [
+        [
+          "SKU-CHOCOLATE",
+          12,
+          0
+        ],
+        [
+          "SKU-STRAWBERRY",
+          1,
+          0
+        ],
+        [
+          "SKU-VANILLA",
+          8,
+          0
+        ]
+      ],
+      "spending": [
+        [
+          0,
+          2600
+        ]
+      ]
+    }
+  },
+  "actual_installed_report": "Lucy's operating report\nObserved: 2026-09-07T22:17:50.821491+00:00\nCurrent local snapshot; work, orders and spending cover all retained history. Model usage covers the current UTC day. No external account audit was performed.\n\nSupplier purchases accepted: GBP 26.00\nAllowance reserved for pending orders: GBP 0.00\nOrders delivered: 1; accepted and awaiting delivery: 1\nOrder drafts awaiting approval: 0; uncertain supplier outcomes: 0\nWork completed: 17; blocked: 0; cancelled: 1\nRead-only research quotes completed: 1\n\nCurrent stock:\n- \"SKU-CHOCOLATE\": 12 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n- \"SKU-STRAWBERRY\": 1 on hand, 0 reserved, 4 pending replenishment, 0 still needed\n- \"SKU-VANILLA\": 8 on hand, 0 reserved, 0 pending replenishment, 0 still needed\n\nModel calls reserved today: 37; configured estimate: 0 pence. This is not a provider invoice.\n\nExceptions requiring inspection:\n- Historical model usage is incomplete; recorded usage is not the full bill.\nEvidence detail: 2 recent order records; 0 older orders omitted from detail, included in totals.\n",
+  "scope": "actual immutable release, completed service work and retained accounting; not a new reboot or phone test"
+}
