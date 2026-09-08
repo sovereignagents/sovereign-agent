@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFT",
+  "created": "2026-09-08",
+  "chapters": [
+    {
+      "number": 2,
+      "notebook": "ch02-shop-tools-class-v1.ipynb",
+      "guide": "ch02-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch02.py",
+      "expectedObservations": [
+        "invalid_arguments",
+        "\"total_pence\": 1500"
+      ]
+    },
+    {
+      "number": 3,
+      "notebook": "ch03-agent-loop-class-v1.ipynb",
+      "guide": "ch03-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch03.py",
+      "expectedObservations": [
+        "COMPLETED 3 3",
+        "draft evidence PASS"
+      ]
+    },
+    {
+      "number": 4,
+      "notebook": "ch04-memory-class-v1.ipynb",
+      "guide": "ch04-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch04.py",
+      "expectedObservations": [
+        "Forgotten value in future context: False",
+        "Context reached the model: True"
+      ]
+    },
+    {
+      "number": 5,
+      "notebook": "ch05-skills-class-v1.ipynb",
+      "guide": "ch05-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch05.py",
+      "expectedObservations": [
+        "Missing required tool excludes skill: True",
+        "Purchases: 0"
+      ]
+    },
+    {
+      "number": 6,
+      "notebook": "ch06-messaging-class-v1.ipynb",
+      "guide": "ch06-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch06.py",
+      "expectedObservations": [
+        "Duplicate intake after restart: 0",
+        "First delivery: UNKNOWN",
+        "Automatic resend: None"
+      ]
+    },
+    {
+      "number": 7,
+      "notebook": "ch07-scheduling-class-v1.ipynb",
+      "guide": "ch07-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch07.py",
+      "expectedObservations": [
+        "Coalesced missed runs: 3",
+        "Unattended second episode: PASS",
+        "Purchases: 0"
+      ]
+    },
+    {
+      "number": 8,
+      "notebook": "ch08-approval-class-v1.ipynb",
+      "guide": "ch08-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch08.py",
+      "expectedObservations": [
+        "Cumulative overspend refused: True",
+        "Supplier orders after authorized send: 1"
+      ]
+    },
+    {
+      "number": 9,
+      "notebook": "ch09-ambiguous-order-class-v1.ipynb",
+      "guide": "ch09-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch09.py",
+      "expectedObservations": [
+        "initial UNKNOWN",
+        "reserved and spent 1500 0",
+        "supplier orders 1"
+      ]
+    },
+    {
+      "number": 10,
+      "notebook": "ch10-worker-recovery-class-v1.ipynb",
+      "guide": "ch10-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch10.py",
+      "expectedObservations": [
+        "Live stale worker refused: 3",
+        "New model calls during recovery: 0"
+      ]
+    },
+    {
+      "number": 11,
+      "notebook": "ch11-isolation-class-v1.ipynb",
+      "guide": "ch11-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch11.py",
+      "expectedObservations": [
+        "Hostile purchase attempt: tool_not_allowed",
+        "Catalog through real MCP process: 3",
+        "OS containment: NOT RUN"
+      ]
+    },
+    {
+      "number": 12,
+      "notebook": "ch12-evaluation-class-v1.ipynb",
+      "guide": "ch12-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch12.py",
+      "expectedObservations": [
+        "Wrong prose amount with correct calls: REVIEW_REQUIRED",
+        "Saved report digest verified: True"
+      ]
+    },
+    {
+      "number": 13,
+      "notebook": "ch13-improvement-class-v1.ipynb",
+      "guide": "ch13-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch13.py",
+      "expectedObservations": [
+        "Configuration changes during evaluation: STALE",
+        "Active configuration survives reopen: True"
+      ]
+    },
+    {
+      "number": 14,
+      "notebook": "ch14-delegation-class-v1.ipynb",
+      "guide": "ch14-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch14.py",
+      "expectedObservations": [
+        "Replacement cannot reset assignment allowance: True",
+        "Architecture decision: retain the function"
+      ]
+    },
+    {
+      "number": 15,
+      "notebook": "ch15-operation-class-v1.ipynb",
+      "guide": "ch15-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch15.py",
+      "expectedObservations": [
+        "Local orders after restore / reconciled: 1 2",
+        "historical model usage complete: False",
+        "Systemd host operations: NOT RUN"
+      ]
+    },
+    {
+      "number": 16,
+      "notebook": "ch16-acceptance-class-v1.ipynb",
+      "guide": "ch16-instructor-guide-v1.md",
+      "checkpoint": "checkpoints/ch16.py",
+      "expectedObservations": [
+        "Independent supplier: 2 orders, 2600 pence"
+      ]
+    }
+  ]
+}

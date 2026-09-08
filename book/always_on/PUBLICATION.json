@@ -103,7 +103,12 @@
     {
       "slug": "ch01-classroom",
       "title": "Chapter 1 classroom materials",
-      "path": "educator/ch01-classroom-v1.md"
+      "path": "educator/ch01-classroom-v2.md"
+    },
+    {
+      "slug": "always-on-educator",
+      "title": "Educator companion for every chapter",
+      "path": "educator/educator-companion-v1.md"
     }
   ],
   "expectedFigures": 52,
