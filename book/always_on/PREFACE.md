@@ -35,3 +35,5 @@ The manuscript is a construction draft. Executed tests, Linux experiments and li
 OpenClaw, NanoClaw and Hermes appear when their code illuminates a particular decision. Every finished comparison names a commit and distinguishes documented rationale from our interpretation. We do not infer that a project lacks a feature because a short inspection did not find it. The decisions organize the book; the projects are dated illustrations.
 
 Sovereign Agent is the educational implementation. Zeocore is an optional path to maintained integrations in a separate environment. The [integration appendix](appendices/zeocore-interop-v2.md) demonstrates a real, bounded protocol connection without making it a prerequisite for understanding the chapters. Start with [the reader conventions](CONVENTIONS.md), then make Lucy's [first model call](ch01_first_model_call/README.md).
+
+Continue with [How to use this book](CONVENTIONS.md), then [Chapter 1](ch01_first_model_call/README.md).

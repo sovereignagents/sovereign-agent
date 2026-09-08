@@ -92,7 +92,14 @@ def main():
     parser.add_argument("--model", default="qwen3")
     args = parser.parse_args()
     body = payload(SHOP, args.model)
-    document = live_call(body) if args.live else OFFLINE_RESPONSE
+    try:
+        document = live_call(body) if args.live else OFFLINE_RESPONSE
+    except OSError, ValueError:
+        parser.exit(
+            1,
+            "Model call failed. Start Ollama and pull the selected model; "
+            "check the Chapter 1 setup, then retry. No order was sent.\n",
+        )
     print("LIVE MODEL RESPONSE" if args.live else "OFFLINE RESPONSE FIXTURE")
     print(read_brief(document))
 

@@ -5,10 +5,12 @@ import json
 import runpy
 from pathlib import Path
 
-from sovereign_agent.agent_loop import Limits, run_loop
-from sovereign_agent.model_turn import HTTPModel, ModelError, ModelTurn, ToolCall
+LEARNER = runpy.run_path(str(Path(__file__).resolve().parents[1] / "learner/ch03.py"))
+Limits, run_loop = LEARNER["Limits"], LEARNER["run_loop"]
+HTTPModel, ModelError = LEARNER["HTTPModel"], LEARNER["ModelError"]
+ModelTurn, ToolCall = LEARNER["ModelTurn"], LEARNER["ToolCall"]
 
-SHOP_TOOLS = runpy.run_path(str(Path(__file__).with_name("ch02.py")))
+SHOP_TOOLS = LEARNER["shop_tools"]
 MESSAGES = [
     {
         "role": "system",
@@ -90,11 +92,7 @@ def main():
     parser.add_argument("--model", default="qwen3")
     parser.add_argument("--transcript", action="store_true")
     args = parser.parse_args()
-    model = (
-        HTTPModel(model=args.model, reasoning_effort="none")
-        if args.live
-        else ReplayModel(opening_turns())
-    )
+    model = HTTPModel(model=args.model) if args.live else ReplayModel(opening_turns())
     dispatcher = SHOP_TOOLS["build_tools"](SHOP_TOOLS["SHOP"])
     result = run_loop(model, dispatcher, MESSAGES, limits=Limits())
     print(result.status, result.model_calls, result.tool_calls)

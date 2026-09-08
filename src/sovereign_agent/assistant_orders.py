@@ -120,6 +120,7 @@ def approve(
     policy: SpendingPolicy,
     expires: float,
     automatic: bool = False,
+    supplier: Supplier | None = None,
     now: float | None = None,
 ) -> None:
     now = time.time() if now is None else now
@@ -136,10 +137,25 @@ def approve(
         if (
             order is None
             or order["digest"] != digest
-            or order["status"] not in {"DRAFT", "APPROVED"}
+            or order["status"] not in {"DRAFT", "APPROVED", "SENDING", "UNKNOWN"}
             or order["revoked"]
         ):
             raise PermissionError("approval does not match an eligible exact proposal")
+        _operator_state(db)
+        work = connection.execute(
+            "SELECT cancelled FROM assistant_work WHERE id=?", (order["work_id"],)
+        ).fetchone()
+        if work["cancelled"]:
+            raise PermissionError("cancelled work cannot gain new approval")
+        if order["status"] in {"SENDING", "UNKNOWN"} and (
+            automatic
+            or supplier is None
+            or not supplier.idempotent
+            or supplier.identity != order["target"]
+        ):
+            raise PermissionError(
+                "uncertain retry needs explicit approval and matching idempotent supplier"
+            )
         if automatic and order["amount"] > policy.automatic_order_pence:
             raise PermissionError("exact proposal needs operator approval")
         connection.execute(
@@ -158,7 +174,9 @@ def approve(
             "UPDATE assistant_spending SET reserved_pence=reserved_pence+? WHERE id=1", (addition,)
         )
         connection.execute(
-            "UPDATE assistant_orders SET status='APPROVED',approved_by=?,approved_until=?,"
+            "UPDATE assistant_orders SET status=CASE WHEN status IN ('SENDING','UNKNOWN') "
+            "THEN status "
+            "ELSE 'APPROVED' END,approved_by=?,approved_until=?,"
             "approval_basis=? WHERE id=?",
             (actor, expires, "AUTOMATIC" if automatic else "OPERATOR", identifier),
         )
@@ -195,6 +213,47 @@ def revoke(db: Database, identifier: str, *, actor: str, policy: SpendingPolicy)
         append_event(db, "assistant.order.revoked", {"order": identifier, "actor": actor})
 
 
+def _operator_state(db: Database) -> None:
+    control = db.connection.execute("SELECT * FROM assistant_control WHERE id=1").fetchone()
+    if control["paused"] or db.path.with_suffix(".authority").read_text() != control["epoch"]:
+        raise PermissionError("paused or replaced state requires account recovery")
+
+
+def _settle(db: Database, row: Any, receipt: dict[str, Any]) -> dict[str, Any]:
+    connection = db.connection
+    identifier = row["id"]
+    if (
+        receipt.get("operation") != identifier
+        or json.dumps(
+            receipt.get("proposal"), sort_keys=True, separators=(",", ":"), allow_nan=False
+        )
+        != row["proposal"]
+    ):
+        raise ValueError("supplier receipt does not match the exact intent")
+    if receipt.get("status") not in {"ACCEPTED", "REJECTED"}:
+        raise ValueError("supplier outcome is not conclusive")
+    if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
+        if receipt["status"] != json.loads(row["receipt"])["status"]:
+            raise ValueError("supplier receipt contradicts the recorded outcome")
+        return dict(json.loads(row["receipt"]))
+    if row["status"] not in {"SENDING", "UNKNOWN"}:
+        raise PermissionError("order was not admitted for transmission")
+    accepted = receipt["status"] == "ACCEPTED"
+    connection.execute(
+        "UPDATE assistant_orders SET status=?,receipt=? WHERE id=?",
+        ("CONFIRMED" if accepted else "REJECTED", json.dumps(receipt), identifier),
+    )
+    connection.execute(
+        "UPDATE assistant_spending SET reserved_pence=reserved_pence-?,"
+        "spent_pence=spent_pence+? WHERE id=1",
+        (row["amount"], row["amount"] if accepted else 0),
+    )
+    append_event(
+        db, "assistant.order.reconciled", {"order": identifier, "status": receipt["status"]}
+    )
+    return receipt
+
+
 def _record(db: Database, work: Claim, identifier: str, receipt: dict[str, Any]) -> dict[str, Any]:
     with db.immediate() as connection:
         assert_current(connection, work)
@@ -202,34 +261,56 @@ def _record(db: Database, work: Claim, identifier: str, receipt: dict[str, Any])
             "SELECT * FROM assistant_orders WHERE id=? AND work_id=?", (identifier, work.id)
         ).fetchone()
         assert row
-        if (
-            receipt.get("operation") != identifier
-            or json.dumps(
-                receipt.get("proposal"), sort_keys=True, separators=(",", ":"), allow_nan=False
+        return _settle(db, row, receipt)
+
+
+def resolve(
+    db: Database,
+    identifier: str,
+    digest: str,
+    receipt: dict[str, Any],
+    *,
+    target: str,
+    evidence: str,
+    actor: str,
+    policy: SpendingPolicy,
+) -> dict[str, Any]:
+    """Operator-attested conclusive supplier receipt, never an absent lookup.
+
+    REJECTED must irrevocably close this operation at the supplier, including
+    delayed requests. This trusts the operator's evidence, not a model's claim.
+    """
+    if actor not in policy.operators:
+        raise PermissionError("operator is not allowlisted")
+    if not evidence.strip() or len(evidence) > 500 or not isinstance(receipt, dict):
+        raise ValueError("bounded supplier evidence and an exact receipt are required")
+    with db.immediate() as connection:
+        _operator_state(db)
+        row = connection.execute(
+            "SELECT * FROM assistant_orders WHERE id=?", (identifier,)
+        ).fetchone()
+        if row is None or row["digest"] != digest or row["target"] != target:
+            raise PermissionError("resolution differs from the exact supplier intent")
+        terminal = row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}
+        result = _settle(db, row, receipt)
+        if not terminal:
+            append_event(
+                db,
+                "assistant.order.resolved",
+                {
+                    "order": identifier,
+                    "actor": actor,
+                    "evidence": evidence,
+                    "target": target,
+                    "digest": digest,
+                },
             )
-            != row["proposal"]
-        ):
-            raise ValueError("supplier receipt does not match the exact intent")
-        if receipt.get("status") not in {"ACCEPTED", "REJECTED"}:
-            raise ValueError("supplier outcome is not conclusive")
-        if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
-            return dict(json.loads(row["receipt"]))
-        if row["status"] not in {"SENDING", "UNKNOWN"}:
-            raise PermissionError("order was not admitted for transmission")
-        accepted = receipt["status"] == "ACCEPTED"
-        connection.execute(
-            "UPDATE assistant_orders SET status=?,receipt=? WHERE id=?",
-            ("CONFIRMED" if accepted else "REJECTED", json.dumps(receipt), identifier),
-        )
-        connection.execute(
-            "UPDATE assistant_spending SET reserved_pence=reserved_pence-?,"
-            "spent_pence=spent_pence+? WHERE id=1",
-            (row["amount"], row["amount"] if accepted else 0),
-        )
-        append_event(
-            db, "assistant.order.reconciled", {"order": identifier, "status": receipt["status"]}
-        )
-    return receipt
+            connection.execute(
+                "UPDATE assistant_work SET status='READY',available_after=0 "
+                "WHERE id=? AND status IN ('BLOCKED','CANCELLED')",
+                (row["work_id"],),
+            )
+        return result
 
 
 def execute(
@@ -256,7 +337,7 @@ def execute(
             if receipt is not None:
                 return _record(db, work, identifier, receipt)
         except OSError, ValueError:
-            return {"status": "UNKNOWN", "operation": identifier}
+            return {"status": "UNKNOWN", "operation": identifier, "needs_operator": True}
         if not supplier.idempotent:
             return {"status": "UNKNOWN", "operation": identifier, "needs_operator": True}
     with db.immediate() as connection:

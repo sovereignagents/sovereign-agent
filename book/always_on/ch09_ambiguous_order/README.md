@@ -46,6 +46,7 @@ Our local states describe both progress and knowledge. `SENDING` means the agent
 | `SENDING` | Transmission admitted durably | Reserved |
 | `UNKNOWN` | Remote outcome not conclusively known | Reserved |
 | `CONFIRMED` | Matching supplier acceptance recorded | Spent |
+| `DELIVERED` | Acceptance plus a separately observed stock delivery | Spent; physical stock credited once |
 | `REJECTED` | Matching conclusive rejection recorded | Reservation released |
 
 There is also `REVOKED` for an eligible proposal whose permission was withdrawn before sending. Revoking an uncertain order prevents a newly authorized send; it does not erase the possibility that the supplier already accepted the earlier one. We still need to discover its outcome and settle the accounts accordingly.
@@ -223,7 +224,9 @@ def record_receipt(db, work, identifier, receipt):
             raise ValueError("receipt does not match the exact intent")
         if receipt.get("status") not in {"ACCEPTED", "REJECTED"}:
             raise ValueError("supplier outcome is not conclusive")
-        if row["status"] in {"CONFIRMED", "REJECTED"}:
+        if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
+            if receipt["status"] != json.loads(row["receipt"])["status"]:
+                raise ValueError("receipt contradicts the recorded outcome")
             return json.loads(row["receipt"])
         if row["status"] not in {"SENDING", "UNKNOWN"}:
             raise PermissionError("order was not admitted for transmission")
@@ -267,7 +270,7 @@ def execute_order(db, work, identifier, supplier, *, policy):
     assert_current(db.connection, work)
     if row["target"] != supplier.identity:
         raise PermissionError("supplier destination differs from approved proposal")
-    if row["status"] in {"CONFIRMED", "REJECTED"}:
+    if row["status"] in {"CONFIRMED", "DELIVERED", "REJECTED"}:
         return json.loads(row["receipt"])
     if row["status"] in {"SENDING", "UNKNOWN"}:
         try:
@@ -375,6 +378,12 @@ print(
     ],
 )
 print("same receipt", execute_order(db, work, identifier, supplier, policy=policy) == recovered)
+print(
+    "settlement events",
+    db.connection.execute(
+        "SELECT count(*) FROM events WHERE kind='assistant.order.reconciled'"
+    ).fetchone()[0],
+)
 ```
 
 ```text
@@ -384,11 +393,22 @@ reserved and spent (1500, 0)
 ACCEPTED sends 1 lookups 1
 reserved and spent (0, 1500)
 same receipt True
+settlement events 1
 ```
 
 The second execution performed a lookup, not another send. The third returned the stored receipt. The accepted purchase consumed 1,500 pence once, and the reservation is now zero. A second settlement would incorrectly subtract the reservation again or double the spent total; the terminal-state check prevents that transition.
 
 The supplier's accepted order does not mean six tubs physically arrived at the shop. Confirmation belongs to order accounting. Receiving stock is a separate observed business event. Until a delivery is recorded, physical inventory remains unchanged and the confirmed order represents incoming stock.
+
+## Give uncertainty an operator path
+
+An expired approval forbids a new send; it does not erase an earlier send. For an `UNKNOWN` order or a `SENDING` order left by a crash at our idempotent supplier, Lucy can renew the exact existing approval with `agent approve ORDER --digest DIGEST --supplier ENDPOINT`. The approval code checks the configured supplier identity and idempotency contract, the current operator, cancellation, revocation and cumulative ceiling. It retains the same operation ID, proposal, digest and reservation, and retains that uncertain state so the next execution must still look up the old operation first. Automatic policy cannot renew an uncertain order.
+
+When discovery cannot establish the result, obtain a conclusive receipt from the supplier through a separate operator interaction. The ordinary local `agent resolve-order` command accepts a receipt JSON file containing the original `operation`, exact `proposal` and `status` of `ACCEPTED` or `REJECTED`. Supply `--digest`, the exact stored target through `--supplier`, `--actor`, `--receipt` and a bounded `--evidence` reference. The command checks those values in one transaction, uses the same receipt settlement logic and records who supplied the evidence. Repeating the same resolution makes no second accounting transition.
+
+`REJECTED` means the supplier has irrevocably closed that operation, including any delayed request; “not found” does not meet that contract. A support search result, an expired local lease or an operator's guess is insufficient. If the supplier cannot provide conclusive evidence or safely close the operation, retain `UNKNOWN` and its reservation. The system cannot manufacture a truthful resolution. This path trusts an explicitly authorized operator's attestation; it does not cryptographically authenticate a pasted document and is never exposed as a model tool.
+
+Revoked or cancelled uncertain work can still receive a conclusive receipt, because it may describe an effect already committed. It cannot acquire fresh retry authority. A mismatched or contradictory receipt is refused with the reservation or prior outcome unchanged. A restored database remains subject to Chapter 15's separate account-wide recovery; the ordinary resolution command cannot bypass that pause.
 
 ## Refuse an unjustified retry
 
@@ -454,7 +474,7 @@ flowchart TD
     A -->|Yes| S[Resend same identity and proposal]
 ```
 
-**Figure:** An empty lookup becomes a retry opportunity only under an explicit provider guarantee and current authority. It never justifies a new operation identity.
+**Figure:** An empty lookup becomes a retry opportunity only under an explicit provider guarantee and current authority. Failed authority checks raise `PermissionError` while the durable row remains `UNKNOWN`; they do not create a replacement identity.
 
 ### Failure experiment: a plausible but mismatched receipt
 
@@ -487,6 +507,8 @@ Keeping physical stock at two is part of the expected result. An order receipt p
 ## Run the independent HTTP failure experiment
 
 The standalone checkpoint in `book/always_on/checkpoints/ch09.py` uses the cumulative `assistant_orders` implementation, whose admission and reconciliation mechanism you have built above. It starts the simulated supplier as a separate Python process, with a separate SQLite file and an operating-system-assigned loopback port.
+
+An HTTP 409 from the fixture signals a conflicting identity or supplier authority. The adapter conservatively exposes it as a transport failure, leaving local uncertainty; inspect the supplier account and exact proposal instead of changing the operation ID to evade the conflict.
 
 The supplier's `--drop-first-response` option closes the connection after committing the first receipt for each new operation. Looking up that operation still returns the persisted receipt, and resubmitting the same identity returns the existing outcome. The failure is placed after the database commit, so this is an actual lost-response experiment rather than a timeout raised before any effect happened.
 

@@ -12,6 +12,12 @@ Build the model–tool–observation cycle in Python, retain an inspectable tran
 
 Your first successful run will execute three model calls and three tool calls, producing vanilla and strawberry drafts totalling 2,600 pence. You will then provoke repeated identifiers, exhausted budgets, and a model failure. Each experiment must end with a specific status instead of hanging or silently pretending to finish Lucy's task.
 
+## Keep your implementation in a file
+
+Continue from the repository root. Create `book/always_on/learner/ch03.py` and save this chapter's imports, class and function definitions, plus the assignments to `shop_tools`, `ToolCall`, `first` and `messages`. Run the print statements and failure experiments separately. Chapter 2's learner file supplies the dispatcher and request type you constructed. The completed learner files are included for comparison, and the Chapter 3 checkpoint loads your learner file, so changing its loop changes both the offline and live commands.
+
+The only supplied runtime component used by the live path is the bounded HTTP transport, identified and explained below. The loop, request parsing, tool schemas and tool dispatcher are all code you write in Chapters 2 and 3.
+
 ## Give one model call a precise contract
 
 A model call is one request to a provider. A model turn may contain an answer, one or more tool requests, or both explanatory text and requests. A whole agent run can contain several such turns. Keeping these units separate prevents a provider adapter from quietly taking control of the entire task.
@@ -30,9 +36,12 @@ import runpy
 import time
 from dataclasses import dataclass
 
-from sovereign_agent.model_turn import ModelError, ToolCall
+shop_tools = runpy.run_path("book/always_on/learner/ch02.py")
+ToolCall = shop_tools["ToolCall"]
 
-shop_tools = runpy.run_path("book/always_on/checkpoints/ch02.py")
+
+class ModelError(RuntimeError):
+    """A sanitized model transport or response failure."""
 
 
 @dataclass(frozen=True)
@@ -486,9 +495,9 @@ sequenceDiagram
 
 **Figure:** The client bounds how long it waits and how much it reads. Terminating the client cannot cancel remote generation or billing already underway.
 
-The complete transport lives in `src/sovereign_agent/http_transport.py`; the provider-specific payload and response parser live in `src/sovereign_agent/model_turn.py`. Inspect the calls to `subprocess.run`, `response.read(maximum + 1)`, and the redirect handler together. They control elapsed waiting, response size, and unexpected credential forwarding respectively. None of them makes the remote service trustworthy.
+The supplied transport lives in `src/sovereign_agent/http_transport.py`. We build the provider-specific payload and response parser in the next section; `src/sovereign_agent/model_turn.py` is the installed adapter for comparison after you finish. Inspect the calls to `subprocess.run`, `response.read(maximum + 1)`, and the redirect handler together. They control elapsed waiting, response size, and unexpected credential forwarding respectively. None of them makes the remote service trustworthy.
 
-Credentials pass through the child's standard input rather than command-line arguments. Its environment includes only the explicitly selected path and certificate settings, and raw request errors are not copied into the model transcript. Redirects are refused instead of allowing an endpoint to forward an authorization header elsewhere. The configured endpoint is operator-owned; generated text cannot replace it.
+Credentials pass through the child's standard input rather than command-line arguments. Its environment includes only the explicitly selected path and certificate settings; proxy variables and `PYTHONPATH` are not inherited. This teaching path needs direct network access and the `uv sync` installation from Chapter 1, and raw request errors are not copied into the model transcript. Redirects are refused instead of allowing an endpoint to forward an authorization header elsewhere. The configured endpoint is operator-owned; generated text cannot replace it.
 
 Process creation and operating-system scheduling are not hard real-time services. The timeout bounds the waiting strategy; it is not a promise that a host under arbitrary load will report a result at an exact millisecond. Similarly, a provider that continues after client termination may still have an unknown billed outcome. Later chapters reuse this distinction when the remote operation is an order.
 
@@ -516,6 +525,106 @@ STOP_REQUESTED 0
 ```
 
 The stop callback is cooperative. It prevents another step at the loop's check points; it does not undo an operation already in flight. When we install a long-running service, a termination signal will set this stop state, and the worker will preserve any uncertain external outcome for recovery.
+
+## Build the tool-capable HTTP adapter
+
+Chapter 1 sent text and read text. Our adapter must now send the schemas and preserve generated tool identities. Add this class to your learner file. Its optional `request` argument accepts a transport function; an authored response can therefore exercise the parser without a model server. When omitted, it uses the bounded transport discussed above. It deliberately targets the one local endpoint from Chapter 1; remote endpoint validation and credentials belong to the provider extension appendix.
+
+**Listing:** Translate one HTTP response into a model turn without executing its requests.
+
+```python
+class HTTPModel:
+    """One local Ollama response; never executes tools itself."""
+
+    def __init__(self, model="qwen3", request=None):
+        self.model, self.request = model, request
+
+    def complete(self, messages, tools, *, timeout, max_output_tokens):
+        transport = self.request
+        if transport is None:
+            from sovereign_agent.http_transport import request
+
+            transport = request
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "tools": tools,
+            "stream": False,
+            "max_tokens": max_output_tokens,
+            "temperature": 0,
+            "reasoning_effort": "none",
+        }
+        try:
+            response = transport(
+                "http://localhost:11434/v1/chat/completions",
+                data=json.dumps(payload).encode(),
+                headers={"Content-Type": "application/json"},
+                timeout=timeout,
+            )
+            if response.status != 200:
+                raise ModelError("model HTTP request failed")
+            envelope = json.loads(response.body)
+            choices, usage = envelope["choices"], envelope["usage"]
+            if not isinstance(choices, list) or len(choices) != 1:
+                raise ModelError("one complete choice required")
+            choice = choices[0]
+            message = choice["message"]
+            if choice["finish_reason"] not in {"stop", "tool_calls"} or message.get("refusal"):
+                raise ModelError("incomplete or refused response")
+            requested = message.get("tool_calls", [])
+            if not isinstance(requested, list) or len(requested) > 32:
+                raise ModelError("bounded tool-call array required")
+            calls = tuple(
+                ToolCall(
+                    id=item["id"],
+                    name=item["function"]["name"],
+                    arguments=json.loads(item["function"]["arguments"]),
+                )
+                for item in requested
+            )
+            content = message.get("content")
+            content = "" if content is None else content
+            tokens = usage["completion_tokens"]
+            if (
+                not isinstance(content, str)
+                or type(tokens) is not int
+                or not 0 <= tokens <= max_output_tokens
+            ):
+                raise ModelError("invalid content or usage")
+            return ModelTurn(content, calls, tokens)
+        except OSError, ValueError, KeyError, IndexError, TypeError, AttributeError:
+            raise ModelError("model transport or response validation failed") from None
+
+
+from types import SimpleNamespace
+
+payloads = []
+
+
+def authored_http(url, *, data, headers, timeout):
+    payloads.append(json.loads(data))
+    return SimpleNamespace(
+        status=200,
+        body=json.dumps(
+            {
+                "choices": [{"finish_reason": "tool_calls", "message": first.message()}],
+                "usage": {"completion_tokens": 12},
+            }
+        ).encode(),
+    )
+
+
+parsed = HTTPModel(request=authored_http).complete(
+    messages, dispatcher.schemas(), timeout=2, max_output_tokens=100
+)
+print(parsed.calls[0].name, parsed.output_tokens, len(payloads[0]["tools"]))
+```
+
+```text
+list_stock 12 3
+```
+
+The response's `arguments` string is decoded before `ToolCall` validates the envelope. The dispatcher still validates operation-specific arguments before invoking the handler. A truncated completion, a non-object argument value, or an impossible usage count fails at this boundary. Replace `"{}"` with `"broken JSON"` in an authored call and observe `MODEL_FAILED` through your loop with zero handler invocations. Then supply a complete final answer to demonstrate that the parser can finish a run without a tool request.
 
 ## Replace the replay with a live model
 

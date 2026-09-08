@@ -2,9 +2,11 @@
 
 Lucy opens her ice cream shop at nine. Before the first customer arrives, she checks the freezer, checks yesterday's notes, and decides what needs attention. Vanilla is running low. Chocolate is plentiful. Strawberry has almost gone. She would like a short briefing before opening, and eventually she would like help preparing the orders that follow.
 
-You are the developer building that assistant. Lucy is your customer. She supplies the business rules and decides what the assistant may do; you turn those decisions into a system whose behavior she can inspect. You will not ask her to understand a database lease before she can use the shop's stock report.
+You are the developer building that assistant. Lucy is your customer. She supplies the business rules and decides what the assistant may do; you turn those decisions into a system whose behavior she can inspect. Her first observable result is the shop's stock report.
 
 This chapter ends with a small Python program that sends real shop data to a model and reads a morning brief. An offline response fixture makes the surrounding Python reproducible without a model server. A separate live command proves the model connection. Keep those two observations separate: a fixture proves how your program handles known bytes; a live response demonstrates what a configured model returned on that run.
+
+In this book, a **model** generates a response, the **loop** decides which validated tool calls to execute next, and the **runtime** is the Python program that keeps the loop, tools and saved records working together. A **fixture** is synthetic input or an authored response used to reproduce an experiment.
 
 ## Learning objectives
 
@@ -60,7 +62,7 @@ The companion repository uses Python 3.14 and `uv`. Its lockfile pins the develo
 From a fresh checkout, run:
 
 ```bash
-uv sync --python 3.14 --group dev
+uv sync --frozen --python 3.14 --group dev
 uv run --python 3.14 python --version
 uv run --python 3.14 python book/always_on/checkpoints/ch01.py
 ```

@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 @pytest.mark.parametrize("failure", ["duplicate", "missing", "escape", "ready", "figures"])
 def test_publication_contract_refuses_invalid_edition(tmp_path: Path, failure: str) -> None:
     spec = importlib.util.spec_from_file_location(
-        "publication", ROOT / "scripts" / "verify_publication_v1.py"
+        "publication", ROOT / "scripts" / "verify_publication_v2.py"
     )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)

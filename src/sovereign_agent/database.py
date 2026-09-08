@@ -16,6 +16,7 @@ from sovereign_agent.assistant_schema import SCHEMA_22 as MIGRATION_22
 from sovereign_agent.assistant_schema import SCHEMA_23 as MIGRATION_23
 from sovereign_agent.assistant_schema import SCHEMA_24 as MIGRATION_24
 from sovereign_agent.assistant_schema import SCHEMA_25 as MIGRATION_25
+from sovereign_agent.assistant_schema import SCHEMA_26 as MIGRATION_26
 
 MIGRATION_1 = """
 PRAGMA foreign_keys = ON;
@@ -830,6 +831,7 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
     (23, MIGRATION_23),
     (24, MIGRATION_24),
     (25, MIGRATION_25),
+    (26, MIGRATION_26),
 )
 
 
@@ -968,8 +970,9 @@ class Database:
             self.connection.execute("BEGIN IMMEDIATE")
             yield self.connection
             self.connection.execute("COMMIT")
-        except Exception:
-            self.connection.execute("ROLLBACK")
+        except BaseException:
+            if self.connection.in_transaction:
+                self.connection.execute("ROLLBACK")
             raise
         finally:
             self.connection.isolation_level = previous
