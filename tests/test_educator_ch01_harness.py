@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 NOTEBOOK = Path(__file__).resolve().parents[1] / (
-    "book/always_on/educator/ch01-prompts-and-harness-class-v1.ipynb"
+    "book/always_on/educator/ch01-prompts-and-harness-class-v2.ipynb"
 )
 
 

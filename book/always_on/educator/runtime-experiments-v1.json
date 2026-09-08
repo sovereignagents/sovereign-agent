@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFT",
+  "sourceCommit": "92db3d436dc69b5694eecb3adaebd82770f59250",
+  "experiments": [
+    {
+      "chapter": 2,
+      "path": "book/always_on/learner/ch02.py",
+      "sha256": "3181d2709765f9ad27b024c0f38c5fa95b37a8293916b87c8831198e563c05ee",
+      "before": "        if args.quantity != needed:",
+      "after": "        if False:",
+      "line": 162,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nm = runpy.run_path(\"book/always_on/learner/ch02.py\")\nresult = m[\"build_tools\"](m[\"SHOP\"]).invoke(m[\"ToolCall\"](id=\"wrong-quantity\", name=\"draft_order\", arguments={\"sku\":\"SKU-VANILLA\", \"quantity\":7}))\nprint(json.dumps({\"draft_accepted\": result[\"ok\"], \"tool_result\": result}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "draft_accepted": false
+      },
+      "expected_broken": {
+        "draft_accepted": true
+      },
+      "loss": "Lucy receives a seven-tub draft when stock requires six. She can over-order if she trusts that draft.",
+      "explanation": "Schema validation still accepts an integer seven. The deterministic quantity check is the line that makes the business rule executable; removing it returns a 1750-pence draft, not a purchase.",
+      "transfer": "Change quantity to five and then True. Predict which layer refuses each input. A bool remains invalid even with the business check removed.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 3,
+      "path": "book/always_on/learner/ch03.py",
+      "sha256": "e17b034dff63cfab77af872e408fe1aee860decde9b0263081db9831f02a0840",
+      "before": "exposure += limits.estimated_call_pence",
+      "after": "exposure += 0",
+      "line": 124,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nm=runpy.run_path(\"book/always_on/learner/ch03.py\")\nclass Failed:\n    def complete(self,*args,**kwargs):\n        raise m[\"ModelError\"](\"fixture loss\")\nr=m[\"run_loop\"](Failed(),m[\"shop_tools\"][\"build_tools\"](m[\"shop_tools\"][\"SHOP\"]),m[\"messages\"],limits=m[\"Limits\"](estimated_call_pence=5))\nprint(json.dumps({\"stop_reason\":r.status,\"model_calls\":r.model_calls,\"tool_calls\":r.tool_calls,\"estimated_pence\":r.estimated_cost_pence}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "estimated_pence": 5,
+        "model_calls": 1,
+        "stop_reason": "MODEL_FAILED"
+      },
+      "expected_broken": {
+        "estimated_pence": 0,
+        "model_calls": 1,
+        "stop_reason": "MODEL_FAILED"
+      },
+      "loss": "Lucy loses the allowance accounting for failed attempts, so repeated failures look free.",
+      "explanation": "The attempt counter remains one while the estimate drops to zero. This is configured exposure, not an invoice or proof that the provider billed the failed call.",
+      "transfer": "Run your own ReplayModel with two allowed calls, then a first-call ModelError. Retain the actual tool messages as well as counts.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 4,
+      "path": "src/sovereign_agent/assistant_context.py",
+      "sha256": "848e5acaf9366c66c6f699d6d2790a1364af0113360985f726f48fa622518c49",
+      "before": "\"WHERE session=? AND active=1\",\n            (session,),",
+      "after": "\"WHERE session=?\",\n            (session,),",
+      "line": 90,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_context import remember, preferences\nremember(db,\"lucy\",\"delivery\",\"morning\",\"message/1\")\nremember(db,\"lucy\",\"delivery\",\"afternoon\",\"message/2\")\nrows=preferences(db,\"lucy\")\nprint(json.dumps({\"old_preference_returned\":any(r[\"value\"]==\"morning\" for r in rows),\"retrieved\":[{k:r[k] for k in (\"name\",\"value\",\"source\")} for r in rows]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "old_preference_returned": false
+      },
+      "expected_broken": {
+        "old_preference_returned": true
+      },
+      "loss": "Lucy corrects delivery time, but the next request again contains the superseded preference.",
+      "explanation": "Correction retains an inactive historical row. Retrieval must filter it; sorting the new row first does not remove contradictory old guidance.",
+      "transfer": "Correct the same preference a third time and use a second session. Identify which query clause isolates each boundary.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 5,
+      "path": "src/sovereign_agent/assistant_context.py",
+      "sha256": "848e5acaf9366c66c6f699d6d2790a1364af0113360985f726f48fa622518c49",
+      "before": "if set(skill.requires).issubset(allowed):",
+      "after": "if True:",
+      "line": 196,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_context import stage_skill, activate_skill, context\np=state/\"skill.toml\"\np.write_text('name=\"opening\"\\nversion=\"1\"\\ninstructions=\"Check privately.\"\\nrequires=[\"private_report\"]\\n')\nstage_skill(db,p)\nactivate_skill(db,\"opening\",\"1\",evaluate=lambda skill:{\"fixture\":True},required_cases=frozenset({\"fixture\"}))\nmessages=context(db,\"lucy\",\"Brief me\",allowed=frozenset({\"list_stock\"}))\nprint(json.dumps({\"ineligible_guidance_present\":\"skill_guidance\" in messages[0][\"content\"],\"model_context\":messages}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "ineligible_guidance_present": false
+      },
+      "expected_broken": {
+        "ineligible_guidance_present": true
+      },
+      "loss": "Lucy gets a procedure that assumes unavailable capabilities and may repeatedly request impossible work.",
+      "explanation": "The activation check here is explicitly an authored fixture. Eligibility does not grant authority: even the broken context does not change the dispatcher allowlist.",
+      "transfer": "Edit the copied probe to stage without activating, then activate a skill with empty requirements. Predict context separately from registration.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 6,
+      "path": "src/sovereign_agent/telegram_channel.py",
+      "sha256": "677e5224959437264258c29a4ec3c51390b42559bebf9d2b4e53e804e0a939ef",
+      "before": "and chat.get(\"type\") == \"private\"",
+      "after": "and True",
+      "line": 123,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.telegram_channel import poll\nclass FixtureBot:\n    account=\"classroom\"\n    def call(self,method,data):\n        return [{\"update_id\":101,\"message\":{\"from\":{\"id\":123,\"is_bot\":False},\"chat\":{\"id\":123,\"type\":\"group\"},\"text\":\"Brief me\"}}]\nids=poll(db,FixtureBot(),frozenset({123}))\nprint(json.dumps({\"group_intakes\":len(ids),\"durable_work\":db.connection.execute(\"SELECT count(*) FROM assistant_work\").fetchone()[0]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "group_intakes": 0,
+        "durable_work": 0
+      },
+      "expected_broken": {
+        "group_intakes": 1,
+        "durable_work": 1
+      },
+      "loss": "Lucy\u2019s agent admits a message from a channel context her private-chat policy excludes.",
+      "explanation": "The group envelope deliberately holds sender and chat IDs equal to isolate the private-type check. Real Telegram group IDs usually differ; the second check is independent protection, not a reason to leave the first untested.",
+      "transfer": "Change only is_bot, then only the authenticated actor. Run each against the repaired copy; both must still be refused.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 7,
+      "path": "src/sovereign_agent/assistant_work.py",
+      "sha256": "b359e33e95ea475b492935f743cd7d6e59232d2b8507cc4b09806ab1572752e9",
+      "before": "next_due = row[\"next_due\"] + (skipped + 1) * row[\"interval_seconds\"]",
+      "after": "next_due = row[\"next_due\"] + row[\"interval_seconds\"]",
+      "line": 261,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_work import schedule, tick\nschedule(db,\"morning\",\"lucy\",\"Brief me\",first_due=100,interval_seconds=10)\ncounts=[len(tick(db,now=139)) for _ in range(4)]\nprint(json.dumps({\"work_per_pass\":counts,\"work_count\":db.connection.execute(\"SELECT count(*) FROM assistant_work\").fetchone()[0],\"next_due\":db.connection.execute(\"SELECT next_due FROM assistant_jobs\").fetchone()[0]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "work_per_pass": [
+          1,
+          0,
+          0,
+          0
+        ],
+        "work_count": 1
+      },
+      "expected_broken": {
+        "work_per_pass": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "work_count": 4
+      },
+      "loss": "A late wake creates repeated stale briefs instead of one current brief, consuming Lucy\u2019s request allowance.",
+      "explanation": "Both versions eventually reach next_due=140. Only the sequence of durable work counts exposes the backlog; checking the final due time alone misses it.",
+      "transfer": "Pause before ticking and verify no advancement. Compare a stock condition episode with a clock interval; they use different rearming rules.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 8,
+      "path": "src/sovereign_agent/assistant_orders.py",
+      "sha256": "0c1c8d69a54bcd7de458658fcfa56a3a4bc15d228474eb8d6d414d4b1b9b2b99",
+      "before": "if budget[\"spent_pence\"] + budget[\"reserved_pence\"] + addition > min(",
+      "after": "if addition > min(",
+      "line": 169,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\npolicy=SpendingPolicy(frozenset({\"lucy\"}),total_pence=2500)\ngrant(policy=policy)\ntry:\n    grant(\"SKU-STRAWBERRY\",4,policy=policy)\n    second=True\nexcept PermissionError:\n    second=False\nrow=db.connection.execute(\"SELECT reserved_pence,spent_pence FROM assistant_spending\").fetchone()\nprint(json.dumps({\"second_approved\":second,\"reserved_pence\":row[0],\"spent_pence\":row[1]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "second_approved": false,
+        "reserved_pence": 1500,
+        "spent_pence": 0
+      },
+      "expected_broken": {
+        "second_approved": true,
+        "reserved_pence": 2600,
+        "spent_pence": 0
+      },
+      "loss": "Lucy receives simultaneous approvals whose promises exceed her total allowance.",
+      "explanation": "Six vanilla tubs reserve 1500 pence; four strawberry tubs add 1100. This experiment does not execute either order. Execution has its own budget recheck, so do not claim this mutation alone spends 2600.",
+      "transfer": "Repeat the same exact approval and inspect its reservation. Then change quantity and identify the new digest rather than reusing consent.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 9,
+      "path": "src/sovereign_agent/assistant_orders.py",
+      "sha256": "0c1c8d69a54bcd7de458658fcfa56a3a4bc15d228474eb8d6d414d4b1b9b2b99",
+      "before": "receipt = supplier.order(identifier, json.loads(row[\"proposal\"]))",
+      "after": "receipt = supplier.order(uuid.uuid4().hex, json.loads(row[\"proposal\"]))",
+      "line": 390,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_orders import execute\nsupplier_scope=runpy.run_path(\"book/always_on/checkpoints/ch09.py\")[\"independent_supplier\"]\nwith supplier_scope(state) as (supplier,remote_path):\n    policy=SpendingPolicy(frozenset({\"lucy\"}),total_pence=2500)\n    identifier=grant(target=supplier.identity,policy=policy)\n    statuses=[execute(db,work,identifier,supplier,policy=policy)[\"status\"] for _ in range(2)]\n    with sqlite3.connect(remote_path) as remote:\n        count=remote.execute(\"SELECT count(*) FROM orders\").fetchone()[0]\n    same_id_count=None\n    if statuses[-1] == \"ACCEPTED\":\n        proposal=json.loads(db.connection.execute(\"SELECT proposal FROM assistant_orders WHERE id=?\",(identifier,)).fetchone()[0])\n        supplier.order(identifier,proposal)\n        with sqlite3.connect(remote_path) as remote:\n            same_id_count=remote.execute(\"SELECT count(*) FROM orders\").fetchone()[0]\n    print(json.dumps({\"local_statuses\":statuses,\"supplier_order_count\":count,\"same_id_retransmission_count\":same_id_count}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "supplier_order_count": 1,
+        "local_statuses": [
+          "UNKNOWN",
+          "ACCEPTED"
+        ],
+        "same_id_retransmission_count": 1
+      },
+      "expected_broken": {
+        "supplier_order_count": 2,
+        "local_statuses": [
+          "UNKNOWN",
+          "UNKNOWN"
+        ],
+        "same_id_retransmission_count": null
+      },
+      "loss": "Lucy can buy the same replenishment twice while both local attempts remain uncertain.",
+      "explanation": "The broken send invents a new ID, so lookup of the original operation cannot find either purchase. Moving lookup after a resend would not itself prove duplication under this supplier\u2019s same-ID idempotency contract. Retain that counterexample in the explanation.",
+      "transfer": "After repairing, directly repeat an identical supplier request using the same operation and proposal; inspect independent rows. Then explain why absent discovery without idempotency still requires HOLD.",
+      "preparation": "One probe subprocess launches one separate local HTTP supplier process on an ephemeral loopback port. The supplier retains SQLite receipts and drops first responses. Both processes and temporary state are cleaned up; no live purchase or SIGKILL."
+    },
+    {
+      "chapter": 10,
+      "path": "src/sovereign_agent/assistant_work.py",
+      "sha256": "b359e33e95ea475b492935f743cd7d6e59232d2b8507cc4b09806ab1572752e9",
+      "before": "or work.epoch != current_epoch",
+      "after": "or False",
+      "line": 349,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_work import observe\nenqueue(db,\"epoch-probe\",\"lucy\",\"Brief me\")\nwork=claim(db,\"same-worker\")\nepoch=\"replacement-epoch\"\nwith db.immediate() as connection:\n    connection.execute(\"UPDATE assistant_control SET epoch=?\",(epoch,))\ndb.path.with_suffix(\".authority\").write_text(epoch)\ntry:\n    observe(db,work,{\"role\":\"assistant\",\"content\":\"old authority\"})\n    accepted=True\nexcept PermissionError:\n    accepted=False\nprint(json.dumps({\"stale_epoch_write\":accepted,\"transcript_rows\":db.connection.execute(\"SELECT count(*) FROM assistant_transcript\").fetchone()[0]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "stale_epoch_write": false,
+        "transcript_rows": 0
+      },
+      "expected_broken": {
+        "stale_epoch_write": true,
+        "transcript_rows": 1
+      },
+      "loss": "A worker from an earlier authority epoch can append evidence to Lucy\u2019s current work.",
+      "explanation": "This controlled state injection changes both epoch representations while holding owner, generation and lease fixed. An ordinary replacement changes several fields and would conceal a missing epoch check. The full checkpoint separately includes real process death.",
+      "transfer": "Change only generation in another fresh trial. Then change only owner, work ID and status in separate cases. Explain why liveness does not answer any of these questions.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 11,
+      "path": "src/sovereign_agent/tool_dispatch.py",
+      "sha256": "02e289df4c3f913f1cf9a1fa6267cd53e8845aa55235164097e67f207fe49134",
+      "before": "if tool is None or call.name not in self.allowed:",
+      "after": "if tool is None:",
+      "line": 57,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.tool_dispatch import Dispatcher, ExecutableTool\nfrom sovereign_agent.model_turn import ToolCall\nfrom reference_organizations.store.agent import NoArguments\nseen=[]\ndef private(arguments):\n    seen.append(\"called\")\n    return {\"private_fixture\":\"supplier preference\"}\ndispatcher=Dispatcher([ExecutableTool(\"private_report\",\"Read private fixture\",NoArguments,private)],allowed=frozenset())\nresult=dispatcher.invoke(ToolCall(id=\"forced\",name=\"private_report\",arguments={}))\nprint(json.dumps({\"private_handler_calls\":len(seen),\"tool_result\":result}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "private_handler_calls": 0
+      },
+      "expected_broken": {
+        "private_handler_calls": 1
+      },
+      "loss": "Private shop data can leave a registered handler despite Lucy withholding permission to use it.",
+      "explanation": "A forced call tests enforcement even if a good model refuses hostile prose. The tool must be registered but disallowed to isolate this check. An unregistered tool would still be refused after the mutation.",
+      "transfer": "Try an unregistered name, then invalid arguments for an allowed registered tool. Explain which independent checks remain. A process boundary still needs separate containment evidence.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 12,
+      "path": "src/reference_organizations/store/evaluation.py",
+      "sha256": "f7b51b6c2c0326f66a53fefa79e075b124225bb0b84c8d59278d7927438c3c76",
+      "before": "(sku, threshold - stock + reserved)",
+      "after": "(sku, threshold - stock)",
+      "line": 70,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom reference_organizations.store.evaluation import CASES, evaluate\nfrom reference_organizations.store.agent import OfflineShopModel\ncase=next(c for c in CASES if c.name==\"reserved_stock\")\nreport=evaluate(OfflineShopModel,cases=(case,))\nprint(json.dumps({\"baseline_matches\":report[\"cases\"][0][\"checks\"][\"baseline_matches_authored_answer\"],\"model_quantities_match\":report[\"cases\"][0][\"checks\"][\"quantities\"],\"passed\":report[\"passed\"]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "baseline_matches": true,
+        "model_quantities_match": true,
+        "passed": true
+      },
+      "expected_broken": {
+        "baseline_matches": false,
+        "model_quantities_match": true,
+        "passed": false
+      },
+      "loss": "Lucy can adopt a faulty scripted baseline as her standard unless independently authored answers challenge it.",
+      "explanation": "Removing reserved stock breaks the ordinary function while fixture model quantities remain correct. This shows why expected answers must not be generated by the baseline being graded. Prose correctness remains a separate review.",
+      "transfer": "Change the authored case to another reservation amount and calculate the answer by hand. Explain why regenerating expected values from the changed function would erase this test.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 13,
+      "path": "src/sovereign_agent/assistant_context.py",
+      "sha256": "848e5acaf9366c66c6f699d6d2790a1364af0113360985f726f48fa622518c49",
+      "before": "if skill_snapshot(db)[0] != baseline:",
+      "after": "if False:",
+      "line": 174,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_context import stage_skill, activate_skill, skill_snapshot\nfor name in (\"opening\",\"reporting\"):\n    path=state/(name+\".toml\")\n    path.write_text('name='+json.dumps(name)+'\\nversion=\"1\"\\ninstructions=\"Use GBP.\"\\nrequires=[]\\n')\n    stage_skill(db,path)\ndef concurrent(skill):\n    activate_skill(db,\"reporting\",\"1\",evaluate=lambda s:{\"fixture\":True},required_cases=frozenset({\"fixture\"}))\n    return {\"fixture\":True}\ntry:\n    activate_skill(db,\"opening\",\"1\",evaluate=concurrent,required_cases=frozenset({\"fixture\"}))\n    accepted=True\nexcept PermissionError:\n    accepted=False\nprint(json.dumps({\"stale_candidate_activated\":accepted,\"active_names\":[s.name for s in skill_snapshot(db)[1]]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "stale_candidate_activated": false,
+        "active_names": [
+          "reporting"
+        ]
+      },
+      "expected_broken": {
+        "stale_candidate_activated": true,
+        "active_names": [
+          "opening",
+          "reporting"
+        ]
+      },
+      "loss": "Lucy activates a procedure using an evaluation that describes an obsolete configuration.",
+      "explanation": "The callback activates a different skill through the real activation API while the candidate is being evaluated. Named True results are a deterministic concurrency fixture, not evidence of model quality.",
+      "transfer": "Run a candidate with a named False result: the evaluation guard must refuse it before the stale-state comparison. Find version 3 in retained activation data in the full checkpoint; its printed status omits the version.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 14,
+      "path": "src/reference_organizations/store/delegation.py",
+      "sha256": "ef99acc885bdc4a640c37c44b82f3f90baa59e9d886ac39343c7242c0d8a6174",
+      "before": "tubs = (inquiry.guests + 9) // 10",
+      "after": "tubs = inquiry.guests // 10",
+      "line": 39,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom reference_organizations.store.delegation import Inquiry, quote\nresult=quote(db,Inquiry(sku=\"SKU-VANILLA\",guests=11))\nprint(json.dumps({\"tubs\":result[\"tubs\"],\"total_pence\":result[\"total_pence\"],\"stock_reserved\":result[\"stock_reserved\"],\"model_calls\":0}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "tubs": 2,
+        "total_pence": 1000,
+        "model_calls": 0
+      },
+      "expected_broken": {
+        "tubs": 1,
+        "total_pence": 500,
+        "model_calls": 0
+      },
+      "loss": "Lucy\u2019s catering quote leaves one guest without a portion.",
+      "explanation": "A ceiling is required when guests are not a multiple of ten. This fixed quote needs zero model calls. The integrated checkpoint\u2019s ten fixture calls include orchestration, cancellation and replacement trials; they are not the cost of this function.",
+      "transfer": "Try 1, 10, 200 and 201 guests through Inquiry and quote. Separate schema refusal from the rounding rule.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    },
+    {
+      "chapter": 15,
+      "path": "src/sovereign_agent/assistant_service.py",
+      "sha256": "909180473cf321a19b0f40bb735ad8a19dbcf0aa77a34dbaa12ef8ddfc75ad01",
+      "before": "\"UPDATE assistant_control SET epoch=?,paused=1 WHERE id=1\"",
+      "after": "\"UPDATE assistant_control SET epoch=?,paused=0 WHERE id=1\"",
+      "line": 88,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom sovereign_agent.assistant_service import backup, restore, health\nenqueue(db,\"before-backup\",\"lucy\",\"Brief me\")\nsnapshot=backup(db,state/\"backup.sqlite\")\nrestore(db,snapshot)\npaused=health(db)[\"paused\"]\nprint(json.dumps({\"restored_paused\":paused,\"work_claimed_before_audit\":claim(db,\"replacement\") is not None}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "restored_paused": true,
+        "work_claimed_before_audit": false
+      },
+      "expected_broken": {
+        "restored_paused": false,
+        "work_claimed_before_audit": true
+      },
+      "loss": "Lucy\u2019s restored snapshot starts work before later supplier activity and physical stock have been reconciled.",
+      "explanation": "The prepared snapshot overwrites the live database after its temporary pause. Its own paused flag controls final state. Old approval revocation still remains, so claiming a draft is not proof of a new purchase.",
+      "transfer": "Compare the unchanged backup hash before and after restore. Explain why missing historical model usage cannot be reconstructed from supplier receipts.",
+      "preparation": "One probe subprocess performs real local SQLite backup and restore in a temporary directory. It installs no service, reboots no host, and makes no network call."
+    },
+    {
+      "chapter": 16,
+      "path": "src/reference_organizations/store/operating_report.py",
+      "sha256": "664af6a5a72c1f0eb18bb291dfdd656474201c2933c6517164be7f02222e0ba5",
+      "before": "matching = (spent, reserved) == tuple(totals)",
+      "after": "matching = True",
+      "line": 93,
+      "probe": "import json, runpy, tempfile, time, sqlite3\nfrom pathlib import Path\nfrom sovereign_agent.database import Database\nfrom reference_organizations.store.agent import seed_lucy\nfrom sovereign_agent.assistant_work import enqueue, claim\nfrom sovereign_agent.assistant_orders import SpendingPolicy, propose, approve\nsandbox = tempfile.TemporaryDirectory(prefix=\"lucy-probe-state-\")\nstate = Path(sandbox.name)\ndb = Database(state / \"agent.sqlite\")\nseed_lucy(db)\ndef grant(sku=\"SKU-VANILLA\", quantity=6, target=\"fixture\", policy=None):\n    global work\n    if \"work\" not in globals():\n        enqueue(db, \"probe:morning\", \"lucy\", \"Replenish\")\n        work = claim(db, \"probe-worker\")\n    identifier = propose(db, work, sku, quantity, target=target)\n    digest = db.connection.execute(\"SELECT digest FROM assistant_orders WHERE id=?\", (identifier,)).fetchone()[0]\n    approve(db, identifier, digest, actor=\"lucy\", policy=policy or SpendingPolicy(frozenset({\"lucy\"}), total_pence=2500), expires=time.time()+60)\n    return identifier\n\nfrom reference_organizations.store.operating_report import operating_report\ngrant()\nwith db.immediate() as connection:\n    connection.execute(\"UPDATE assistant_spending SET reserved_pence=1499\")\nreport=operating_report(db)\nprint(json.dumps({\"order_totals_match\":report[\"spending\"][\"order_totals_match\"],\"disagreement_reported\":\"Spending ledger and retained order totals disagree.\" in report[\"exceptions\"],\"reserved_pence\":report[\"spending\"][\"reserved_pence\"]}))\n\ndb.close()\nsandbox.cleanup()\n",
+      "expected_baseline": {
+        "order_totals_match": false,
+        "disagreement_reported": true
+      },
+      "expected_broken": {
+        "order_totals_match": true,
+        "disagreement_reported": false
+      },
+      "loss": "Lucy receives a reassuring report even though one pence of reserved allowance has disappeared from its ledger.",
+      "explanation": "The probe corrupts a ledger value after a real approval. The report compares independently queried order totals with that ledger. This local consistency check still does not audit the external supplier. The full day report has a real observed_at timestamp; assert business facts, not byte-identical wall-clock text.",
+      "transfer": "Swap individual operation amounts while retaining their total in the pure reconciliation exercise. Then locate independent supplier receipts in the full day scenario and explain the difference from local consistency.",
+      "preparation": "One bounded Python subprocess per trial; temporary SQLite state; no paid model or channel call. No worker is killed."
+    }
+  ]
+}

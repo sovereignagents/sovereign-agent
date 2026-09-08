@@ -8,7 +8,7 @@ This chapter ends with a small Python program that sends real shop data to a mod
 
 In this book, a **model** generates a response, the **loop** decides which validated tool calls to execute next, and the **runtime** is the Python program that keeps the loop, tools and saved records working together. A **fixture** is synthetic input or an authored response used to reproduce an experiment.
 
-For a classroom session, use the [standalone notebooks and instructor guides](../educator/ch01-classroom-v2.md). The notebook runs offline on Python 3.11 or newer; the cumulative book environment below remains Python 3.14.
+For a classroom session, use the [standalone notebooks and instructor guides](../educator/ch01-classroom-v3.md). The notebook runs offline on Python 3.11 or newer; the cumulative book environment below remains Python 3.14.
 
 ## Learning objectives
 
@@ -211,6 +211,8 @@ def read_brief(document):
     message = choice.get("message", {})
     if not isinstance(message, dict) or message.get("tool_calls") or message.get("refusal"):
         raise ValueError("a plain completed brief was expected")
+    if message.get("role") != "assistant":
+        raise ValueError("assistant completion role required")
     text = message.get("content")
     if not isinstance(text, str) or not text.strip():
         raise ValueError("nonempty brief required")
@@ -325,10 +327,15 @@ Keep model prose labelled as a draft. Lucy's dependable stock display can use th
 
 ## Make the live call
 
-The small checkpoint uses Python's standard-library HTTP client. `Request` holds the address, serialized body, and content type. `urlopen` sends it and exposes the response stream. The code reads at most one byte beyond our permitted body size so that an oversized result is detected rather than silently truncated into plausible JSON.
+The small checkpoint uses Python's standard-library HTTP client. `Request` holds the address, serialized body, and content type. An explicit opener sends it and exposes the response stream. Its redirect handler refuses a second destination; the configured endpoint must answer directly. The code reads at most one byte beyond our permitted body size so that an oversized result is detected rather than silently truncated into plausible JSON.
 
 ```python
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+class RefuseRedirects(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError("Redirect refused; use the configured endpoint directly")
 
 
 def live_call(body):
@@ -337,7 +344,7 @@ def live_call(body):
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urlopen(request, timeout=30) as response:
+    with build_opener(RefuseRedirects()).open(request, timeout=30) as response:
         raw = response.read(65_537)
     if len(raw) > 65_536:
         raise ValueError("response exceeded the chapter's byte limit")

@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 BOOK = Path(__file__).resolve().parents[1] / "book/always_on"
-NOTEBOOK = BOOK / "educator/ch01-first-model-call-class-v1.ipynb"
+NOTEBOOK = BOOK / "educator/ch01-first-model-call-class-v2.ipynb"
 
 
 def cells():
@@ -133,7 +133,7 @@ def test_transport_withholds_errors_and_enforces_byte_ceiling(lesson, failure):
             raise URLError("private-endpoint-secret")
         return Response()
 
-    lesson["urlopen"] = urlopen
+    lesson["build_opener"] = lambda *args: type("Opener", (), {"open": staticmethod(urlopen)})()
     with pytest.raises((RuntimeError, ValueError)) as error:
         lesson["live_call"]({}, base="https://example.invalid/v1", max_bytes=16)
     assert "private" not in str(error.value) and "secret" not in str(error.value)
@@ -143,7 +143,11 @@ def test_notebook_parser_matches_chapter_checkpoint():
     namespace = runpy.run_path(str(BOOK / "checkpoints/ch01.py"))
     assert (
         namespace["read_brief"](
-            {"choices": [{"finish_reason": "stop", "message": {"content": "x"}}]}
+            {
+                "choices": [
+                    {"finish_reason": "stop", "message": {"role": "assistant", "content": "x"}}
+                ]
+            }
         )
         == "x"
     )

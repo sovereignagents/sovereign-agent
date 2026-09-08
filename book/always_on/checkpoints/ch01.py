@@ -4,7 +4,7 @@ import argparse
 import copy
 import hashlib
 import json
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 SHOP = {
     "customer": "Lucy",
@@ -52,6 +52,8 @@ def read_brief(document):
     message = choice.get("message", {})
     if not isinstance(message, dict) or message.get("tool_calls") or message.get("refusal"):
         raise ValueError("a plain completed brief was expected")
+    if message.get("role") != "assistant":
+        raise ValueError("assistant completion role required")
     text = message.get("content")
     if not isinstance(text, str) or not text.strip():
         raise ValueError("nonempty brief required")
@@ -99,6 +101,11 @@ def review_brief(built, document, current_shop):
     }
 
 
+class RefuseRedirects(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError("Redirect refused; use the configured endpoint directly")
+
+
 def live_call(body):
     # A socket-operation timeout, not a total wall-clock guarantee. Chapter 3
     # introduces the killable transport used by the cumulative agent.
@@ -107,7 +114,7 @@ def live_call(body):
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urlopen(request, timeout=30) as response:
+    with build_opener(RefuseRedirects()).open(request, timeout=30) as response:
         raw = response.read(65_537)
     if len(raw) > 65_536:
         raise ValueError("response exceeded the chapter's byte limit")
