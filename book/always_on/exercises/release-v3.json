@@ -8,7 +8,7 @@
     "process, network, and descendant isolation unavailable"
   ],
   "schemaVersion": 2,
-  "sourceCommit": "a4146a4271961c36a7da2d9a7a5ea6dbaf5fd8c9",
+  "sourceCommit": "5b5ddb2558911d1482a97a1317ee22fb36a68049",
   "status": "DRAFT",
   "studentFiles": [
     {
@@ -49,11 +49,11 @@
     },
     {
       "path": "book/always_on/exercises/ch09/unit-a-durable-intent-v1.md",
-      "sha256": "e09bb77de530ed057d576b2ffa2d83ef075aad6f76fb8112390c59bc6587d8e1"
+      "sha256": "ba69a15b05a9e317331f01862a2f223fa3efe0527a86db1fcc684053d8808921"
     },
     {
       "path": "book/always_on/exercises/ch09/unit-a-durable-intent-v1.ipynb",
-      "sha256": "28571361f804c0ea9b0b1c1599b5bc88e7e2b3f1ee9327987ffe7e9b3a6579ff"
+      "sha256": "a1e46c8d84b59715c063b9526d46c64b57c954180b678318164157b33306c3bc"
     },
     {
       "path": "book/always_on/exercises/ch09/unit-b-reconcile-unknown-v1.md",
@@ -211,7 +211,7 @@
       "semanticSha256": "bbb35f63f5aef18909689b89189544e84026c14bc47969edfc2bb7931045cc5f"
     },
     {
-      "canonicalSha256": "e09bb77de530ed057d576b2ffa2d83ef075aad6f76fb8112390c59bc6587d8e1",
+      "canonicalSha256": "ba69a15b05a9e317331f01862a2f223fa3efe0527a86db1fcc684053d8808921",
       "canonicalSource": "book/always_on/exercises/ch09/unit-a-durable-intent-v1.md",
       "execution": {
         "attempted": 6,
@@ -239,12 +239,12 @@
         },
         "holdoutSha256": "a1bfcac46ea526bf710733bbece4cc76b51ef27b1ba374eee4b557daa134a471",
         "solution": "book/always_on/exercises/ch09/solutions/unit-a-solution-v1.py",
-        "solutionSha256": "8b0a4f5b01c72c372644741b7c90464af793ad2acf8f79eeb08b6826222fe282"
+        "solutionSha256": "253e2518096cdb75a653a0f08eaa4670f03a14715d92d34737b488d99c304215"
       },
       "notebook": "book/always_on/exercises/ch09/unit-a-durable-intent-v1.ipynb",
-      "notebookSha256": "28571361f804c0ea9b0b1c1599b5bc88e7e2b3f1ee9327987ffe7e9b3a6579ff",
+      "notebookSha256": "a1e46c8d84b59715c063b9526d46c64b57c954180b678318164157b33306c3bc",
       "semanticDigestVersion": 1,
-      "semanticSha256": "30b7986572949648d8ac4055b6c82f2b21e4adcec5a37cfc89c45ea086b01cfd"
+      "semanticSha256": "1953d187493305483cbaaadff6c668fe8b0f7f734d0304443c2b7affe3fc15d5"
     },
     {
       "canonicalSha256": "c8cc219cf323fcaf67f82f9a69f90ee5b881289f2a8d85d7d5f7d3f4cae0c0d3",
