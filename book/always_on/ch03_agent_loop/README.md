@@ -2,6 +2,8 @@
 
 Lucy asks, “What needs ordering this morning?” Answering well requires more than a single generated paragraph. The program must obtain current stock, calculate useful drafts, and explain the results. In Chapter 2 you called the tools yourself. Now the model will select requests, your dispatcher will execute permitted operations, and the model will receive the observations before deciding what to do next.
 
+Practice this chapter with the [bounded-loop successor bundle](../exercises/ch03/unit-a-bounded-loop-v1.md). Unit A connects a learner-owned admission decision to the model/tool loop; Unit B mutates and repairs the real failed-call accounting in a temporary source copy. Solutions and holdouts remain separate from the student notebooks.
+
 That repeated exchange is the agent loop. It is small enough to write directly, but leaving it unbounded would create an expensive failure mode: the model could repeat a lookup indefinitely, request an oversized batch, or keep working after you asked the program to stop. The loop therefore needs an explicit result even when it does not produce a final answer.
 
 We will first use authored model responses so that each failure can be reproduced. Then we will run the same interface against the local HTTP model. The authored responses prove how the runtime reacts; the live run investigates whether a model chooses useful requests. Neither kind of evidence substitutes for the other.

@@ -15,7 +15,12 @@ Chapter 1 is the first successor bundle:
 - [Unit B: Put prompts inside a harness](ch01/unit-b-prompt-and-harness-v1.md)
 - [Instructor guide](ch01/instructor-guide-v1.md)
 
+Chapter 3 is the second successor bundle:
+
+- [Unit A: Build a bounded model and tool loop](ch03/unit-a-bounded-loop-v1.md)
+- [Unit B: Repair failed-call accounting](ch03/unit-b-failure-accounting-v1.md)
+- [Instructor guide](ch03/instructor-guide-v1.md)
+
 Only the two Chapter 1 units are designed for Colab. Later chapters depend on local processes, files, containers, or service behavior. The full book is not a Colab course.
 
 Solutions and holdouts are separate from the student release. A notebook that executes supplied scaffolding has shown only that the artifact runs. Learning evidence comes from the learner's implementation, its connection to the cumulative behavior, and a transfer case that defeats a plausible shortcut.
-
