@@ -109,6 +109,11 @@
       "slug": "always-on-educator",
       "title": "Educator companion for every chapter",
       "path": "educator/educator-companion-v2.md"
+    },
+    {
+      "slug": "always-on-exercises",
+      "title": "Executable exercises companion",
+      "path": "exercises/README.md"
     }
   ],
   "expectedFigures": 52,

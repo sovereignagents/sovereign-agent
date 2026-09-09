@@ -9,7 +9,7 @@ tool dispatch, persistent context, jobs, permissions and recovery yourself, usin
 model APIs, SQLite and operating-system services as infrastructure. A finished
 agent framework or private Zeocore service is not required.
 
-Use the [educator companion](educator/educator-companion-v2.md) for chapter notebooks, instructor guides and assessment.
+Use the [exercises companion](exercises/README.md) for the canonical practical units and generated notebooks. The earlier [educator companion](educator/educator-companion-v2.md) remains the classroom record while successor units are built chapter by chapter.
 
 All sixteen construction drafts have runnable checkpoints. The old thirteen
 chapters and their labs remain at their original paths. Source-to-site migration,

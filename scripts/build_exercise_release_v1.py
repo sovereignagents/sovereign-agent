@@ -169,7 +169,9 @@ def main() -> int:
                         "exerciseReport": report,
                     },
                     "instructorEvidence": {
+                        "solution": relative(unit.solution),
                         "solutionSha256": sha256(unit.solution),
+                        "holdout": relative(unit.holdout),
                         "holdoutSha256": sha256(unit.holdout),
                         "holdoutResult": solution,
                     },
@@ -182,11 +184,14 @@ def main() -> int:
         "environmentLock": "uv.lock",
         "environmentLockSha256": lock_hash,
         "studentFiles": [
-            "book/always_on/exercises/README.md",
-            "book/always_on/exercises/ch01/unit-a-first-grounded-brief-v1.md",
-            "book/always_on/exercises/ch01/unit-a-first-grounded-brief-v1.ipynb",
-            "book/always_on/exercises/ch01/unit-b-prompt-and-harness-v1.md",
-            "book/always_on/exercises/ch01/unit-b-prompt-and-harness-v1.ipynb",
+            {"path": path, "sha256": sha256(ROOT / path)}
+            for path in (
+                "book/always_on/exercises/README.md",
+                "book/always_on/exercises/ch01/unit-a-first-grounded-brief-v1.md",
+                "book/always_on/exercises/ch01/unit-a-first-grounded-brief-v1.ipynb",
+                "book/always_on/exercises/ch01/unit-b-prompt-and-harness-v1.md",
+                "book/always_on/exercises/ch01/unit-b-prompt-and-harness-v1.ipynb",
+            )
         ],
         "units": rows,
         "executionLimitations": [

@@ -8,7 +8,7 @@ This chapter ends with a small Python program that sends real shop data to a mod
 
 In this book, a **model** generates a response, the **loop** decides which validated tool calls to execute next, and the **runtime** is the Python program that keeps the loop, tools and saved records working together. A **fixture** is synthetic input or an authored response used to reproduce an experiment.
 
-For a classroom session, use the [standalone notebooks and instructor guides](../educator/ch01-classroom-v3.md). The notebook runs offline on Python 3.11 or newer; the cumulative book environment below remains Python 3.14.
+For a classroom session, use the [Chapter 1 successor exercises](../exercises/ch01/unit-a-first-grounded-brief-v1.md): two canonical Markdown units with generated notebooks, separate solutions, a saved handoff and instructor-held transfer checks. The [earlier standalone notebooks](../educator/ch01-classroom-v3.md) remain reproducible classroom history. Chapter 1 runs offline on Python 3.11 or newer; the cumulative book environment below remains Python 3.14.
 
 ## Learning objectives
 
