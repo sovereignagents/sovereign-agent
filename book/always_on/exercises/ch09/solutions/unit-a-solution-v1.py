@@ -1,5 +1,9 @@
 # ruff: noqa: F821 - executed inside the submitted notebook namespace
 
+import json
+
+from sovereign_agent.events import append_event
+
 
 def record_transition(db, work_id, identifier, event, receipt=None):
     with db.immediate() as connection:

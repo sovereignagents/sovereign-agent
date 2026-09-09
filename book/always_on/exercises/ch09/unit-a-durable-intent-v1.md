@@ -31,6 +31,11 @@ import tempfile
 import time
 from pathlib import Path
 
+from reference_organizations.store.agent import seed_lucy
+from sovereign_agent.assistant_orders import SpendingPolicy, approve, propose
+from sovereign_agent.assistant_work import claim, enqueue
+from sovereign_agent.database import Database
+
 assert sys.version_info >= (3, 14)
 start = Path(os.environ.get("SOVEREIGN_AGENT_REPO", Path.cwd())).resolve()
 ROOT = next(
@@ -43,12 +48,6 @@ ROOT = next(
 )
 if ROOT is None:
     raise RuntimeError("Set SOVEREIGN_AGENT_REPO to the Sovereign Agent checkout.")
-
-from reference_organizations.store.agent import seed_lucy
-from sovereign_agent.assistant_orders import SpendingPolicy, approve, propose
-from sovereign_agent.assistant_work import claim, enqueue
-from sovereign_agent.database import Database
-from sovereign_agent.events import append_event
 
 independent_supplier = runpy.run_path(str(ROOT / "book/always_on/checkpoints/ch09.py"))[
     "independent_supplier"
