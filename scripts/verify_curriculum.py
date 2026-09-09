@@ -12,7 +12,7 @@ Catches the ways a curriculum rots:
 - a chapter missing its co-located INSTRUCTOR.md, or one missing a required
   section
 - a chapter's forward/backward links not forming one coherent sequence
-- injected site frontmatter in any source Markdown file under book/
+- injected site frontmatter in source Markdown, while allowing declared Jupytext exercise metadata
 
 Exits 0 when the curriculum is sound, 1 otherwise.
 """
@@ -118,11 +118,8 @@ FORBIDDEN_CLAIMS = (
     re.compile(r"organization wakes itself (?:up )?(?:now|today)", re.IGNORECASE),
 )
 
-# A leading site-frontmatter block: three dashes starting the file, a second
-# bare `---` line closing it. Formalizes, mechanically, what
-# book/CONTENT-SOURCE.md already states in prose: "Any frontmatter its own
-# collection schema requires -- this directory carries none, because
-# frontmatter belongs to the site that renders it, not to the source."
+# A leading YAML block can be either forbidden site collection metadata or the
+# required Jupytext representation/kernel declaration for a canonical exercise.
 FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
 
 # Added Unit 11: Chapter 12 exercises the pilot-start mechanism and MUST
@@ -426,17 +423,25 @@ def check_chapter_sequence() -> list[str]:
 
 
 def check_no_frontmatter() -> list[str]:
-    """No source Markdown under book/ begins with a site frontmatter block.
+    """No source Markdown under book/ begins with site collection metadata.
 
-    Formalizes book/CONTENT-SOURCE.md's own prose commitment ("this
-    directory carries none, because frontmatter belongs to the site that
-    renders it, not to the source") as something this gate actually
-    verifies, rather than only states.
+    Canonical exercise Markdown is also a Jupytext source file, so its leading
+    block declares Jupytext and kernelspec metadata. That narrow block is not a
+    site's collection schema and is allowed only under always_on/exercises.
     """
     problems: list[str] = []
     for markdown_file in sorted(BOOK.rglob("*.md")):
         text = markdown_file.read_text(encoding="utf-8")
-        if FRONTMATTER_PATTERN.match(text):
+        frontmatter = FRONTMATTER_PATTERN.match(text)
+        relative = markdown_file.relative_to(BOOK)
+        is_exercise = relative.parts[:2] == ("always_on", "exercises")
+        is_jupytext = bool(
+            frontmatter
+            and frontmatter.group().startswith("---\njupyter:\n")
+            and "\n  jupytext:\n" in frontmatter.group()
+            and "\n  kernelspec:\n" in frontmatter.group()
+        )
+        if frontmatter and not (is_exercise and is_jupytext):
             problems.append(
                 f"{markdown_file.relative_to(REPO_ROOT)}: begins with a site frontmatter "
                 "block, which book/ source files must never carry"
