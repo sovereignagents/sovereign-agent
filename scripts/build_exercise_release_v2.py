@@ -229,7 +229,10 @@ def main() -> int:
         ],
     }
     args.output.write_text(json.dumps(release, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"built {len(rows)} units -> {args.output.relative_to(ROOT)}")
+    displayed_output = (
+        args.output.relative_to(ROOT) if args.output.is_relative_to(ROOT) else args.output
+    )
+    print(f"built {len(rows)} units -> {displayed_output}")
     return 0
 
 
