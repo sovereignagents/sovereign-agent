@@ -11,7 +11,7 @@ help:
 	@printf "  make lint      Run Ruff and mypy\n"
 	@printf "  make doctor    Check the offline learner environment\n"
 	@printf "  make labs      Execute every companion lab from fresh roots\n"
-	@printf "  make exercises Build Chapter 1 notebooks in fresh kernels\n"
+	@printf "  make exercises Build successor notebooks in fresh kernels\n"
 
 .PHONY: install
 install:
@@ -37,8 +37,8 @@ labs:
 
 .PHONY: exercises
 exercises:
-	$(UV) run --python 3.14 --group authoring python scripts/build_exercise_release_v2.py
-	$(UV) run --python 3.14 python scripts/verify_exercise_release_v2.py
+	$(UV) run --python 3.14 --group authoring python scripts/build_exercise_release_v3.py
+	$(UV) run --python 3.14 python scripts/verify_exercise_release_v3.py
 
 .PHONY: verify
 verify: lint test
@@ -50,7 +50,7 @@ verify: lint test
 	$(UV) run --python 3.14 python scripts/verify_book_structure_v1.py
 	$(UV) run --python 3.14 python scripts/verify_always_on_v1.py
 	$(UV) run --python 3.14 python scripts/verify_publication_v2.py
-	$(UV) run --python 3.14 python scripts/verify_exercise_release_v2.py
+	$(UV) run --python 3.14 python scripts/verify_exercise_release_v3.py
 	$(UV) run --python 3.14 python scripts/verify_book_labs.py
 	$(UV) run --python 3.14 sovereign-agent --help >/dev/null
 	$(UV) run --python 3.14 sovereign-agent doctor

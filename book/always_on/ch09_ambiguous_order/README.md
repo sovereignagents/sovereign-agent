@@ -1,5 +1,7 @@
 # Chapter 9 — Survive the ambiguous supplier order
 
+For practical work, use the [Chapter 9 successor exercises](../exercises/ch09/unit-a-durable-intent-v1.md): build the durable transition, reproduce a real duplicate-purchase defect, repair the cumulative order path, and transfer reconciliation to a second supplier shape.
+
 The supplier accepts Lucy's vanilla order and records it in its database. Before the receipt reaches her agent, the connection drops. The agent sees a failed request. The supplier sees six tubs to deliver.
 
 If the agent creates another order, Lucy may receive twelve tubs and pay twice. If it declares failure and releases the reserved money, a later order may spend funds already committed to the first purchase. If it declares success without a receipt, the shop's records may claim an order that never existed. The honest immediate result is that the outcome is unknown.
